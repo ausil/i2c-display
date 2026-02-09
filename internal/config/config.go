@@ -122,6 +122,9 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
+	// Apply display defaults based on type
+	cfg.Display.ApplyDisplayDefaults()
+
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
@@ -184,15 +187,13 @@ func (c *Config) Validate() error {
 	if c.Display.Type == "" {
 		c.Display.Type = "ssd1306" // Default to SSD1306
 	}
-	validTypes := map[string]bool{
-		"ssd1306":        true,
-		"ssd1306_128x32": true,
-		"ssd1306_128x64": true,
-		"ssd1306_96x16":  true,
-	}
-	if !validTypes[c.Display.Type] {
+
+	// Check if display type is valid
+	spec, validType := GetDisplaySpec(c.Display.Type)
+	if !validType {
 		return fmt.Errorf("display.type must be one of [ssd1306, ssd1306_128x32, ssd1306_128x64, ssd1306_96x16], got %s", c.Display.Type)
 	}
+
 	if c.Display.I2CBus == "" {
 		return fmt.Errorf("display.i2c_bus cannot be empty")
 	}
@@ -205,6 +206,13 @@ func (c *Config) Validate() error {
 	if c.Display.Height <= 0 {
 		return fmt.Errorf("display.height must be positive, got %d", c.Display.Height)
 	}
+
+	// Validate dimensions match the display type
+	if c.Display.Width != spec.Width || c.Display.Height != spec.Height {
+		return fmt.Errorf("display dimensions (%dx%d) don't match type %s (expected %dx%d)",
+			c.Display.Width, c.Display.Height, c.Display.Type, spec.Width, spec.Height)
+	}
+
 	if c.Display.Rotation < 0 || c.Display.Rotation > 3 {
 		return fmt.Errorf("display.rotation must be 0-3, got %d", c.Display.Rotation)
 	}

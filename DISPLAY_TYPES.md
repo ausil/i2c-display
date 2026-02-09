@@ -17,7 +17,7 @@ All SSD1306 variants are supported through the periph.io library:
 
 ### Configuration
 
-Set the display type in your config file:
+Set the display type in your config file. Width and height are automatically determined:
 
 ```json
 {
@@ -25,12 +25,25 @@ Set the display type in your config file:
     "type": "ssd1306",
     "i2c_bus": "/dev/i2c-1",
     "i2c_address": "0x3C",
-    "width": 128,
-    "height": 64,
     "rotation": 0
   }
 }
 ```
+
+For a 128x32 display:
+
+```json
+{
+  "display": {
+    "type": "ssd1306_128x32",
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x3C",
+    "rotation": 0
+  }
+}
+```
+
+The dimensions (128x32) are automatically set based on the display type.
 
 ### Example Configurations
 

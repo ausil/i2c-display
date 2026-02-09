@@ -1,6 +1,6 @@
 {
   "display": {
-    "type": "ssd1306",
+    "type": "ssd1306_96x16",
     "i2c_bus": "/dev/i2c-1",
     "i2c_address": "0x3C",
     "rotation": 0
@@ -18,12 +18,12 @@
   "network": {
     "auto_detect": true,
     "interface_filter": {
-      "include": ["eth0", "wlan0", "usb0"],
+      "include": ["eth0", "wlan0"],
       "exclude": ["lo", "docker*", "veth*"]
     },
     "show_ipv4": true,
     "show_ipv6": false,
-    "max_interfaces_per_page": 3
+    "max_interfaces_per_page": 1
   },
   "logging": {
     "level": "info",
