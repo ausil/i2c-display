@@ -1,0 +1,33 @@
+{
+  "display": {
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x3C",
+    "width": 128,
+    "height": 64,
+    "rotation": 0
+  },
+  "pages": {
+    "rotation_interval": "5s",
+    "refresh_interval": "1s"
+  },
+  "system_info": {
+    "hostname_display": "short",
+    "disk_path": "/",
+    "temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  },
+  "network": {
+    "auto_detect": true,
+    "interface_filter": {
+      "include": ["eth0", "wlan0", "usb0"],
+      "exclude": ["lo", "docker*", "veth*"]
+    },
+    "show_ipv4": true,
+    "show_ipv6": false,
+    "max_interfaces_per_page": 3
+  },
+  "logging": {
+    "level": "info",
+    "output": "stdout"
+  }
+}

@@ -1,0 +1,229 @@
+package config
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+)
+
+// Config represents the application configuration
+type Config struct {
+	Display    DisplayConfig    `json:"display"`
+	Pages      PagesConfig      `json:"pages"`
+	SystemInfo SystemInfoConfig `json:"system_info"`
+	Network    NetworkConfig    `json:"network"`
+	Logging    LoggingConfig    `json:"logging"`
+}
+
+// DisplayConfig holds display-related settings
+type DisplayConfig struct {
+	I2CBus     string `json:"i2c_bus"`
+	I2CAddress string `json:"i2c_address"`
+	Width      int    `json:"width"`
+	Height     int    `json:"height"`
+	Rotation   int    `json:"rotation"`
+}
+
+// PagesConfig holds page rotation settings
+type PagesConfig struct {
+	RotationInterval string `json:"rotation_interval"`
+	RefreshInterval  string `json:"refresh_interval"`
+}
+
+// SystemInfoConfig holds system information settings
+type SystemInfoConfig struct {
+	HostnameDisplay   string `json:"hostname_display"`
+	DiskPath          string `json:"disk_path"`
+	TemperatureSource string `json:"temperature_source"`
+	TemperatureUnit   string `json:"temperature_unit"`
+}
+
+// NetworkConfig holds network interface settings
+type NetworkConfig struct {
+	AutoDetect            bool            `json:"auto_detect"`
+	InterfaceFilter       InterfaceFilter `json:"interface_filter"`
+	ShowIPv4              bool            `json:"show_ipv4"`
+	ShowIPv6              bool            `json:"show_ipv6"`
+	MaxInterfacesPerPage  int             `json:"max_interfaces_per_page"`
+}
+
+// InterfaceFilter defines include/exclude patterns for network interfaces
+type InterfaceFilter struct {
+	Include []string `json:"include"`
+	Exclude []string `json:"exclude"`
+}
+
+// LoggingConfig holds logging settings
+type LoggingConfig struct {
+	Level  string `json:"level"`
+	Output string `json:"output"`
+}
+
+// GetRotationInterval returns the parsed rotation interval duration
+func (p *PagesConfig) GetRotationInterval() (time.Duration, error) {
+	return time.ParseDuration(p.RotationInterval)
+}
+
+// GetRefreshInterval returns the parsed refresh interval duration
+func (p *PagesConfig) GetRefreshInterval() (time.Duration, error) {
+	return time.ParseDuration(p.RefreshInterval)
+}
+
+// Default returns a configuration with sensible defaults
+func Default() *Config {
+	return &Config{
+		Display: DisplayConfig{
+			I2CBus:     "/dev/i2c-1",
+			I2CAddress: "0x3C",
+			Width:      128,
+			Height:     64,
+			Rotation:   0,
+		},
+		Pages: PagesConfig{
+			RotationInterval: "5s",
+			RefreshInterval:  "1s",
+		},
+		SystemInfo: SystemInfoConfig{
+			HostnameDisplay:   "short",
+			DiskPath:          "/",
+			TemperatureSource: "/sys/class/thermal/thermal_zone0/temp",
+			TemperatureUnit:   "celsius",
+		},
+		Network: NetworkConfig{
+			AutoDetect: true,
+			InterfaceFilter: InterfaceFilter{
+				Include: []string{"eth0", "wlan0", "usb0"},
+				Exclude: []string{"lo", "docker*", "veth*"},
+			},
+			ShowIPv4:             true,
+			ShowIPv6:             false,
+			MaxInterfacesPerPage: 3,
+		},
+		Logging: LoggingConfig{
+			Level:  "info",
+			Output: "stdout",
+		},
+	}
+}
+
+// Load loads configuration from a file path
+func Load(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	cfg := Default()
+	if err := json.Unmarshal(data, cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// LoadWithPriority loads configuration using cascading priority:
+// 1. Explicit path (if provided and exists)
+// 2. SSD1306_CONFIG_PATH environment variable
+// 3. /etc/ssd1306-display/config.json
+// 4. $HOME/.config/ssd1306-display/config.json
+// 5. ./config.json
+func LoadWithPriority(explicitPath string) (*Config, error) {
+	var paths []string
+
+	// Priority 1: Explicit path
+	if explicitPath != "" {
+		paths = append(paths, explicitPath)
+	}
+
+	// Priority 2: Environment variable
+	if envPath := os.Getenv("SSD1306_CONFIG_PATH"); envPath != "" {
+		paths = append(paths, envPath)
+	}
+
+	// Priority 3: System-wide
+	paths = append(paths, "/etc/ssd1306-display/config.json")
+
+	// Priority 4: User-specific
+	if home, err := os.UserHomeDir(); err == nil {
+		paths = append(paths, filepath.Join(home, ".config", "ssd1306-display", "config.json"))
+	}
+
+	// Priority 5: Current directory
+	paths = append(paths, "./config.json")
+
+	var lastErr error
+	for _, path := range paths {
+		if _, err := os.Stat(path); err == nil {
+			cfg, err := Load(path)
+			if err != nil {
+				lastErr = fmt.Errorf("%s: %w", path, err)
+				continue
+			}
+			return cfg, nil
+		}
+	}
+
+	if lastErr != nil {
+		return nil, lastErr
+	}
+
+	return nil, fmt.Errorf("no configuration file found in search paths: %v", paths)
+}
+
+// Validate validates the configuration values
+func (c *Config) Validate() error {
+	// Validate display settings
+	if c.Display.I2CBus == "" {
+		return fmt.Errorf("display.i2c_bus cannot be empty")
+	}
+	if c.Display.I2CAddress == "" {
+		return fmt.Errorf("display.i2c_address cannot be empty")
+	}
+	if c.Display.Width <= 0 {
+		return fmt.Errorf("display.width must be positive, got %d", c.Display.Width)
+	}
+	if c.Display.Height <= 0 {
+		return fmt.Errorf("display.height must be positive, got %d", c.Display.Height)
+	}
+	if c.Display.Rotation < 0 || c.Display.Rotation > 3 {
+		return fmt.Errorf("display.rotation must be 0-3, got %d", c.Display.Rotation)
+	}
+
+	// Validate page intervals
+	if _, err := c.Pages.GetRotationInterval(); err != nil {
+		return fmt.Errorf("invalid pages.rotation_interval: %w", err)
+	}
+	if _, err := c.Pages.GetRefreshInterval(); err != nil {
+		return fmt.Errorf("invalid pages.refresh_interval: %w", err)
+	}
+
+	// Validate system info
+	if c.SystemInfo.HostnameDisplay != "short" && c.SystemInfo.HostnameDisplay != "full" {
+		return fmt.Errorf("system_info.hostname_display must be 'short' or 'full', got %s", c.SystemInfo.HostnameDisplay)
+	}
+	if c.SystemInfo.DiskPath == "" {
+		return fmt.Errorf("system_info.disk_path cannot be empty")
+	}
+	if c.SystemInfo.TemperatureUnit != "celsius" && c.SystemInfo.TemperatureUnit != "fahrenheit" {
+		return fmt.Errorf("system_info.temperature_unit must be 'celsius' or 'fahrenheit', got %s", c.SystemInfo.TemperatureUnit)
+	}
+
+	// Validate network settings
+	if c.Network.MaxInterfacesPerPage <= 0 {
+		return fmt.Errorf("network.max_interfaces_per_page must be positive, got %d", c.Network.MaxInterfacesPerPage)
+	}
+
+	// Validate logging
+	validLevels := map[string]bool{"debug": true, "info": true, "warn": true, "error": true}
+	if !validLevels[c.Logging.Level] {
+		return fmt.Errorf("logging.level must be one of [debug, info, warn, error], got %s", c.Logging.Level)
+	}
+
+	return nil
+}
