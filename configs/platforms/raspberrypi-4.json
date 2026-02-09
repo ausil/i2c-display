@@ -18,7 +18,7 @@
   "network": {
     "auto_detect": true,
     "interface_filter": {
-      "include": ["eth0", "wlan0", "usb0"],
+      "include": ["eth0", "wlan0"],
       "exclude": ["lo", "docker*", "veth*"]
     },
     "show_ipv4": true,
@@ -31,14 +31,14 @@
     "json": false
   },
   "metrics": {
-    "enabled": false,
-    "address": ":9090"
+    "enabled": true,
+    "address": "127.0.0.1:9090"
   },
   "screensaver": {
-    "enabled": false,
+    "enabled": true,
     "mode": "dim",
     "idle_timeout": "5m",
-    "dim_brightness": 50,
+    "dim_brightness": 75,
     "normal_brightness": 255
   }
 }

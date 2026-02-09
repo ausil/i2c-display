@@ -7,7 +7,7 @@
   },
   "pages": {
     "rotation_interval": "5s",
-    "refresh_interval": "1s"
+    "refresh_interval": "2s"
   },
   "system_info": {
     "hostname_display": "short",
@@ -18,12 +18,12 @@
   "network": {
     "auto_detect": true,
     "interface_filter": {
-      "include": ["eth0", "wlan0", "usb0"],
-      "exclude": ["lo", "docker*", "veth*"]
+      "include": ["wlan0", "usb0"],
+      "exclude": ["lo"]
     },
     "show_ipv4": true,
     "show_ipv6": false,
-    "max_interfaces_per_page": 3
+    "max_interfaces_per_page": 2
   },
   "logging": {
     "level": "info",
@@ -32,12 +32,12 @@
   },
   "metrics": {
     "enabled": false,
-    "address": ":9090"
+    "address": "127.0.0.1:9090"
   },
   "screensaver": {
-    "enabled": false,
+    "enabled": true,
     "mode": "dim",
-    "idle_timeout": "5m",
+    "idle_timeout": "10m",
     "dim_brightness": 50,
     "normal_brightness": 255
   }

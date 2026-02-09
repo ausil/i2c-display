@@ -10,12 +10,13 @@ import (
 
 // Config represents the application configuration
 type Config struct {
-	Display    DisplayConfig    `json:"display"`
-	Pages      PagesConfig      `json:"pages"`
-	SystemInfo SystemInfoConfig `json:"system_info"`
-	Network    NetworkConfig    `json:"network"`
-	Logging    LoggingConfig    `json:"logging"`
-	Metrics    MetricsConfig    `json:"metrics"`
+	Display     DisplayConfig     `json:"display"`
+	Pages       PagesConfig       `json:"pages"`
+	SystemInfo  SystemInfoConfig  `json:"system_info"`
+	Network     NetworkConfig     `json:"network"`
+	Logging     LoggingConfig     `json:"logging"`
+	Metrics     MetricsConfig     `json:"metrics"`
+	ScreenSaver ScreenSaverConfig `json:"screensaver"`
 }
 
 // DisplayConfig holds display-related settings
@@ -70,6 +71,15 @@ type MetricsConfig struct {
 	Address string `json:"address"` // e.g., ":9090"
 }
 
+// ScreenSaverConfig holds screen saver settings
+type ScreenSaverConfig struct {
+	Enabled          bool   `json:"enabled"`
+	Mode             string `json:"mode"`              // "off", "dim", or "blank"
+	IdleTimeout      string `json:"idle_timeout"`      // e.g., "5m"
+	DimBrightness    uint8  `json:"dim_brightness"`    // 0-255
+	NormalBrightness uint8  `json:"normal_brightness"` // 0-255
+}
+
 // GetRotationInterval returns the parsed rotation interval duration
 func (p *PagesConfig) GetRotationInterval() (time.Duration, error) {
 	return time.ParseDuration(p.RotationInterval)
@@ -119,6 +129,13 @@ func Default() *Config {
 		Metrics: MetricsConfig{
 			Enabled: false,
 			Address: ":9090",
+		},
+		ScreenSaver: ScreenSaverConfig{
+			Enabled:          false,
+			Mode:             "dim",
+			IdleTimeout:      "5m",
+			DimBrightness:    50,
+			NormalBrightness: 255,
 		},
 	}
 }

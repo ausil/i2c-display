@@ -312,3 +312,13 @@ func (m *MockDisplay) String() string {
 	}
 	return sb.String()
 }
+
+// SetBrightness simulates setting display brightness
+func (m *MockDisplay) SetBrightness(level uint8) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.recordCall("SetBrightness", level)
+
+	// Mock just records the call, no actual brightness control
+	return m.checkError()
+}

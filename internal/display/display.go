@@ -39,6 +39,9 @@ type Display interface {
 
 	// GetBuffer returns a copy of the current display buffer (for testing)
 	GetBuffer() []byte
+
+	// SetBrightness sets the display brightness (0-255)
+	SetBrightness(level uint8) error
 }
 
 // Font sizes
