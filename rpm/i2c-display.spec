@@ -1,5 +1,5 @@
 Name:           i2c-display
-Version:        0.0.1
+Version:        0.0.2
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
@@ -62,6 +62,17 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 %{_unitdir}/i2c-display.service
 
 %changelog
+* Sun Feb 09 2025 Dennis Korablev <dennis@example.com> - 0.0.2-1
+- Production-ready enhancements
+- Added structured logging with zerolog
+- Added Prometheus metrics endpoint
+- Added configuration validation and hot reload
+- Added screen saver with brightness control
+- Added retry logic and health monitoring
+- Complete CI/CD pipeline with multi-arch builds
+- Platform-specific configurations
+- Security hardening and code quality improvements
+
 * Sun Feb 09 2025 Dennis Korablev <dennis@example.com> - 0.0.1-1
 - Initial release
 - System monitoring with disk, RAM, and CPU temperature display

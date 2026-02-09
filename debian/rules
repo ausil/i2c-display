@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 export DH_VERBOSE = 1
-export DH_GOPKG := github.com/denniskorablev/i2c-display
+export DH_GOPKG := github.com/ausil/i2c-display
 export GOCACHE := $(CURDIR)/.cache/go-build
 export GOPATH := $(CURDIR)/.gopath
 
@@ -9,10 +9,10 @@ export GOPATH := $(CURDIR)/.gopath
 	dh $@ --buildsystem=golang --with=systemd
 
 override_dh_auto_build:
-	go build -o bin/ssd1306d ./cmd/ssd1306d/
+	go build -o bin/i2c-displayd ./cmd/i2c-displayd/
 
 override_dh_auto_install:
-	install -D -m 0755 bin/ssd1306d debian/i2c-display/usr/bin/ssd1306d
+	install -D -m 0755 bin/i2c-displayd debian/i2c-display/usr/bin/i2c-displayd
 	install -D -m 0644 configs/config.example.json debian/i2c-display/etc/i2c-display/config.json
 	install -D -m 0644 systemd/i2c-display.service debian/i2c-display/lib/systemd/system/i2c-display.service
 
