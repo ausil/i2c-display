@@ -19,6 +19,7 @@ type Config struct {
 
 // DisplayConfig holds display-related settings
 type DisplayConfig struct {
+	Type       string `json:"type"`        // Display type: "ssd1306", "ssd1306_128x32", etc.
 	I2CBus     string `json:"i2c_bus"`
 	I2CAddress string `json:"i2c_address"`
 	Width      int    `json:"width"`
@@ -75,6 +76,7 @@ func (p *PagesConfig) GetRefreshInterval() (time.Duration, error) {
 func Default() *Config {
 	return &Config{
 		Display: DisplayConfig{
+			Type:       "ssd1306",
 			I2CBus:     "/dev/i2c-1",
 			I2CAddress: "0x3C",
 			Width:      128,
@@ -179,6 +181,18 @@ func LoadWithPriority(explicitPath string) (*Config, error) {
 // Validate validates the configuration values
 func (c *Config) Validate() error {
 	// Validate display settings
+	if c.Display.Type == "" {
+		c.Display.Type = "ssd1306" // Default to SSD1306
+	}
+	validTypes := map[string]bool{
+		"ssd1306":        true,
+		"ssd1306_128x32": true,
+		"ssd1306_128x64": true,
+		"ssd1306_96x16":  true,
+	}
+	if !validTypes[c.Display.Type] {
+		return fmt.Errorf("display.type must be one of [ssd1306, ssd1306_128x32, ssd1306_128x64, ssd1306_96x16], got %s", c.Display.Type)
+	}
 	if c.Display.I2CBus == "" {
 		return fmt.Errorf("display.i2c_bus cannot be empty")
 	}

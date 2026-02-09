@@ -30,7 +30,8 @@ func main() {
 	// Set up logging
 	setupLogging(cfg)
 
-	log.Println("SSD1306 Display Service starting...")
+	log.Println("I2C Display Service starting...")
+	log.Printf("Display type: %s", cfg.Display.Type)
 	log.Printf("Hostname display mode: %s", cfg.SystemInfo.HostnameDisplay)
 
 	// Create display
@@ -39,14 +40,8 @@ func main() {
 		log.Println("Using mock display (no hardware)")
 		disp = display.NewMockDisplay(cfg.Display.Width, cfg.Display.Height)
 	} else {
-		log.Printf("Initializing SSD1306 display on %s at %s", cfg.Display.I2CBus, cfg.Display.I2CAddress)
-		hardwareDisp, err := display.NewSSD1306Display(
-			cfg.Display.I2CBus,
-			cfg.Display.I2CAddress,
-			cfg.Display.Width,
-			cfg.Display.Height,
-			cfg.Display.Rotation,
-		)
+		log.Printf("Initializing %s display on %s at %s", cfg.Display.Type, cfg.Display.I2CBus, cfg.Display.I2CAddress)
+		hardwareDisp, err := display.NewDisplay(&cfg.Display)
 		if err != nil {
 			log.Printf("Warning: Failed to initialize hardware display: %v", err)
 			log.Println("Falling back to mock display")

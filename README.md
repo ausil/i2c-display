@@ -1,6 +1,13 @@
 # I2C Display Controller
 
-A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that controls an SSD1306 128x64 OLED display via I2C, showing system stats and network information with rotating pages.
+A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that controls I2C OLED displays via I2C, showing system stats and network information with rotating pages.
+
+## Supported Displays
+
+- **SSD1306** - 128x64, 128x32, or 96x16 monochrome OLED (default)
+- Extensible architecture for additional I2C displays
+
+See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed display information and how to add new types.
 
 ## Features
 
@@ -94,6 +101,7 @@ See `configs/config.example.json` for a complete example:
 ```json
 {
   "display": {
+    "type": "ssd1306",
     "i2c_bus": "/dev/i2c-1",
     "i2c_address": "0x3C",
     "width": 128,
@@ -131,10 +139,14 @@ See `configs/config.example.json` for a complete example:
 
 #### Display
 
+- `type`: Display controller type (default: `ssd1306`)
+  - `ssd1306` - Standard 128x64
+  - `ssd1306_128x32` - Compact 128x32 variant
+  - `ssd1306_96x16` - Small 96x16 variant
 - `i2c_bus`: I2C bus device (default: `/dev/i2c-1`)
 - `i2c_address`: I2C address in hex (default: `0x3C`)
-- `width`: Display width in pixels (default: 128)
-- `height`: Display height in pixels (default: 64)
+- `width`: Display width in pixels (must match display type)
+- `height`: Display height in pixels (must match display type)
 - `rotation`: Display rotation 0-3 (default: 0)
 
 #### Pages
