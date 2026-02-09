@@ -79,8 +79,9 @@ jobs:
         with:
           name: packages
           path: |
-            *.tar.gz
-            *.rpm
+            dist/*.tar.gz
+            rpm-build/RPMS/*/*.rpm
+            rpm-build/SRPMS/*.src.rpm
             ../*.deb
 
   create-release:
@@ -138,8 +139,9 @@ jobs:
             See [README.md](https://github.com/ausil/i2c-display/blob/main/README.md) for setup instructions.
           files: |
             i2c-displayd-linux-*/i2c-displayd-*
-            packages/*.tar.gz
-            packages/*.rpm
+            packages/dist/*.tar.gz
+            packages/rpm-build/RPMS/*/*.rpm
+            packages/rpm-build/SRPMS/*.src.rpm
             packages/*.deb
           draft: false
           prerelease: false
