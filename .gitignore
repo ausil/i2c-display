@@ -52,3 +52,6 @@ debian/files
 ../*.tar.xz
 ../*.changes
 ../*.buildinfo
+
+# Claude Code local settings
+.claude/
