@@ -1,0 +1,230 @@
+// This is a template for implementing a new display driver
+// Copy this file and replace TEMPLATE with your display name (e.g., SH1106, SSD1327)
+// +build ignore
+
+package display
+
+import (
+	"fmt"
+	"image"
+	"image/color"
+
+	// Import your display driver library here
+	// Example: "github.com/yourlib/displaydriver"
+
+	"periph.io/x/conn/v3/i2c/i2creg"
+	"periph.io/x/host/v3"
+)
+
+// TEMPLATEDisplay implements Display interface for TEMPLATE hardware
+type TEMPLATEDisplay struct {
+	dev    interface{} // Replace with your driver's device type
+	img    *image.Gray // Or *image.Gray16 for grayscale, *image.RGBA for color
+	width  int
+	height int
+}
+
+// NewTEMPLATEDisplay creates a new TEMPLATE display driver
+func NewTEMPLATEDisplay(i2cBus string, i2cAddr string, width, height, rotation int) (*TEMPLATEDisplay, error) {
+	// Initialize periph host
+	if _, err := host.Init(); err != nil {
+		return nil, fmt.Errorf("failed to initialize periph: %w", err)
+	}
+
+	// Open I2C bus
+	bus, err := i2creg.Open(i2cBus)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open I2C bus %s: %w", i2cBus, err)
+	}
+
+	// Parse I2C address
+	var addr uint16
+	_, err = fmt.Sscanf(i2cAddr, "0x%x", &addr)
+	if err != nil {
+		_, err = fmt.Sscanf(i2cAddr, "%d", &addr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid I2C address %s: %w", i2cAddr, err)
+		}
+	}
+
+	// Create your display device here
+	// Example: dev, err := yourdriver.NewI2C(bus, addr, width, height)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create TEMPLATE device: %w", err)
+	// }
+
+	return &TEMPLATEDisplay{
+		dev:    nil, // Replace with your device
+		img:    image.NewGray(image.Rect(0, 0, width, height)),
+		width:  width,
+		height: height,
+	}, nil
+}
+
+// Init initializes the display
+func (d *TEMPLATEDisplay) Init() error {
+	// Initialize your display hardware
+	return d.Clear()
+}
+
+// Clear clears the display
+func (d *TEMPLATEDisplay) Clear() error {
+	// Clear the image buffer
+	for y := 0; y < d.height; y++ {
+		for x := 0; x < d.width; x++ {
+			d.img.SetGray(x, y, color.Gray{Y: 0})
+		}
+	}
+	// Call your driver's clear method
+	// return d.dev.Clear()
+	return nil
+}
+
+// DrawText draws text at the specified position
+// This is a simple placeholder - use a proper font library
+func (d *TEMPLATEDisplay) DrawText(x, y int, text string, size int) error {
+	// Implement text rendering or use placeholder
+	charWidth := size / 2
+	for i := range text {
+		startX := x + i*charWidth
+		if startX >= d.width {
+			break
+		}
+		if err := d.DrawRect(startX, y, charWidth-1, size, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DrawLine draws a horizontal line
+func (d *TEMPLATEDisplay) DrawLine(x, y, width int) error {
+	for i := 0; i < width && x+i < d.width; i++ {
+		if x+i >= 0 && y >= 0 && y < d.height {
+			d.img.SetGray(x+i, y, color.Gray{Y: 255})
+		}
+	}
+	return nil
+}
+
+// DrawPixel draws a single pixel
+func (d *TEMPLATEDisplay) DrawPixel(x, y int, on bool) error {
+	if x < 0 || x >= d.width || y < 0 || y >= d.height {
+		return nil
+	}
+
+	if on {
+		d.img.SetGray(x, y, color.Gray{Y: 255})
+	} else {
+		d.img.SetGray(x, y, color.Gray{Y: 0})
+	}
+	return nil
+}
+
+// DrawRect draws a rectangle
+func (d *TEMPLATEDisplay) DrawRect(x, y, width, height int, fill bool) error {
+	if fill {
+		for dy := 0; dy < height && y+dy < d.height; dy++ {
+			for dx := 0; dx < width && x+dx < d.width; dx++ {
+				if x+dx >= 0 && y+dy >= 0 {
+					d.img.SetGray(x+dx, y+dy, color.Gray{Y: 255})
+				}
+			}
+		}
+	} else {
+		// Draw outline
+		for i := 0; i < width && x+i < d.width; i++ {
+			if x+i >= 0 && y >= 0 {
+				d.img.SetGray(x+i, y, color.Gray{Y: 255})
+			}
+			if x+i >= 0 && y+height-1 >= 0 && y+height-1 < d.height {
+				d.img.SetGray(x+i, y+height-1, color.Gray{Y: 255})
+			}
+		}
+		for i := 0; i < height && y+i < d.height; i++ {
+			if x >= 0 && y+i >= 0 {
+				d.img.SetGray(x, y+i, color.Gray{Y: 255})
+			}
+			if x+width-1 >= 0 && x+width-1 < d.width && y+i >= 0 {
+				d.img.SetGray(x+width-1, y+i, color.Gray{Y: 255})
+			}
+		}
+	}
+	return nil
+}
+
+// DrawImage draws an image at the specified position
+func (d *TEMPLATEDisplay) DrawImage(x, y int, img image.Image) error {
+	bounds := img.Bounds()
+	for dy := 0; dy < bounds.Dy() && y+dy < d.height; dy++ {
+		for dx := 0; dx < bounds.Dx() && x+dx < d.width; dx++ {
+			if x+dx >= 0 && y+dy >= 0 {
+				r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
+				brightness := (r + g + b) / 3
+				if brightness > 32768 && a > 32768 {
+					d.img.SetGray(x+dx, y+dy, color.Gray{Y: 255})
+				} else {
+					d.img.SetGray(x+dx, y+dy, color.Gray{Y: 0})
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Show flushes the buffer to the display
+func (d *TEMPLATEDisplay) Show() error {
+	// Send your image buffer to the display
+	// Example: return d.dev.Draw(d.img.Bounds(), d.img, image.Point{})
+	return nil
+}
+
+// Close closes the display connection
+func (d *TEMPLATEDisplay) Close() error {
+	// Clean up display resources
+	// Example: return d.dev.Halt()
+	return nil
+}
+
+// GetBounds returns the display dimensions
+func (d *TEMPLATEDisplay) GetBounds() image.Rectangle {
+	return d.img.Bounds()
+}
+
+// GetBuffer returns a copy of the current display buffer
+func (d *TEMPLATEDisplay) GetBuffer() []byte {
+	buf := make([]byte, d.width*d.height/8)
+	for y := 0; y < d.height; y++ {
+		for x := 0; x < d.width; x++ {
+			if d.img.GrayAt(x, y).Y > 128 {
+				byteIdx := x + (y/8)*d.width
+				bitIdx := uint(y % 8)
+				buf[byteIdx] |= 1 << bitIdx
+			}
+		}
+	}
+	return buf
+}
+
+/*
+IMPLEMENTATION CHECKLIST:
+
+1. Replace TEMPLATE with your display name throughout
+2. Import your display driver library
+3. Implement NewTEMPLATEDisplay with proper initialization
+4. Implement Show() to actually send data to display
+5. Implement Close() for cleanup
+6. Test on real hardware
+
+7. Add to factory.go:
+   if strings.HasPrefix(displayType, "yourtype") {
+       return NewTEMPLATEDisplay(...)
+   }
+
+8. Add to display_specs.go:
+   "yourtype": {Width: 128, Height: 64},
+
+9. Create example config in configs/
+
+10. Update DISPLAY_TYPES.md documentation
+*/

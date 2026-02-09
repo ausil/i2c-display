@@ -11,7 +11,7 @@ import (
 func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
 	displayType := strings.ToLower(cfg.Type)
 
-	// All SSD1306 variants use the same driver
+	// SSD1306 variants (official periph.io support)
 	if strings.HasPrefix(displayType, "ssd1306") {
 		return NewSSD1306Display(
 			cfg.I2CBus,
@@ -22,5 +22,19 @@ func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
 		)
 	}
 
-	return nil, fmt.Errorf("unsupported display type: %s (currently only SSD1306 variants are supported)", cfg.Type)
+	// Other display types - Framework ready, awaiting drivers
+	supportedButNeedDrivers := map[string]string{
+		"sh1106":  "SH1106 (128x64 mono) - compatible with SSD1306, driver available at github.com/danielgatis/go-sh1106 (SPI)",
+		"ssd1327": "SSD1327 (128x128 grayscale) - no Go I2C driver found",
+		"ssd1331": "SSD1331 (96x64 color) - no Go I2C driver found",
+	}
+
+	for prefix, desc := range supportedButNeedDrivers {
+		if strings.HasPrefix(displayType, prefix) {
+			return nil, fmt.Errorf("display type %s is recognized but not yet implemented: %s\n"+
+				"See DISPLAY_TYPES.md for how to add this display", displayType, desc)
+		}
+	}
+
+	return nil, fmt.Errorf("unsupported display type: %s", cfg.Type)
 }

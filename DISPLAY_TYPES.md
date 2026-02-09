@@ -2,18 +2,32 @@
 
 This document describes the I2C OLED displays currently supported and how to add new ones.
 
-## Currently Supported
+## Currently Supported ✅
 
 ### SSD1306 Family (via periph.io)
 
-All SSD1306 variants are supported through the periph.io library:
+All SSD1306 variants are fully supported through the periph.io library:
 
-| Type | Resolution | Description |
-|------|------------|-------------|
-| `ssd1306` | 128x64 | Default, most common variant |
-| `ssd1306_128x64` | 128x64 | Explicit 128x64 variant |
-| `ssd1306_128x32` | 128x32 | Smaller variant, common in compact displays |
-| `ssd1306_96x16` | 96x16 | Very small variant |
+| Type | Resolution | Description | Status |
+|------|------------|-------------|--------|
+| `ssd1306` | 128x64 | Default, most common variant | ✅ Working |
+| `ssd1306_128x64` | 128x64 | Explicit 128x64 variant | ✅ Working |
+| `ssd1306_128x32` | 128x32 | Smaller variant, common in compact displays | ✅ Working |
+| `ssd1306_96x16` | 96x16 | Very small variant | ✅ Working |
+
+## Framework Ready (Drivers Needed) 🔧
+
+These displays are recognized by the configuration system but need driver implementations:
+
+| Type | Resolution | Color | Driver Status |
+|------|------------|-------|---------------|
+| `sh1106` | 128x64 | Monochrome | Third-party available (SPI only) |
+| `sh1106_128x64` | 128x64 | Monochrome | Third-party available (SPI only) |
+| `ssd1327` | 128x128 | 4-bit grayscale | No Go I2C driver found |
+| `ssd1327_96x96` | 96x96 | 4-bit grayscale | No Go I2C driver found |
+| `ssd1331` | 96x64 | 16-bit color | No Go I2C driver found |
+
+**Note:** The configuration will accept these types and auto-set dimensions, but will return an error message explaining the driver is not implemented.
 
 ### Configuration
 
@@ -53,6 +67,26 @@ The dimensions (128x32) are automatically set based on the display type.
 ## Display Type Detection
 
 The application automatically selects the correct driver based on the `type` field. All `ssd1306*` types use the same periph.io driver with different dimensions.
+
+## Driver Availability Research
+
+Based on searches of available Go libraries:
+
+### SH1106
+- **GitHub:** [danielgatis/go-sh1106](https://github.com/danielgatis/go-sh1106) - **SPI only**, not I2C
+- **Alternative:** [sandbankdisperser/go-i2c-oled](https://pkg.go.dev/github.com/sandbankdisperser/go-i2c-oled/sh1106) - May support I2C
+- **Status:** Possible to add with third-party library
+- **Compatibility:** Very similar to SSD1306, just different memory mapping
+
+### SSD1327 (Grayscale)
+- **Status:** No mature Go I2C drivers found
+- **Python:** Many Python libraries exist (Adafruit, Luma.OLED)
+- **Would need:** Port from Python or write from datasheet
+
+### SSD1331/SSD1351 (Color)
+- **Status:** No Go I2C drivers found
+- **Note:** Most color OLEDs use SPI, not I2C
+- **Would need:** Implement from datasheet
 
 ## Adding New Display Types
 

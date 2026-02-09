@@ -4,10 +4,20 @@ A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that con
 
 ## Supported Displays
 
-- **SSD1306** - 128x64, 128x32, or 96x16 monochrome OLED (default)
-- Extensible architecture for additional I2C displays
+### Fully Working ✅
+- **SSD1306** - 128x64, 128x32, or 96x16 monochrome OLED
+  - Most common I2C OLED display
+  - Full support via periph.io
+  - Types: `ssd1306`, `ssd1306_128x64`, `ssd1306_128x32`, `ssd1306_96x16`
 
-See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed display information and how to add new types.
+### Framework Ready (Drivers Needed) 🔧
+- **SH1106** - 128x64 monochrome (similar to SSD1306)
+- **SSD1327** - 128x128 4-bit grayscale OLED
+- **SSD1331** - 96x64 16-bit color OLED
+
+These types are recognized and dimensions auto-set, but return a helpful error message explaining the driver is not yet implemented.
+
+See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add new display drivers.
 
 ## Features
 
