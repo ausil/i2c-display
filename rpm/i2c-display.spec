@@ -62,7 +62,7 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 %{_unitdir}/i2c-display.service
 
 %changelog
-* Sun Feb 09 2025 Dennis Korablev <dennis@example.com> - 0.0.2-1
+* Sun Feb 09 2025 Dennis Gilmore <dennis@ausil.us> - 0.0.2-1
 - Production-ready enhancements
 - Added structured logging with zerolog
 - Added Prometheus metrics endpoint
@@ -73,7 +73,7 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 - Platform-specific configurations
 - Security hardening and code quality improvements
 
-* Sun Feb 09 2025 Dennis Korablev <dennis@example.com> - 0.0.1-1
+* Sun Feb 09 2025 Dennis Gilmore <dennis@ausil.us> - 0.0.1-1
 - Initial release
 - System monitoring with disk, RAM, and CPU temperature display
 - Network interface information display
