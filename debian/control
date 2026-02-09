@@ -1,0 +1,26 @@
+Source: ssd1306-display
+Section: utils
+Priority: optional
+Maintainer: Dennis Korablev <dennis@example.com>
+Build-Depends: debhelper-compat (= 13), golang-go (>= 2:1.19~)
+Standards-Version: 4.6.0
+Homepage: https://github.com/denniskorablev/ssd1306-display
+Vcs-Git: https://github.com/denniskorablev/ssd1306-display.git
+Vcs-Browser: https://github.com/denniskorablev/ssd1306-display
+Rules-Requires-Root: no
+
+Package: ssd1306-display
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, systemd
+Description: SSD1306 OLED display controller for single board computers
+ A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that
+ controls an SSD1306 128x64 OLED display via I2C, showing system stats and
+ network information with rotating pages.
+ .
+ Features:
+  * System monitoring (disk, RAM, CPU temperature)
+  * Network interface information display
+  * Automatic page rotation
+  * Systemd service integration
+  * JSON-based configuration
+  * Mock display support for testing

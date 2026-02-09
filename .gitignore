@@ -34,3 +34,21 @@ Thumbs.db
 
 # Build artifacts
 dist/
+rpm-build/
+
+# RPM artifacts
+*.rpm
+*.src.rpm
+
+# Debian artifacts
+debian/.debhelper/
+debian/ssd1306-display/
+debian/*.debhelper*
+debian/*.substvars
+debian/debhelper-build-stamp
+debian/files
+../*.deb
+../*.dsc
+../*.tar.xz
+../*.changes
+../*.buildinfo

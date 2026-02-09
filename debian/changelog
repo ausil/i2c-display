@@ -1,0 +1,12 @@
+ssd1306-display (0.0.1-1) unstable; urgency=medium
+
+  * Initial release.
+  * System monitoring with disk, RAM, and CPU temperature display
+  * Network interface information display
+  * Automatic page rotation
+  * Systemd service integration
+  * JSON-based configuration
+  * Mock display support for testing
+  * Comprehensive test coverage
+
+ -- Dennis Korablev <dennis@example.com>  Sun, 09 Feb 2025 10:00:00 -0500

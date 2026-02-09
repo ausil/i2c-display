@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DH_GOPKG := github.com/denniskorablev/ssd1306-display
+export GOCACHE := $(CURDIR)/.cache/go-build
+export GOPATH := $(CURDIR)/.gopath
+
+%:
+	dh $@ --buildsystem=golang --with=systemd
+
+override_dh_auto_build:
+	go build -o bin/ssd1306d ./cmd/ssd1306d/
+
+override_dh_auto_install:
+	install -D -m 0755 bin/ssd1306d debian/ssd1306-display/usr/bin/ssd1306d
+	install -D -m 0644 configs/config.example.json debian/ssd1306-display/etc/ssd1306-display/config.json
+	install -D -m 0644 systemd/ssd1306-display.service debian/ssd1306-display/lib/systemd/system/ssd1306-display.service
+
+override_dh_auto_test:
+	go test ./...
+
+override_dh_auto_clean:
+	rm -rf bin/ .cache/ .gopath/
+	dh_auto_clean

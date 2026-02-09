@@ -1,11 +1,20 @@
-.PHONY: build test clean install uninstall test-hardware
+.PHONY: build test clean install uninstall test-hardware dist rpm srpm deb deb-src
+
+# Version
+VERSION=$(shell cat VERSION)
+PROJECT_NAME=ssd1306-display
 
 # Build configuration
 BINARY_NAME=ssd1306d
 BUILD_DIR=bin
+DIST_DIR=dist
 INSTALL_DIR=/usr/local/bin
 CONFIG_DIR=/etc/ssd1306-display
 SYSTEMD_DIR=/etc/systemd/system
+
+# RPM configuration
+RPM_TOPDIR=$(shell pwd)/rpm-build
+TARBALL=$(PROJECT_NAME)-$(VERSION).tar.gz
 
 # Go parameters
 GOCMD=go
@@ -34,7 +43,9 @@ test-hardware:
 clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) $(DIST_DIR) $(RPM_TOPDIR)
+	rm -f ../$(PROJECT_NAME)_*.deb ../$(PROJECT_NAME)_*.dsc ../$(PROJECT_NAME)_*.tar.xz ../$(PROJECT_NAME)_*.changes ../$(PROJECT_NAME)_*.buildinfo
+	rm -rf debian/.debhelper debian/$(PROJECT_NAME) debian/*.debhelper* debian/*.substvars debian/debhelper-build-stamp debian/files
 	@echo "Clean complete"
 
 # Install the binary, config, and systemd service
@@ -85,19 +96,101 @@ run-mock: build
 	@echo "Running with mock display..."
 	$(BUILD_DIR)/$(BINARY_NAME) -mock -config configs/config.example.json
 
+# Create release tarball
+dist:
+	@echo "Creating release tarball v$(VERSION)..."
+	@mkdir -p $(DIST_DIR)
+	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
+	@mkdir -p $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
+	@cp -r cmd internal configs systemd scripts testdata $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
+	@cp go.mod go.sum Makefile README.md LICENSE LICENSES.md VERSION $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
+	@cp rpm/$(PROJECT_NAME).spec $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
+	@tar -czf $(DIST_DIR)/$(TARBALL) -C $(DIST_DIR) $(PROJECT_NAME)-$(VERSION)
+	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
+	@echo "Release tarball created: $(DIST_DIR)/$(TARBALL)"
+	@ls -lh $(DIST_DIR)/$(TARBALL)
+
+# Build source RPM
+srpm: dist
+	@echo "Building source RPM..."
+	@mkdir -p $(RPM_TOPDIR)/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
+	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
+	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -bs $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
+	@echo "Source RPM created:"
+	@ls -lh $(RPM_TOPDIR)/SRPMS/*.src.rpm
+
+# Build binary RPM
+rpm: dist
+	@echo "Building binary RPM..."
+	@mkdir -p $(RPM_TOPDIR)/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
+	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
+	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -ba $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
+	@echo "RPM packages created:"
+	@ls -lh $(RPM_TOPDIR)/RPMS/*/*.rpm
+	@ls -lh $(RPM_TOPDIR)/SRPMS/*.src.rpm
+
+# Install RPM (requires rpm to be built first)
+install-rpm:
+	@echo "Installing RPM..."
+	@sudo rpm -Uvh $(RPM_TOPDIR)/RPMS/*/*.rpm
+
+# Build Debian source package
+deb-src:
+	@echo "Building Debian source package..."
+	@dpkg-buildpackage -S -us -uc
+	@echo "Debian source package created:"
+	@ls -lh ../$(PROJECT_NAME)_*.dsc
+
+# Build Debian binary package
+deb:
+	@echo "Building Debian binary package..."
+	@dpkg-buildpackage -b -us -uc
+	@echo "Debian package created:"
+	@ls -lh ../$(PROJECT_NAME)_*.deb
+
+# Install DEB (requires deb to be built first)
+install-deb:
+	@echo "Installing DEB..."
+	@sudo dpkg -i ../$(PROJECT_NAME)_*.deb
+	@sudo apt-get install -f -y
+
+# Show version
+version:
+	@echo "$(VERSION)"
+
 # Show help
 help:
 	@echo "SSD1306 Display Controller Makefile"
 	@echo ""
-	@echo "Available targets:"
+	@echo "Version: $(VERSION)"
+	@echo ""
+	@echo "Build targets:"
 	@echo "  build         - Build the binary for current architecture"
-	@echo "  test          - Run unit tests"
-	@echo "  test-hardware - Run hardware tests (requires actual display)"
-	@echo "  clean         - Remove build artifacts"
-	@echo "  install       - Install binary, config, and systemd service"
-	@echo "  uninstall     - Remove binary and systemd service"
 	@echo "  build-arm7    - Cross-compile for Raspberry Pi (32-bit ARM)"
 	@echo "  build-arm64   - Cross-compile for ARM64 (Pi 4, Rock 3C)"
 	@echo "  build-all     - Build for all architectures"
+	@echo ""
+	@echo "Test targets:"
+	@echo "  test          - Run unit tests"
+	@echo "  test-hardware - Run hardware tests (requires actual display)"
 	@echo "  run-mock      - Run with mock display (no hardware needed)"
+	@echo ""
+	@echo "Release targets:"
+	@echo "  dist          - Create release tarball"
+	@echo "  srpm          - Build source RPM"
+	@echo "  rpm           - Build binary and source RPM"
+	@echo "  deb-src       - Build Debian source package"
+	@echo "  deb           - Build Debian binary package"
+	@echo ""
+	@echo "Installation targets:"
+	@echo "  install       - Install from source (binary, config, systemd service)"
+	@echo "  install-rpm   - Install from RPM package"
+	@echo "  install-deb   - Install from DEB package"
+	@echo "  uninstall     - Remove binary and systemd service"
+	@echo ""
+	@echo "Utility targets:"
+	@echo "  clean         - Remove build artifacts"
+	@echo "  version       - Show current version"
 	@echo "  help          - Show this help message"
