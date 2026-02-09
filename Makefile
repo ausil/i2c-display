@@ -1,4 +1,4 @@
-.PHONY: build test clean install uninstall test-hardware dist rpm srpm deb deb-src
+.PHONY: build test clean install uninstall test-hardware dist rpm srpm deb deb-src lint fmt
 
 # Version
 VERSION=$(shell cat VERSION)
@@ -28,6 +28,18 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/i2c-displayd/
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
+
+# Run linters
+lint:
+	@echo "Running linters..."
+	@which golangci-lint > /dev/null || (echo "golangci-lint not installed. Install with: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin" && exit 1)
+	golangci-lint run --timeout=5m ./...
+
+# Format code
+fmt:
+	@echo "Formatting code..."
+	gofmt -s -w .
+	goimports -w -local github.com/ausil/i2c-display .
 
 # Run tests
 test:
@@ -176,6 +188,8 @@ help:
 	@echo "  test          - Run unit tests"
 	@echo "  test-hardware - Run hardware tests (requires actual display)"
 	@echo "  run-mock      - Run with mock display (no hardware needed)"
+	@echo "  lint          - Run golangci-lint"
+	@echo "  fmt           - Format code with gofmt and goimports"
 	@echo ""
 	@echo "Release targets:"
 	@echo "  dist          - Create release tarball"

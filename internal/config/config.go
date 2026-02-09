@@ -15,6 +15,7 @@ type Config struct {
 	SystemInfo SystemInfoConfig `json:"system_info"`
 	Network    NetworkConfig    `json:"network"`
 	Logging    LoggingConfig    `json:"logging"`
+	Metrics    MetricsConfig    `json:"metrics"`
 }
 
 // DisplayConfig holds display-related settings
@@ -60,6 +61,13 @@ type InterfaceFilter struct {
 type LoggingConfig struct {
 	Level  string `json:"level"`
 	Output string `json:"output"`
+	JSON   bool   `json:"json"` // true for JSON output, false for console
+}
+
+// MetricsConfig holds Prometheus metrics settings
+type MetricsConfig struct {
+	Enabled bool   `json:"enabled"`
+	Address string `json:"address"` // e.g., ":9090"
 }
 
 // GetRotationInterval returns the parsed rotation interval duration
@@ -106,6 +114,11 @@ func Default() *Config {
 		Logging: LoggingConfig{
 			Level:  "info",
 			Output: "stdout",
+			JSON:   false,
+		},
+		Metrics: MetricsConfig{
+			Enabled: false,
+			Address: ":9090",
 		},
 	}
 }

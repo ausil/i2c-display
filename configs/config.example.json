@@ -27,6 +27,11 @@
   },
   "logging": {
     "level": "info",
-    "output": "stdout"
+    "output": "stdout",
+    "json": false
+  },
+  "metrics": {
+    "enabled": false,
+    "address": ":9090"
   }
 }

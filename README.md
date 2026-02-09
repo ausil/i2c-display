@@ -24,10 +24,15 @@ See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add
 - **System Monitoring**: Display disk usage, RAM usage, and CPU temperature
 - **Network Information**: Show IP addresses for configured network interfaces
 - **Rotating Pages**: Automatically cycle through information pages
-- **Flexible Configuration**: JSON-based configuration with multiple search paths
+- **Flexible Configuration**: JSON-based configuration with multiple search paths and hot reload
 - **Systemd Integration**: Run as a system service with automatic start
 - **Hardware Abstraction**: Mock display for testing without physical hardware
 - **Comprehensive Testing**: Over 80% test coverage with CI/CD support
+- **Structured Logging**: JSON and console logging with configurable levels
+- **Prometheus Metrics**: Optional metrics endpoint for monitoring
+- **Error Handling**: Automatic retry with exponential backoff for I2C errors
+- **Health Monitoring**: Component health tracking and status reporting
+- **Config Validation**: Validate configuration without running the service
 
 ## Requirements
 
@@ -138,7 +143,12 @@ See `configs/config.example.json` for a complete example:
   },
   "logging": {
     "level": "info",
-    "output": "stdout"
+    "output": "stdout",
+    "json": false
+  },
+  "metrics": {
+    "enabled": false,
+    "address": ":9090"
   }
 }
 ```
@@ -184,6 +194,14 @@ See `configs/config.example.json` for a complete example:
 
 - `level`: "debug", "info", "warn", or "error"
 - `output`: "stdout" or "stderr"
+- `json`: `true` for JSON output, `false` for human-readable console output
+
+#### Metrics (Optional)
+
+- `enabled`: Enable Prometheus metrics endpoint
+- `address`: Metrics server address (e.g., ":9090" or "127.0.0.1:9090")
+
+When enabled, metrics are available at `http://address/metrics`
 
 ## Usage
 
@@ -217,6 +235,13 @@ sudo journalctl -u i2c-display.service -f
 
 # With mock display (for testing)
 ./bin/i2c-displayd -mock -config configs/config.example.json
+
+# Validate configuration without running
+./bin/i2c-displayd -validate-config -config /path/to/config.json
+
+# Reload configuration (send SIGHUP to running process)
+sudo systemctl reload i2c-display.service
+# Or: sudo kill -HUP $(pidof i2c-displayd)
 ```
 
 ## Development
@@ -338,6 +363,53 @@ Check your interface filter settings in the config. Use:
 ip link show
 ```
 to see available interfaces and adjust the `include` patterns.
+
+## Monitoring
+
+### Prometheus Metrics
+
+Enable metrics in your configuration:
+
+```json
+{
+  "metrics": {
+    "enabled": true,
+    "address": "127.0.0.1:9090"
+  }
+}
+```
+
+Available metrics:
+- `i2c_display_refresh_total` - Total display refreshes
+- `i2c_display_refresh_errors_total` - Display errors by type
+- `i2c_display_refresh_latency_seconds` - Refresh latency histogram
+- `i2c_display_i2c_errors_total` - I2C communication errors
+- `i2c_display_cpu_temperature_celsius` - Current CPU temperature
+- `i2c_display_memory_used_percent` - Memory usage percentage
+- `i2c_display_disk_used_percent` - Disk usage percentage
+- `i2c_display_network_interfaces_count` - Number of network interfaces
+- `i2c_display_current_page` - Current page number
+- `i2c_display_page_rotation_total` - Total page rotations
+
+Access metrics: `curl http://127.0.0.1:9090/metrics`
+
+### Logging
+
+Structured logging with contextual information:
+
+```bash
+# Console output (human-readable)
+{"level":"info","time":"2026-02-09T12:00:00Z","message":"Display service running"}
+
+# JSON output (for log aggregation)
+{
+  "level":"info",
+  "display_type":"ssd1306",
+  "bus":"/dev/i2c-1",
+  "time":"2026-02-09T12:00:00Z",
+  "message":"Initializing display hardware"
+}
+```
 
 ## Uninstallation
 
