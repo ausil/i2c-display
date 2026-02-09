@@ -129,9 +129,9 @@ func Load(path string) (*Config, error) {
 
 // LoadWithPriority loads configuration using cascading priority:
 // 1. Explicit path (if provided and exists)
-// 2. SSD1306_CONFIG_PATH environment variable
-// 3. /etc/ssd1306-display/config.json
-// 4. $HOME/.config/ssd1306-display/config.json
+// 2. I2C_DISPLAY_CONFIG_PATH environment variable
+// 3. /etc/i2c-display/config.json
+// 4. $HOME/.config/i2c-display/config.json
 // 5. ./config.json
 func LoadWithPriority(explicitPath string) (*Config, error) {
 	var paths []string
@@ -142,16 +142,16 @@ func LoadWithPriority(explicitPath string) (*Config, error) {
 	}
 
 	// Priority 2: Environment variable
-	if envPath := os.Getenv("SSD1306_CONFIG_PATH"); envPath != "" {
+	if envPath := os.Getenv("I2C_DISPLAY_CONFIG_PATH"); envPath != "" {
 		paths = append(paths, envPath)
 	}
 
 	// Priority 3: System-wide
-	paths = append(paths, "/etc/ssd1306-display/config.json")
+	paths = append(paths, "/etc/i2c-display/config.json")
 
 	// Priority 4: User-specific
 	if home, err := os.UserHomeDir(); err == nil {
-		paths = append(paths, filepath.Join(home, ".config", "ssd1306-display", "config.json"))
+		paths = append(paths, filepath.Join(home, ".config", "i2c-display", "config.json"))
 	}
 
 	// Priority 5: Current directory

@@ -1,4 +1,4 @@
-ssd1306-display (0.0.1-1) unstable; urgency=medium
+i2c-display (0.0.1-1) unstable; urgency=medium
 
   * Initial release.
   * System monitoring with disk, RAM, and CPU temperature display

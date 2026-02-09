@@ -1,15 +1,15 @@
-Source: ssd1306-display
+Source: i2c-display
 Section: utils
 Priority: optional
 Maintainer: Dennis Korablev <dennis@example.com>
 Build-Depends: debhelper-compat (= 13), golang-go (>= 2:1.19~)
 Standards-Version: 4.6.0
-Homepage: https://github.com/denniskorablev/ssd1306-display
-Vcs-Git: https://github.com/denniskorablev/ssd1306-display.git
-Vcs-Browser: https://github.com/denniskorablev/ssd1306-display
+Homepage: https://github.com/ausil/i2c-display
+Vcs-Git: https://github.com/ausil/i2c-display.git
+Vcs-Browser: https://github.com/ausil/i2c-display
 Rules-Requires-Root: no
 
-Package: ssd1306-display
+Package: i2c-display
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, systemd
 Description: SSD1306 OLED display controller for single board computers

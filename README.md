@@ -1,4 +1,4 @@
-# SSD1306 Display Controller
+# I2C Display Controller
 
 A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that controls an SSD1306 128x64 OLED display via I2C, showing system stats and network information with rotating pages.
 
@@ -58,8 +58,8 @@ sudo i2cdetect -y 1
 ### Quick Install
 
 ```bash
-git clone https://github.com/denniskorablev/ssd1306-display.git
-cd ssd1306-display
+git clone https://github.com/ausil/i2c-display.git
+cd i2c-display
 sudo ./scripts/install.sh
 ```
 
@@ -73,8 +73,8 @@ make build
 sudo make install
 
 # Enable and start the service
-sudo systemctl enable ssd1306-display.service
-sudo systemctl start ssd1306-display.service
+sudo systemctl enable i2c-display.service
+sudo systemctl start i2c-display.service
 ```
 
 ## Configuration
@@ -82,9 +82,9 @@ sudo systemctl start ssd1306-display.service
 The configuration file is searched in the following order:
 
 1. Path specified with `-config` flag
-2. `$SSD1306_CONFIG_PATH` environment variable
-3. `/etc/ssd1306-display/config.json` (system-wide)
-4. `$HOME/.config/ssd1306-display/config.json` (user-specific)
+2. `$I2C_DISPLAY_CONFIG_PATH` environment variable
+3. `/etc/i2c-display/config.json` (system-wide)
+4. `$HOME/.config/i2c-display/config.json` (user-specific)
 5. `./config.json` (current directory)
 
 ### Example Configuration
@@ -169,32 +169,32 @@ See `configs/config.example.json` for a complete example:
 
 ```bash
 # Start service
-sudo systemctl start ssd1306-display.service
+sudo systemctl start i2c-display.service
 
 # Stop service
-sudo systemctl stop ssd1306-display.service
+sudo systemctl stop i2c-display.service
 
 # Restart service
-sudo systemctl restart ssd1306-display.service
+sudo systemctl restart i2c-display.service
 
 # Check status
-sudo systemctl status ssd1306-display.service
+sudo systemctl status i2c-display.service
 
 # View logs
-sudo journalctl -u ssd1306-display.service -f
+sudo journalctl -u i2c-display.service -f
 ```
 
 ### Run Manually
 
 ```bash
 # With default config search
-./bin/ssd1306d
+./bin/i2c-displayd
 
 # With specific config
-./bin/ssd1306d -config /path/to/config.json
+./bin/i2c-displayd -config /path/to/config.json
 
 # With mock display (for testing)
-./bin/ssd1306d -mock -config configs/config.example.json
+./bin/i2c-displayd -mock -config configs/config.example.json
 ```
 
 ## Development
@@ -231,9 +231,9 @@ make test-hardware
 ### Project Structure
 
 ```
-ssd1306-display/
+i2c-display/
 ├── cmd/
-│   └── ssd1306d/           # Main application
+│   └── i2c-displayd/           # Main application
 ├── internal/
 │   ├── config/             # Configuration management
 │   ├── display/            # Display abstraction layer
@@ -297,7 +297,7 @@ ssd1306-display/
 
 4. Check service logs:
    ```bash
-   sudo journalctl -u ssd1306-display.service -n 50
+   sudo journalctl -u i2c-display.service -n 50
    ```
 
 ### Temperature Not Showing
@@ -325,8 +325,8 @@ sudo ./scripts/uninstall.sh
 
 Or manually:
 ```bash
-sudo systemctl stop ssd1306-display.service
-sudo systemctl disable ssd1306-display.service
+sudo systemctl stop i2c-display.service
+sudo systemctl disable i2c-display.service
 sudo make uninstall
 ```
 
@@ -352,4 +352,4 @@ Contributions are welcome! Please:
 ## Support
 
 For issues, questions, or contributions, please visit:
-https://github.com/denniskorablev/ssd1306-display
+https://github.com/ausil/i2c-display

@@ -5,7 +5,7 @@ import (
 	"net"
 	"path/filepath"
 
-	"github.com/denniskorablev/ssd1306-display/internal/config"
+	"github.com/ausil/i2c-display/internal/config"
 )
 
 // NetworkCollector collects network interface information

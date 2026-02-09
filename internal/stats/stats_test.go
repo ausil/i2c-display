@@ -3,7 +3,7 @@ package stats
 import (
 	"testing"
 
-	"github.com/denniskorablev/ssd1306-display/internal/config"
+	"github.com/ausil/i2c-display/internal/config"
 )
 
 func TestSystemStats(t *testing.T) {

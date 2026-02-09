@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: ssd1306-display
+Upstream-Name: i2c-display
 Upstream-Contact: Dennis Korablev <dennis@example.com>
-Source: https://github.com/denniskorablev/ssd1306-display
+Source: https://github.com/ausil/i2c-display
 
 Files: *
 Copyright: 2025 Dennis Korablev

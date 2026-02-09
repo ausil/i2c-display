@@ -7,7 +7,7 @@ import (
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
 
-	"github.com/denniskorablev/ssd1306-display/internal/display"
+	"github.com/ausil/i2c-display/internal/display"
 )
 
 // DrawText renders text at the specified position using a simple bitmap font

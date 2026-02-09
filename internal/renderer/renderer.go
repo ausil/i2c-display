@@ -1,9 +1,9 @@
 package renderer
 
 import (
-	"github.com/denniskorablev/ssd1306-display/internal/config"
-	"github.com/denniskorablev/ssd1306-display/internal/display"
-	"github.com/denniskorablev/ssd1306-display/internal/stats"
+	"github.com/ausil/i2c-display/internal/config"
+	"github.com/ausil/i2c-display/internal/display"
+	"github.com/ausil/i2c-display/internal/stats"
 )
 
 // Renderer manages page rendering

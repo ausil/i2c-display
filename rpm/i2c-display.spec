@@ -1,10 +1,10 @@
-Name:           ssd1306-display
+Name:           i2c-display
 Version:        0.0.1
 Release:        1%{?dist}
-Summary:        SSD1306 OLED display controller for single board computers
+Summary:        I2C OLED display controller for single board computers
 
 License:        BSD
-URL:            https://github.com/denniskorablev/ssd1306-display
+URL:            https://github.com/ausil/i2c-display
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  golang >= 1.19
@@ -13,7 +13,7 @@ Requires:       systemd
 
 %description
 A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that
-controls an SSD1306 128x64 OLED display via I2C, showing system stats and
+controls I2C OLED displays (SSD1306, SH1106, etc.) showing system stats and
 network information with rotating pages.
 
 Features:
@@ -33,33 +33,33 @@ make build
 %install
 # Create directories
 install -d %{buildroot}%{_bindir}
-install -d %{buildroot}%{_sysconfdir}/ssd1306-display
+install -d %{buildroot}%{_sysconfdir}/i2c-display
 install -d %{buildroot}%{_unitdir}
 
 # Install binary
-install -m 0755 bin/ssd1306d %{buildroot}%{_bindir}/ssd1306d
+install -m 0755 bin/i2c-displayd %{buildroot}%{_bindir}/i2c-displayd
 
 # Install config
-install -m 0644 configs/config.example.json %{buildroot}%{_sysconfdir}/ssd1306-display/config.json
+install -m 0644 configs/config.example.json %{buildroot}%{_sysconfdir}/i2c-display/config.json
 
 # Install systemd service
-install -m 0644 systemd/ssd1306-display.service %{buildroot}%{_unitdir}/ssd1306-display.service
+install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.service
 
 %post
-%systemd_post ssd1306-display.service
+%systemd_post i2c-display.service
 
 %preun
-%systemd_preun ssd1306-display.service
+%systemd_preun i2c-display.service
 
 %postun
-%systemd_postun_with_restart ssd1306-display.service
+%systemd_postun_with_restart i2c-display.service
 
 %files
 %license LICENSE
 %doc README.md LICENSES.md
-%{_bindir}/ssd1306d
-%config(noreplace) %{_sysconfdir}/ssd1306-display/config.json
-%{_unitdir}/ssd1306-display.service
+%{_bindir}/i2c-displayd
+%config(noreplace) %{_sysconfdir}/i2c-display/config.json
+%{_unitdir}/i2c-display.service
 
 %changelog
 * Sun Feb 09 2025 Dennis Korablev <dennis@example.com> - 0.0.1-1

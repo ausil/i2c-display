@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 export DH_VERBOSE = 1
-export DH_GOPKG := github.com/denniskorablev/ssd1306-display
+export DH_GOPKG := github.com/denniskorablev/i2c-display
 export GOCACHE := $(CURDIR)/.cache/go-build
 export GOPATH := $(CURDIR)/.gopath
 
@@ -12,9 +12,9 @@ override_dh_auto_build:
 	go build -o bin/ssd1306d ./cmd/ssd1306d/
 
 override_dh_auto_install:
-	install -D -m 0755 bin/ssd1306d debian/ssd1306-display/usr/bin/ssd1306d
-	install -D -m 0644 configs/config.example.json debian/ssd1306-display/etc/ssd1306-display/config.json
-	install -D -m 0644 systemd/ssd1306-display.service debian/ssd1306-display/lib/systemd/system/ssd1306-display.service
+	install -D -m 0755 bin/ssd1306d debian/i2c-display/usr/bin/ssd1306d
+	install -D -m 0644 configs/config.example.json debian/i2c-display/etc/i2c-display/config.json
+	install -D -m 0644 systemd/i2c-display.service debian/i2c-display/lib/systemd/system/i2c-display.service
 
 override_dh_auto_test:
 	go test ./...

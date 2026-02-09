@@ -4,7 +4,7 @@ set -e
 if [ "$1" = "remove" ]; then
     # Stop the service
     if [ -d /run/systemd/system ]; then
-        deb-systemd-invoke stop ssd1306-display.service >/dev/null || true
+        deb-systemd-invoke stop i2c-display.service >/dev/null || true
     fi
 fi
 

@@ -1,4 +1,4 @@
-module github.com/denniskorablev/ssd1306-display
+module github.com/ausil/i2c-display
 
 go 1.25.6
 

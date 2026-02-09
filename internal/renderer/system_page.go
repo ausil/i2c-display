@@ -3,8 +3,8 @@ package renderer
 import (
 	"fmt"
 
-	"github.com/denniskorablev/ssd1306-display/internal/display"
-	"github.com/denniskorablev/ssd1306-display/internal/stats"
+	"github.com/ausil/i2c-display/internal/display"
+	"github.com/ausil/i2c-display/internal/stats"
 )
 
 // SystemPage displays system statistics (disk, RAM, CPU temp)

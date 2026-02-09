@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "SSD1306 Display Service Uninstallation"
+echo "I2C Display Service Uninstallation"
 echo "======================================="
 echo ""
 
@@ -18,6 +18,6 @@ make uninstall
 echo ""
 echo "Uninstallation complete!"
 echo ""
-echo "Configuration files are preserved in /etc/ssd1306-display/"
-echo "To remove them manually: sudo rm -rf /etc/ssd1306-display/"
+echo "Configuration files are preserved in /etc/i2c-display/"
+echo "To remove them manually: sudo rm -rf /etc/i2c-display/"
 echo ""

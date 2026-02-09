@@ -2,14 +2,14 @@
 
 # Version
 VERSION=$(shell cat VERSION)
-PROJECT_NAME=ssd1306-display
+PROJECT_NAME=i2c-display
 
 # Build configuration
-BINARY_NAME=ssd1306d
+BINARY_NAME=i2c-displayd
 BUILD_DIR=bin
 DIST_DIR=dist
 INSTALL_DIR=/usr/local/bin
-CONFIG_DIR=/etc/ssd1306-display
+CONFIG_DIR=/etc/i2c-display
 SYSTEMD_DIR=/etc/systemd/system
 
 # RPM configuration
@@ -26,7 +26,7 @@ GOCLEAN=$(GOCMD) clean
 build:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/ssd1306d/
+	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/i2c-displayd/
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
 # Run tests
@@ -44,8 +44,8 @@ clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
 	rm -rf $(BUILD_DIR) $(DIST_DIR) $(RPM_TOPDIR)
-	rm -f ../$(PROJECT_NAME)_*.deb ../$(PROJECT_NAME)_*.dsc ../$(PROJECT_NAME)_*.tar.xz ../$(PROJECT_NAME)_*.changes ../$(PROJECT_NAME)_*.buildinfo
-	rm -rf debian/.debhelper debian/$(PROJECT_NAME) debian/*.debhelper* debian/*.substvars debian/debhelper-build-stamp debian/files
+	rm -f ../i2c-display_*.deb ../i2c-display_*.dsc ../i2c-display_*.tar.xz ../i2c-display_*.changes ../i2c-display_*.buildinfo
+	rm -rf debian/.debhelper debian/i2c-display debian/*.debhelper* debian/*.substvars debian/debhelper-build-stamp debian/files
 	@echo "Clean complete"
 
 # Install the binary, config, and systemd service
@@ -54,7 +54,7 @@ install: build
 	@sudo install -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(INSTALL_DIR)/$(BINARY_NAME)
 	@sudo mkdir -p $(CONFIG_DIR)
 	@sudo cp configs/config.example.json $(CONFIG_DIR)/config.json
-	@sudo cp systemd/ssd1306-display.service $(SYSTEMD_DIR)/
+	@sudo cp systemd/i2c-display.service $(SYSTEMD_DIR)/
 	@sudo systemctl daemon-reload
 	@echo "Installation complete"
 	@echo ""
@@ -68,9 +68,9 @@ install: build
 # Uninstall the binary, config, and systemd service
 uninstall:
 	@echo "Uninstalling $(BINARY_NAME)..."
-	@sudo systemctl stop ssd1306-display.service 2>/dev/null || true
-	@sudo systemctl disable ssd1306-display.service 2>/dev/null || true
-	@sudo rm -f $(SYSTEMD_DIR)/ssd1306-display.service
+	@sudo systemctl stop i2c-display.service 2>/dev/null || true
+	@sudo systemctl disable i2c-display.service 2>/dev/null || true
+	@sudo rm -f $(SYSTEMD_DIR)/i2c-display.service
 	@sudo rm -f $(INSTALL_DIR)/$(BINARY_NAME)
 	@echo "Uninstall complete (config preserved in $(CONFIG_DIR))"
 
@@ -78,14 +78,14 @@ uninstall:
 build-arm7:
 	@echo "Building for ARMv7..."
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=arm GOARM=7 $(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME)-arm7 ./cmd/ssd1306d/
+	GOOS=linux GOARCH=arm GOARM=7 $(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME)-arm7 ./cmd/i2c-displayd/
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)-arm7"
 
 # Cross-compile for Raspberry Pi 4 / Rock 3C (64-bit ARM)
 build-arm64:
 	@echo "Building for ARM64..."
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME)-arm64 ./cmd/ssd1306d/
+	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME)-arm64 ./cmd/i2c-displayd/
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)-arm64"
 
 # Build all architectures
@@ -162,7 +162,7 @@ version:
 
 # Show help
 help:
-	@echo "SSD1306 Display Controller Makefile"
+	@echo "I2C Display Controller Makefile"
 	@echo ""
 	@echo "Version: $(VERSION)"
 	@echo ""

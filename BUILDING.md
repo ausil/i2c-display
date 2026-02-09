@@ -1,6 +1,6 @@
 # Building and Packaging Guide
 
-This document describes how to build release packages for the SSD1306 Display Controller.
+This document describes how to build release packages for the I2C Display Controller.
 
 ## Version
 
@@ -28,7 +28,7 @@ Create a source tarball suitable for distribution:
 make dist
 ```
 
-This creates `dist/ssd1306-display-0.0.1.tar.gz` containing all source files.
+This creates `dist/i2c-display-0.0.1.tar.gz` containing all source files.
 
 ## Building RPM Packages
 
@@ -38,8 +38,8 @@ make rpm
 ```
 
 This creates:
-- `rpm-build/RPMS/*/ssd1306-display-0.0.1-1.*.rpm` (binary RPM)
-- `rpm-build/SRPMS/ssd1306-display-0.0.1-1.src.rpm` (source RPM)
+- `rpm-build/RPMS/*/i2c-display-0.0.1-1.*.rpm` (binary RPM)
+- `rpm-build/SRPMS/i2c-display-0.0.1-1.src.rpm` (source RPM)
 
 ### Build only source RPM:
 ```bash
@@ -50,7 +50,7 @@ make srpm
 ```bash
 make install-rpm
 # Or manually:
-sudo rpm -Uvh rpm-build/RPMS/*/ssd1306-display-*.rpm
+sudo rpm -Uvh rpm-build/RPMS/*/i2c-display-*.rpm
 ```
 
 ## Building DEB Packages
@@ -60,7 +60,7 @@ sudo rpm -Uvh rpm-build/RPMS/*/ssd1306-display-*.rpm
 make deb
 ```
 
-This creates `../ssd1306-display_0.0.1-1_*.deb`
+This creates `../i2c-display_0.0.1-1_*.deb`
 
 ### Build source package:
 ```bash
@@ -68,14 +68,14 @@ make deb-src
 ```
 
 This creates:
-- `../ssd1306-display_0.0.1-1.dsc`
-- `../ssd1306-display_0.0.1-1.tar.xz`
+- `../i2c-display_0.0.1-1.dsc`
+- `../i2c-display_0.0.1-1.tar.xz`
 
 ### Install the DEB:
 ```bash
 make install-deb
 # Or manually:
-sudo dpkg -i ../ssd1306-display_*.deb
+sudo dpkg -i ../i2c-display_*.deb
 sudo apt-get install -f  # Install dependencies if needed
 ```
 
@@ -95,18 +95,18 @@ make build-all
 ```
 
 Binaries will be in:
-- `bin/ssd1306d` (native architecture)
-- `bin/ssd1306d-arm7` (ARMv7 32-bit)
-- `bin/ssd1306d-arm64` (ARM64)
+- `bin/i2c-displayd` (native architecture)
+- `bin/i2c-displayd-arm7` (ARMv7 32-bit)
+- `bin/i2c-displayd-arm64` (ARM64)
 
 ## Package Contents
 
 All packages include:
 
-- Binary: `/usr/bin/ssd1306d`
-- Config: `/etc/ssd1306-display/config.json`
-- Service: `/lib/systemd/system/ssd1306-display.service`
-- Docs: `/usr/share/doc/ssd1306-display/`
+- Binary: `/usr/bin/i2c-displayd`
+- Config: `/etc/i2c-display/config.json`
+- Service: `/lib/systemd/system/i2c-display.service`
+- Docs: `/usr/share/doc/i2c-display/`
 
 ## Testing Packages
 
@@ -114,31 +114,31 @@ All packages include:
 ```bash
 # Build and install
 make rpm
-sudo rpm -Uvh rpm-build/RPMS/*/ssd1306-display-*.rpm
+sudo rpm -Uvh rpm-build/RPMS/*/i2c-display-*.rpm
 
 # Test the service
-sudo systemctl start ssd1306-display.service
-sudo systemctl status ssd1306-display.service
-journalctl -u ssd1306-display.service -f
+sudo systemctl start i2c-display.service
+sudo systemctl status i2c-display.service
+journalctl -u i2c-display.service -f
 
 # Uninstall
-sudo rpm -e ssd1306-display
+sudo rpm -e i2c-display
 ```
 
 ### Test DEB installation:
 ```bash
 # Build and install
 make deb
-sudo dpkg -i ../ssd1306-display_*.deb
+sudo dpkg -i ../i2c-display_*.deb
 sudo apt-get install -f
 
 # Test the service
-sudo systemctl start ssd1306-display.service
-sudo systemctl status ssd1306-display.service
-journalctl -u ssd1306-display.service -f
+sudo systemctl start i2c-display.service
+sudo systemctl status i2c-display.service
+journalctl -u i2c-display.service -f
 
 # Uninstall
-sudo apt-get remove ssd1306-display
+sudo apt-get remove i2c-display
 ```
 
 ## Releasing a New Version
@@ -149,12 +149,12 @@ sudo apt-get remove ssd1306-display
    ```
 
 2. Update changelogs:
-   - `rpm/ssd1306-display.spec` - Add entry in `%changelog` section
+   - `rpm/i2c-display.spec` - Add entry in `%changelog` section
    - `debian/changelog` - Use `dch -v 0.0.2-1` or edit manually
 
 3. Commit the version bump:
    ```bash
-   git add VERSION rpm/ssd1306-display.spec debian/changelog
+   git add VERSION rpm/i2c-display.spec debian/changelog
    git commit -m "Bump version to 0.0.2"
    git tag -a v0.0.2 -m "Release v0.0.2"
    ```
@@ -213,7 +213,7 @@ sudo usermod -a -G i2c $USER
 ### Service fails to start
 Check logs:
 ```bash
-sudo journalctl -u ssd1306-display.service -xe
+sudo journalctl -u i2c-display.service -xe
 ```
 
 Common issues:
@@ -227,7 +227,7 @@ Common issues:
 .
 ├── VERSION                 # Version file
 ├── rpm/
-│   └── ssd1306-display.spec   # RPM spec file
+│   └── i2c-display.spec   # RPM spec file
 ├── debian/
 │   ├── control            # Package metadata
 │   ├── changelog          # Debian changelog

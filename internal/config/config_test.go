@@ -367,8 +367,8 @@ func TestLoadWithPriority(t *testing.T) {
 	if err := os.WriteFile(envPath, []byte(validConfig), 0644); err != nil {
 		t.Fatalf("failed to write env config: %v", err)
 	}
-	os.Setenv("SSD1306_CONFIG_PATH", envPath)
-	defer os.Unsetenv("SSD1306_CONFIG_PATH")
+	os.Setenv("I2C_DISPLAY_CONFIG_PATH", envPath)
+	defer os.Unsetenv("I2C_DISPLAY_CONFIG_PATH")
 
 	cfg, err = LoadWithPriority("")
 	if err != nil {
@@ -379,7 +379,7 @@ func TestLoadWithPriority(t *testing.T) {
 	}
 
 	// Test with no valid paths
-	os.Unsetenv("SSD1306_CONFIG_PATH")
+	os.Unsetenv("I2C_DISPLAY_CONFIG_PATH")
 	_, err = LoadWithPriority("")
 	if err == nil {
 		t.Error("LoadWithPriority() should fail when no config found")

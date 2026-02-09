@@ -1,13 +1,13 @@
 [Unit]
-Description=SSD1306 OLED Display Service
-Documentation=https://github.com/denniskorablev/ssd1306-display
+Description=I2C OLED Display Service
+Documentation=https://github.com/ausil/i2c-display
 After=network.target
 Wants=network.target
 
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/ssd1306d -config /etc/ssd1306-display/config.json
+ExecStart=/usr/local/bin/i2c-displayd -config /etc/i2c-display/config.json
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal

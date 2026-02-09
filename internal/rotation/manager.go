@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/denniskorablev/ssd1306-display/internal/config"
-	"github.com/denniskorablev/ssd1306-display/internal/renderer"
-	"github.com/denniskorablev/ssd1306-display/internal/stats"
+	"github.com/ausil/i2c-display/internal/config"
+	"github.com/ausil/i2c-display/internal/renderer"
+	"github.com/ausil/i2c-display/internal/stats"
 )
 
 // Manager handles page rotation and refresh

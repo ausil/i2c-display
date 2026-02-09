@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/denniskorablev/ssd1306-display/internal/config"
+	"github.com/ausil/i2c-display/internal/config"
 )
 
 // SystemCollector collects all system statistics
