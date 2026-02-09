@@ -43,7 +43,7 @@ jobs:
           mv bin/i2c-displayd bin/i2c-displayd-${{ matrix.suffix }}
 
       - name: Upload binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: i2c-displayd-${{ matrix.suffix }}
           path: bin/i2c-displayd-${{ matrix.suffix }}
@@ -75,7 +75,7 @@ jobs:
         run: make deb
 
       - name: Upload packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: packages
           path: |
