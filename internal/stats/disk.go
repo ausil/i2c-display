@@ -19,21 +19,21 @@ func NewDiskCollector(path string) *DiskCollector {
 
 // GetDisk reads disk usage statistics using statfs
 // Returns used and total disk space in bytes
-func (d *DiskCollector) GetDisk() (uint64, uint64, error) {
+func (d *DiskCollector) GetDisk() (used, total uint64, err error) {
 	var stat syscall.Statfs_t
-	err := syscall.Statfs(d.path, &stat)
+	err = syscall.Statfs(d.path, &stat)
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to stat filesystem at %s: %w", d.path, err)
 	}
 
 	// Total size = blocks * block size
-	total := stat.Blocks * uint64(stat.Bsize)
+	total = stat.Blocks * uint64(stat.Bsize)
 
 	// Available space = available blocks * block size
 	available := stat.Bavail * uint64(stat.Bsize)
 
 	// Used space = total - available
-	used := total - available
+	used = total - available
 
 	return used, total, nil
 }

@@ -218,12 +218,26 @@ func LoadWithPriority(explicitPath string) (*Config, error) {
 
 // Validate validates the configuration values
 func (c *Config) Validate() error {
-	// Validate display settings
+	if err := c.validateDisplay(); err != nil {
+		return err
+	}
+	if err := c.validatePages(); err != nil {
+		return err
+	}
+	if err := c.validateSystemInfo(); err != nil {
+		return err
+	}
+	if err := c.validateNetwork(); err != nil {
+		return err
+	}
+	return c.validateLogging()
+}
+
+func (c *Config) validateDisplay() error {
 	if c.Display.Type == "" {
 		c.Display.Type = "ssd1306" // Default to SSD1306
 	}
 
-	// Check if display type is valid
 	spec, validType := GetDisplaySpec(c.Display.Type)
 	if !validType {
 		return fmt.Errorf("display.type must be one of [ssd1306, ssd1306_128x32, ssd1306_128x64, ssd1306_96x16], got %s", c.Display.Type)
@@ -242,7 +256,6 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("display.height must be positive, got %d", c.Display.Height)
 	}
 
-	// Validate dimensions match the display type
 	if c.Display.Width != spec.Width || c.Display.Height != spec.Height {
 		return fmt.Errorf("display dimensions (%dx%d) don't match type %s (expected %dx%d)",
 			c.Display.Width, c.Display.Height, c.Display.Type, spec.Width, spec.Height)
@@ -252,15 +265,20 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("display.rotation must be 0-3, got %d", c.Display.Rotation)
 	}
 
-	// Validate page intervals
+	return nil
+}
+
+func (c *Config) validatePages() error {
 	if _, err := c.Pages.GetRotationInterval(); err != nil {
 		return fmt.Errorf("invalid pages.rotation_interval: %w", err)
 	}
 	if _, err := c.Pages.GetRefreshInterval(); err != nil {
 		return fmt.Errorf("invalid pages.refresh_interval: %w", err)
 	}
+	return nil
+}
 
-	// Validate system info
+func (c *Config) validateSystemInfo() error {
 	if c.SystemInfo.HostnameDisplay != "short" && c.SystemInfo.HostnameDisplay != "full" {
 		return fmt.Errorf("system_info.hostname_display must be 'short' or 'full', got %s", c.SystemInfo.HostnameDisplay)
 	}
@@ -270,17 +288,20 @@ func (c *Config) Validate() error {
 	if c.SystemInfo.TemperatureUnit != "celsius" && c.SystemInfo.TemperatureUnit != "fahrenheit" {
 		return fmt.Errorf("system_info.temperature_unit must be 'celsius' or 'fahrenheit', got %s", c.SystemInfo.TemperatureUnit)
 	}
+	return nil
+}
 
-	// Validate network settings
+func (c *Config) validateNetwork() error {
 	if c.Network.MaxInterfacesPerPage <= 0 {
 		return fmt.Errorf("network.max_interfaces_per_page must be positive, got %d", c.Network.MaxInterfacesPerPage)
 	}
+	return nil
+}
 
-	// Validate logging
+func (c *Config) validateLogging() error {
 	validLevels := map[string]bool{"debug": true, "info": true, "warn": true, "error": true}
 	if !validLevels[c.Logging.Level] {
 		return fmt.Errorf("logging.level must be one of [debug, info, warn, error], got %s", c.Logging.Level)
 	}
-
 	return nil
 }

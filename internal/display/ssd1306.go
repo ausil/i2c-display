@@ -20,7 +20,7 @@ type SSD1306Display struct {
 }
 
 // NewSSD1306Display creates a new SSD1306 display driver
-func NewSSD1306Display(i2cBus string, i2cAddr string, width, height, rotation int) (*SSD1306Display, error) {
+func NewSSD1306Display(i2cBus, i2cAddr string, width, height, rotation int) (*SSD1306Display, error) {
 	// Initialize periph host
 	if _, err := host.Init(); err != nil {
 		return nil, fmt.Errorf("failed to initialize periph: %w", err)

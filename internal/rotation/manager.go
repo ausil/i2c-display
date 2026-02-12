@@ -88,13 +88,13 @@ func (m *Manager) run(ctx context.Context) {
 // refreshCurrentPage collects new stats and re-renders the current page
 func (m *Manager) refreshCurrentPage() error {
 	// Collect current stats
-	stats, err := m.collector.Collect()
+	systemStats, err := m.collector.Collect()
 	if err != nil {
 		return fmt.Errorf("failed to collect stats: %w", err)
 	}
 
 	// Rebuild pages in case interface count changed
-	m.renderer.BuildPages(stats)
+	m.renderer.BuildPages(systemStats)
 
 	// Ensure current page is valid
 	if m.currentPage >= m.renderer.PageCount() {
@@ -102,7 +102,7 @@ func (m *Manager) refreshCurrentPage() error {
 	}
 
 	// Render current page
-	return m.renderer.RenderPage(m.currentPage, stats)
+	return m.renderer.RenderPage(m.currentPage, systemStats)
 }
 
 // rotatePage advances to the next page

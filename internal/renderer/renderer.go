@@ -29,8 +29,7 @@ func (r *Renderer) BuildPages(s *stats.SystemStats) {
 	bounds := r.display.GetBounds()
 	if bounds.Dy() <= 32 {
 		// Add individual metric pages for better readability
-		pages = append(pages, NewSystemPageForMetric(SystemMetricDisk))
-		pages = append(pages, NewSystemPageForMetric(SystemMetricMemory))
+		pages = append(pages, NewSystemPageForMetric(SystemMetricDisk), NewSystemPageForMetric(SystemMetricMemory))
 		if s.CPUTemp > 0 {
 			pages = append(pages, NewSystemPageForMetric(SystemMetricCPU))
 		}

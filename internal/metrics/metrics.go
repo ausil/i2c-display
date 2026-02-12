@@ -153,7 +153,7 @@ func (c *Collector) RecordI2CError(operation string) {
 }
 
 // UpdateSystemMetrics updates system stat metrics
-func (c *Collector) UpdateSystemMetrics(cpuTemp float64, memPercent float64, diskPercent float64, interfaceCount int) {
+func (c *Collector) UpdateSystemMetrics(cpuTemp, memPercent, diskPercent float64, interfaceCount int) {
 	if cpuTemp > 0 {
 		c.CPUTemperature.Set(cpuTemp)
 	}
@@ -180,7 +180,7 @@ func NewServer(cfg Config, collector *Collector, log *logger.Logger) *Server {
 	mux.Handle("/metrics", promhttp.HandlerFor(collector.registry, promhttp.HandlerOpts{}))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK\n"))
+		_, _ = w.Write([]byte("OK\n"))
 	})
 
 	return &Server{

@@ -100,8 +100,8 @@ func (h *Checker) GetComponentStatus(name string) *Component {
 
 	if comp, exists := h.components[name]; exists {
 		// Return a copy to avoid race conditions
-		copy := *comp
-		return &copy
+		compCopy := *comp
+		return &compCopy
 	}
 
 	return nil
@@ -140,8 +140,8 @@ func (h *Checker) GetAllComponents() map[string]*Component {
 
 	result := make(map[string]*Component, len(h.components))
 	for name, comp := range h.components {
-		copy := *comp
-		result[name] = &copy
+		compCopy := *comp
+		result[name] = &compCopy
 	}
 
 	return result
