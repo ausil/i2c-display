@@ -78,15 +78,18 @@ jobs:
       - name: Build DEB
         run: make deb
 
+      - name: Collect DEB packages
+        run: mv ../*.deb dist/ || true
+
       - name: Upload packages
         uses: actions/upload-artifact@v6
         with:
           name: packages
           path: |
             dist/*.tar.gz
+            dist/*.deb
             rpm-build/RPMS/*/*.rpm
             rpm-build/SRPMS/*.src.rpm
-            ../*.deb
 
   create-release:
     name: Create GitHub Release
@@ -144,8 +147,8 @@ jobs:
           files: |
             i2c-displayd-linux-*/i2c-displayd-*
             packages/dist/*.tar.gz
+            packages/dist/*.deb
             packages/rpm-build/RPMS/*/*.rpm
             packages/rpm-build/SRPMS/*.src.rpm
-            packages/*.deb
           draft: false
           prerelease: false
