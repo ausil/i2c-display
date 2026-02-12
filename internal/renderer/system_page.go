@@ -27,46 +27,75 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 		return err
 	}
 
-	// Line 1: Hostname (centered)
-	if err := DrawTextCentered(disp, Line1Y, s.Hostname); err != nil {
-		return err
-	}
-
-	// Line 2: Separator
-	if err := DrawLine(disp, Line2Y); err != nil {
-		return err
-	}
-
-	// Line 3: Disk usage
-	diskText := fmt.Sprintf("Disk: %.1f%% (%.1f/%.1fGB)",
-		s.DiskPercent(),
-		s.DiskUsedGB(),
-		s.DiskTotalGB())
+	// Create adaptive layout
 	bounds := disp.GetBounds()
-	diskText = TruncateText(diskText, bounds.Dx()-2*MarginLeft)
-	if err := DrawText(disp, MarginLeft, Line3Y, diskText); err != nil {
-		return err
+	layout := NewLayout(bounds)
+	maxWidth := bounds.Dx() - 2*MarginLeft
+
+	// Optional: Hostname header
+	if layout.ShowHeader {
+		if err := DrawTextCentered(disp, layout.HeaderY, s.Hostname); err != nil {
+			return err
+		}
 	}
 
-	// Line 4: RAM usage
-	ramText := fmt.Sprintf("RAM: %.1f%% (%.1f/%.1fGB)",
-		s.MemoryPercent(),
-		s.MemoryUsedGB(),
-		s.MemoryTotalGB())
-	ramText = TruncateText(ramText, bounds.Dx()-2*MarginLeft)
-	if err := DrawText(disp, MarginLeft, Line4Y, ramText); err != nil {
-		return err
+	// Optional: Separator
+	if layout.ShowSeparator {
+		if err := DrawLine(disp, layout.SeparatorY); err != nil {
+			return err
+		}
 	}
 
-	// Line 5: CPU temperature
-	var cpuText string
-	if s.CPUTemp > 0 {
-		cpuText = fmt.Sprintf("CPU: %.1fC", s.CPUTemp)
+	// Build content lines based on available space
+	contentLines := make([]string, 0, layout.MaxContentLines)
+
+	// For small displays (128x32), show compact info
+	if layout.Height <= 32 {
+		// Line 1: Disk and RAM usage (compact)
+		diskText := fmt.Sprintf("D:%.0f%% R:%.0f%%",
+			s.DiskPercent(),
+			s.MemoryPercent())
+		contentLines = append(contentLines, diskText)
+		// Line 2: Temperature (if available)
+		if s.CPUTemp > 0 {
+			cpuText := fmt.Sprintf("CPU:%.0fC", s.CPUTemp)
+			contentLines = append(contentLines, cpuText)
+		}
 	} else {
-		cpuText = "CPU: N/A"
+		// Standard display - show full info
+		// Disk usage
+		diskText := fmt.Sprintf("Disk: %.1f%% (%.1f/%.1fGB)",
+			s.DiskPercent(),
+			s.DiskUsedGB(),
+			s.DiskTotalGB())
+		contentLines = append(contentLines, diskText)
+
+		// RAM usage
+		ramText := fmt.Sprintf("RAM: %.1f%% (%.1f/%.1fGB)",
+			s.MemoryPercent(),
+			s.MemoryUsedGB(),
+			s.MemoryTotalGB())
+		contentLines = append(contentLines, ramText)
+
+		// CPU temperature
+		var cpuText string
+		if s.CPUTemp > 0 {
+			cpuText = fmt.Sprintf("CPU: %.1fC", s.CPUTemp)
+		} else {
+			cpuText = "CPU: N/A"
+		}
+		contentLines = append(contentLines, cpuText)
 	}
-	if err := DrawText(disp, MarginLeft, Line5Y, cpuText); err != nil {
-		return err
+
+	// Render content lines
+	for i, text := range contentLines {
+		if i >= len(layout.ContentLines) {
+			break // Don't exceed available lines
+		}
+		text = TruncateText(text, maxWidth)
+		if err := DrawText(disp, MarginLeft, layout.ContentLines[i], text); err != nil {
+			return err
+		}
 	}
 
 	// Show the display

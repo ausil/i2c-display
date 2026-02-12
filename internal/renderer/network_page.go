@@ -47,30 +47,35 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 		return err
 	}
 
-	// Line 1: Hostname (centered)
-	if err := DrawTextCentered(disp, Line1Y, s.Hostname); err != nil {
-		return err
-	}
-
-	// Line 2: Separator
-	if err := DrawLine(disp, Line2Y); err != nil {
-		return err
-	}
-
+	// Create adaptive layout
 	bounds := disp.GetBounds()
+	layout := NewLayout(bounds)
 	maxWidth := bounds.Dx() - 2*MarginLeft
 
+	// Optional: Hostname header
+	if layout.ShowHeader {
+		if err := DrawTextCentered(disp, layout.HeaderY, s.Hostname); err != nil {
+			return err
+		}
+	}
+
+	// Optional: Separator
+	if layout.ShowSeparator {
+		if err := DrawLine(disp, layout.SeparatorY); err != nil {
+			return err
+		}
+	}
+
 	// Render interfaces for this page
-	yPositions := []int{Line3Y, Line4Y, Line5Y}
 	interfaceCount := 0
 
 	for i := p.interfaceStartIdx; i < p.interfaceEndIdx && i < len(s.Interfaces); i++ {
-		if interfaceCount >= len(yPositions) {
+		if interfaceCount >= len(layout.ContentLines) {
 			break
 		}
 
 		iface := s.Interfaces[i]
-		y := yPositions[interfaceCount]
+		y := layout.ContentLines[interfaceCount]
 
 		// Determine which address to show
 		var addr string
@@ -82,9 +87,18 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 			addr = "no addr"
 		}
 
-		text := fmt.Sprintf("%s: %s", iface.Name, addr)
-		text = TruncateText(text, maxWidth)
+		// Format based on display size
+		var text string
+		if layout.Height <= 32 {
+			// Compact format for small displays: "name:IP"
+			// Use shorter separator to save space
+			text = fmt.Sprintf("%s:%s", iface.Name, addr)
+		} else {
+			// Standard format: "interface: IP"
+			text = fmt.Sprintf("%s: %s", iface.Name, addr)
+		}
 
+		text = TruncateText(text, maxWidth)
 		if err := DrawText(disp, MarginLeft, y, text); err != nil {
 			return err
 		}
@@ -92,12 +106,12 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 		interfaceCount++
 	}
 
-	// Line 6: Page indicator
-	if p.totalPages > 1 {
+	// Footer: Page indicator (if space available and multiple pages)
+	if p.totalPages > 1 && layout.FooterY >= 0 {
 		pageIndicator := fmt.Sprintf("Page %d/%d", p.pageNum, p.totalPages)
 		indicatorWidth := MeasureText(pageIndicator)
 		x := bounds.Dx() - indicatorWidth - MarginRight
-		if err := DrawText(disp, x, Line6Y, pageIndicator); err != nil {
+		if err := DrawText(disp, x, layout.FooterY, pageIndicator); err != nil {
 			return err
 		}
 	}

@@ -1,4 +1,5 @@
 {
+  "_comment": "Configuration optimized for 128x32 displays. Layout automatically adapts: hostname always shown at top, 2 lines of compact content. Network interfaces limited to 2 per page for readability.",
   "display": {
     "type": "ssd1306_128x32",
     "i2c_bus": "/dev/i2c-1",
