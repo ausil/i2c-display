@@ -1,7 +1,8 @@
 .PHONY: build test clean install uninstall test-hardware dist rpm srpm deb deb-src lint fmt
 
-# Version
-VERSION=$(shell cat VERSION)
+# Version - prefer git tag if available (for releases), otherwise use VERSION file
+GIT_TAG_VERSION=$(shell git describe --tags --exact-match 2>/dev/null | sed 's/^v//')
+VERSION=$(or $(GIT_TAG_VERSION),$(shell cat VERSION))
 PROJECT_NAME=i2c-display
 
 # Build configuration
