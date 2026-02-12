@@ -52,13 +52,14 @@ func NewLayout(bounds image.Rectangle) *Layout {
 	case height <= 32:
 		// Small display (128x32 or 96x16)
 		// Only 32 pixels tall - compact layout
-		layout.ShowHeader = true      // Always show hostname
-		layout.ShowSeparator = false  // Skip separator to save space
+		// Font is 13px tall, so header (0-11) + one content line (14-25) fits cleanly
+		layout.ShowHeader = true     // Always show hostname
+		layout.ShowSeparator = false // Skip separator to save space
 		layout.HeaderY = 0
-		layout.SeparatorY = 8
-		layout.ContentLines = []int{10, 20} // 2 content lines max, tightly packed
-		layout.FooterY = -1                 // No footer
-		layout.MaxContentLines = 2
+		layout.SeparatorY = -1
+		layout.ContentLines = []int{14} // Single content line with proper spacing
+		layout.FooterY = -1             // No footer
+		layout.MaxContentLines = 1
 
 	case height <= 64:
 		// Standard display (128x64)

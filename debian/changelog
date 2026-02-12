@@ -1,3 +1,14 @@
+i2c-display (0.1.0-1) unstable; urgency=medium
+
+  * Adaptive layout system for different display sizes
+  * Fix text rendering to prevent content from overwriting header
+  * Optimized layout for 128x32 displays with compact formatting
+  * Hostname header now always visible on small displays
+  * Fixed systemd unit file to use /usr/bin path
+  * Improved documentation for multi-platform SBC support
+
+ -- Dennis Gilmore <dennis@ausil.us>  Wed, 12 Feb 2025 02:30:00 -0500
+
 i2c-display (0.0.3-1) unstable; urgency=medium
 
   * Fix display dimension auto-detection for different display types

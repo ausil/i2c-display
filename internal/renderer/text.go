@@ -12,26 +12,29 @@ import (
 
 // DrawText renders text at the specified position using a simple bitmap font
 func DrawText(disp display.Display, x, y int, text string) error {
-	// Create a small image for the text
-	bounds := disp.GetBounds()
-	textImg := image.NewGray(bounds)
-
 	// Use basicfont (7x13 font)
 	face := basicfont.Face7x13
 
-	// Create drawer
+	// Measure text to create appropriately sized image
+	width := font.MeasureString(face, text).Ceil()
+	height := int(face.Metrics().Ascent.Ceil()) + int(face.Metrics().Descent.Ceil())
+
+	// Create an image just large enough for the text
+	textImg := image.NewGray(image.Rect(0, 0, width, height))
+
+	// Create drawer with origin at (0, ascent) in the small image
 	drawer := &font.Drawer{
 		Dst:  textImg,
 		Src:  image.White,
 		Face: face,
-		Dot:  fixed.P(x, y+int(face.Metrics().Ascent.Ceil())),
+		Dot:  fixed.P(0, int(face.Metrics().Ascent.Ceil())),
 	}
 
 	// Draw the text
 	drawer.DrawString(text)
 
-	// Draw the text image to the display
-	return disp.DrawImage(0, 0, textImg)
+	// Draw the text image at the specified position
+	return disp.DrawImage(x, y, textImg)
 }
 
 // DrawTextCentered draws text centered horizontally

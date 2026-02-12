@@ -49,17 +49,20 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 	// Build content lines based on available space
 	contentLines := make([]string, 0, layout.MaxContentLines)
 
-	// For small displays (128x32), show compact info
+	// For small displays (128x32), show compact info on one line
 	if layout.Height <= 32 {
-		// Line 1: Disk and RAM usage (compact)
-		diskText := fmt.Sprintf("D:%.0f%% R:%.0f%%",
-			s.DiskPercent(),
-			s.MemoryPercent())
-		contentLines = append(contentLines, diskText)
-		// Line 2: Temperature (if available)
+		// Single line with all system info
 		if s.CPUTemp > 0 {
-			cpuText := fmt.Sprintf("CPU:%.0fC", s.CPUTemp)
-			contentLines = append(contentLines, cpuText)
+			text := fmt.Sprintf("D:%.0f%% R:%.0f%% C:%.0fC",
+				s.DiskPercent(),
+				s.MemoryPercent(),
+				s.CPUTemp)
+			contentLines = append(contentLines, text)
+		} else {
+			text := fmt.Sprintf("D:%.0f%% R:%.0f%%",
+				s.DiskPercent(),
+				s.MemoryPercent())
+			contentLines = append(contentLines, text)
 		}
 	} else {
 		// Standard display - show full info
