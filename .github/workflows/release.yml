@@ -27,6 +27,8 @@ jobs:
             suffix: linux-armv7
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history including tags for version detection
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -54,6 +56,8 @@ jobs:
     needs: build-binaries
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history including tags for version detection
 
       - name: Set up Go
         uses: actions/setup-go@v5
