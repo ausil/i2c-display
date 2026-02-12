@@ -1,6 +1,13 @@
 # I2C Display Controller
 
-A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that controls I2C OLED displays via I2C, showing system stats and network information with rotating pages.
+A Go application for Single Board Computers that controls I2C OLED displays, showing system stats and network information with rotating pages.
+
+**Works with any SBC that provides I2C devices:**
+- **Raspberry Pi** (all models with I2C support)
+- **Radxa** (Rock 3C, Rock 5B, Rock 4, etc.)
+- **Orange Pi** (all models)
+- **Pine64** (all models)
+- **Banana Pi**, **Odroid**, and any other Linux SBC with I2C support
 
 ## Supported Displays
 
@@ -36,9 +43,9 @@ See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add
 
 ## Requirements
 
-- Go 1.19 or later
-- SSD1306 128x64 OLED display connected via I2C
-- Linux-based SBC (Raspberry Pi, Rock 3C, etc.)
+- Go 1.19 or later (for building from source)
+- Supported OLED display (see Supported Displays section)
+- Any Linux-based SBC with I2C support
 - I2C enabled on the system
 
 ## Hardware Setup
@@ -63,16 +70,35 @@ sudo raspi-config
 sudo reboot
 ```
 
-**Rock 3C:**
+**Radxa (Rock 3C, Rock 5B, etc.):**
 ```bash
-# I2C is usually enabled by default
+# I2C is usually enabled by default in modern images
 # Verify with: ls /dev/i2c-*
 ```
 
-Verify I2C is working:
+**Orange Pi / Pine64 / Other SBCs:**
 ```bash
+# Most modern Linux images have I2C enabled by default
+# Check your board's documentation if I2C devices are not present
+# Verify with: ls /dev/i2c-*
+```
+
+**Verify I2C is working:**
+```bash
+# Install i2c-tools if not already installed
+sudo apt-get install -y i2c-tools
+
+# Detect I2C devices (replace '1' with your I2C bus number if different)
 sudo i2cdetect -y 1
 # You should see your display address (typically 0x3C or 0x3D)
+```
+
+**Finding your I2C bus:**
+```bash
+# List all I2C buses
+ls /dev/i2c-*
+# Common values: /dev/i2c-0, /dev/i2c-1, /dev/i2c-3, etc.
+# Use the bus number in your config.json
 ```
 
 ## Installation
@@ -115,19 +141,40 @@ sudo systemctl start i2c-display.service
 
 ### Using Packages (x86_64 only)
 
-**RPM (Fedora, RHEL, CentOS):**
+**RPM (Fedora, RHEL, Rocky Linux, AlmaLinux, CentOS):**
+
+Download the RPM from [GitHub Releases](https://github.com/ausil/i2c-display/releases/latest)
+
 ```bash
+# Using dnf (Fedora 22+, RHEL 8+)
+sudo dnf install ./i2c-display-*.x86_64.rpm
+sudo systemctl enable --now i2c-display.service
+
+# Or using rpm directly
 sudo rpm -Uvh i2c-display-*.x86_64.rpm
 sudo systemctl enable --now i2c-display.service
-```
 
-**DEB (Debian, Ubuntu):**
-```bash
-sudo dpkg -i i2c-display_*_amd64.deb
+# Or using yum (older RHEL/CentOS)
+sudo yum localinstall i2c-display-*.x86_64.rpm
 sudo systemctl enable --now i2c-display.service
 ```
 
-**Note:** RPM and DEB packages are currently built for x86_64 only. ARM users should use the pre-built binaries as shown above.
+**DEB (Debian, Ubuntu, Linux Mint, Pop!_OS):**
+
+Download the DEB from [GitHub Releases](https://github.com/ausil/i2c-display/releases/latest)
+
+```bash
+# Using apt (recommended)
+sudo apt install ./i2c-display_*_amd64.deb
+sudo systemctl enable --now i2c-display.service
+
+# Or using dpkg
+sudo dpkg -i i2c-display_*_amd64.deb
+sudo apt-get install -f  # Install any missing dependencies
+sudo systemctl enable --now i2c-display.service
+```
+
+**Note:** RPM and DEB packages are currently built for x86_64 only. ARM users (Raspberry Pi, Radxa, Orange Pi, Pine64, etc.) should use the pre-built binaries as shown in the "Using Pre-built Binaries" section above.
 
 ### Building from Source
 
@@ -222,51 +269,315 @@ See `configs/config.example.json` for a complete example:
 
 #### Display
 
-- `type`: Display controller type (default: `ssd1306`)
-  - `ssd1306` or `ssd1306_128x64` - Standard 128x64
-  - `ssd1306_128x32` - Compact 128x32 variant
-  - `ssd1306_96x16` - Small 96x16 variant
-- `i2c_bus`: I2C bus device (default: `/dev/i2c-1`)
-- `i2c_address`: I2C address in hex (default: `0x3C`)
-- `width`: Display width in pixels (optional - auto-detected from type)
-- `height`: Display height in pixels (optional - auto-detected from type)
-- `rotation`: Display rotation 0-3 (default: 0)
+- **`type`**: Display controller type (default: `ssd1306`)
+  - `ssd1306` or `ssd1306_128x64` - Standard 128x64 OLED
+  - `ssd1306_128x32` - Compact 128x32 OLED
+  - `ssd1306_96x16` - Small 96x16 OLED
+  - See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for all supported types
 
-**Note**: Width and height are automatically set based on the display type. You only need to specify them if using custom dimensions.
+- **`i2c_bus`**: I2C bus device path (default: `/dev/i2c-1`)
+  - Find your bus: `ls /dev/i2c-*`
+  - Common values: `/dev/i2c-0`, `/dev/i2c-1`, `/dev/i2c-3`
+
+- **`i2c_address`**: I2C device address in hexadecimal (default: `0x3C`)
+  - Detect with: `sudo i2cdetect -y 1`
+  - Common addresses: `0x3C` or `0x3D`
+
+- **`rotation`**: Display rotation in 90° increments (default: `0`)
+  - `0` - Normal orientation
+  - `1` - Rotated 90° clockwise
+  - `2` - Rotated 180° (upside down)
+  - `3` - Rotated 270° clockwise (90° counter-clockwise)
+
+- **`width`** / **`height`**: Display dimensions in pixels (optional)
+  - **Automatically set** based on display type - no need to specify
+  - Only needed for custom/unsupported displays
 
 #### Pages
 
-- `rotation_interval`: Time between page changes (e.g., "5s", "10s")
-- `refresh_interval`: Time between data updates (e.g., "1s", "2s")
+- **`rotation_interval`**: How often to rotate between pages
+  - Format: Duration string (e.g., `"5s"`, `"30s"`, `"2m"`)
+  - Default: `"5s"`
+
+- **`refresh_interval`**: How often to update data on current page
+  - Format: Duration string (e.g., `"1s"`, `"500ms"`)
+  - Default: `"1s"`
 
 #### System Info
 
-- `hostname_display`: "short" or "full"
-- `disk_path`: Path to monitor disk usage (default: "/")
-- `temperature_source`: Path to CPU temperature file
-- `temperature_unit`: "celsius" or "fahrenheit"
+- **`hostname_display`**: How to display the hostname
+  - `"short"` - Only hostname (e.g., `raspberrypi`)
+  - `"full"` - Full FQDN (e.g., `raspberrypi.local`)
+
+- **`disk_path`**: Filesystem path to monitor (default: `"/"`)
+  - Examples: `"/"`, `"/home"`, `"/mnt/data"`
+
+- **`temperature_source`**: Path to CPU temperature sensor
+  - **Raspberry Pi**: `/sys/class/thermal/thermal_zone0/temp`
+  - **Radxa Rock 5B**: `/sys/class/thermal/thermal_zone0/temp`
+  - **Orange Pi**: `/sys/class/thermal/thermal_zone0/temp` or `/sys/devices/virtual/thermal/thermal_zone0/temp`
+  - **Pine64**: Check `ls /sys/class/thermal/thermal_zone*/temp`
+  - Leave empty (`""`) to disable temperature display
+
+- **`temperature_unit`**: Display unit for temperature
+  - `"celsius"` - Display in °C
+  - `"fahrenheit"` - Display in °F
+
+**Finding your temperature sensor:**
+```bash
+# List all thermal zones
+for zone in /sys/class/thermal/thermal_zone*/temp; do
+  echo "$zone: $(cat $zone)"
+done
+```
 
 #### Network
 
-- `auto_detect`: Automatically detect interfaces
-- `interface_filter.include`: Interface patterns to include
-- `interface_filter.exclude`: Interface patterns to exclude
-- `show_ipv4`: Show IPv4 addresses
-- `show_ipv6`: Show IPv6 addresses
-- `max_interfaces_per_page`: Max interfaces per page
+- **`auto_detect`**: Automatically find network interfaces (default: `true`)
+  - Set to `false` to manually specify interfaces
+
+- **`interface_filter.include`**: Patterns for interfaces to show
+  - Supports wildcards: `["eth*", "wlan*", "usb*"]`
+  - Default: `["eth0", "wlan0", "usb0"]`
+
+- **`interface_filter.exclude`**: Patterns for interfaces to hide
+  - Supports wildcards: `["lo", "docker*", "veth*"]`
+  - Useful to hide virtual interfaces
+  - Default: `["lo", "docker*", "veth*"]`
+
+- **`show_ipv4`**: Display IPv4 addresses (default: `true`)
+
+- **`show_ipv6`**: Display IPv6 addresses (default: `false`)
+
+- **`max_interfaces_per_page`**: Maximum network interfaces per page (default: `3`)
+
+**Example interface configurations:**
+
+<details>
+<summary>Show only Ethernet</summary>
+
+```json
+"network": {
+  "auto_detect": true,
+  "interface_filter": {
+    "include": ["eth*", "en*"],
+    "exclude": ["lo", "wlan*", "docker*", "veth*"]
+  }
+}
+```
+</details>
+
+<details>
+<summary>Show WiFi and Ethernet</summary>
+
+```json
+"network": {
+  "auto_detect": true,
+  "interface_filter": {
+    "include": ["eth*", "wlan*", "en*", "wl*"],
+    "exclude": ["lo", "docker*", "veth*"]
+  }
+}
+```
+</details>
+
+#### Screen Saver (Optional)
+
+Power saving feature to dim or blank the display after inactivity.
+
+- **`enabled`**: Enable screen saver (default: `false`)
+
+- **`mode`**: Screen saver behavior
+  - `"dim"` - Reduce brightness
+  - `"blank"` - Turn off display completely
+  - `"off"` - No screen saver
+
+- **`idle_timeout`**: Time before activating screen saver
+  - Format: Duration string (e.g., `"5m"`, `"30m"`, `"1h"`)
+  - Default: `"5m"`
+
+- **`dim_brightness`**: Brightness level when dimmed (0-255)
+  - `0` - Completely off
+  - `50` - Half brightness
+  - `255` - Full brightness
+  - Default: `50`
+
+- **`normal_brightness`**: Normal operating brightness (0-255)
+  - Default: `255`
+
+**Example:**
+```json
+"screensaver": {
+  "enabled": true,
+  "mode": "dim",
+  "idle_timeout": "10m",
+  "dim_brightness": 30,
+  "normal_brightness": 255
+}
+```
 
 #### Logging
 
-- `level`: "debug", "info", "warn", or "error"
-- `output`: "stdout" or "stderr"
-- `json`: `true` for JSON output, `false` for human-readable console output
+- **`level`**: Log level verbosity
+  - `"debug"` - Very verbose, includes all details
+  - `"info"` - Normal operation information
+  - `"warn"` - Warnings only
+  - `"error"` - Errors only
+  - Default: `"info"`
+
+- **`output`**: Where to send logs
+  - `"stdout"` - Standard output
+  - `"stderr"` - Standard error
+  - Default: `"stdout"`
+
+- **`json`**: Log format
+  - `true` - JSON format (good for log aggregation)
+  - `false` - Human-readable console format
+  - Default: `false`
 
 #### Metrics (Optional)
 
-- `enabled`: Enable Prometheus metrics endpoint
-- `address`: Metrics server address (e.g., ":9090" or "127.0.0.1:9090")
+Prometheus-compatible metrics endpoint for monitoring.
+
+- **`enabled`**: Enable metrics endpoint (default: `false`)
+
+- **`address`**: HTTP server address and port
+  - Format: `"host:port"` or `":port"`
+  - Examples: `":9090"`, `"127.0.0.1:9090"`, `"0.0.0.0:9090"`
+  - Default: `":9090"`
 
 When enabled, metrics are available at `http://address/metrics`
+
+**Example metrics:**
+- Display update count and errors
+- I2C communication metrics
+- Page rotation statistics
+- System resource usage
+
+### Platform-Specific Configuration Examples
+
+<details>
+<summary><strong>Raspberry Pi with SSD1306 128x64</strong></summary>
+
+```json
+{
+  "display": {
+    "type": "ssd1306_128x64",
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x3C",
+    "rotation": 0
+  },
+  "system_info": {
+    "temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  },
+  "network": {
+    "auto_detect": true,
+    "interface_filter": {
+      "include": ["eth0", "wlan0"],
+      "exclude": ["lo", "docker*"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>Radxa Rock 5B</strong></summary>
+
+```json
+{
+  "display": {
+    "type": "ssd1306_128x64",
+    "i2c_bus": "/dev/i2c-7",
+    "i2c_address": "0x3C",
+    "rotation": 0
+  },
+  "system_info": {
+    "temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  },
+  "network": {
+    "auto_detect": true,
+    "interface_filter": {
+      "include": ["eth*", "wlan*", "en*"],
+      "exclude": ["lo", "docker*", "veth*"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>Orange Pi with Smaller Display (128x32)</strong></summary>
+
+```json
+{
+  "display": {
+    "type": "ssd1306_128x32",
+    "i2c_bus": "/dev/i2c-0",
+    "i2c_address": "0x3C",
+    "rotation": 0
+  },
+  "pages": {
+    "rotation_interval": "10s",
+    "refresh_interval": "2s"
+  },
+  "system_info": {
+    "temperature_source": "/sys/devices/virtual/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>Pine64 with Screen Saver</strong></summary>
+
+```json
+{
+  "display": {
+    "type": "ssd1306_128x64",
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x3C",
+    "rotation": 0
+  },
+  "screensaver": {
+    "enabled": true,
+    "mode": "dim",
+    "idle_timeout": "5m",
+    "dim_brightness": 30,
+    "normal_brightness": 255
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>Server/Headless Setup with Metrics</strong></summary>
+
+```json
+{
+  "display": {
+    "type": "ssd1306_128x64",
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x3C",
+    "rotation": 0
+  },
+  "logging": {
+    "level": "info",
+    "output": "stdout",
+    "json": true
+  },
+  "metrics": {
+    "enabled": true,
+    "address": ":9090"
+  }
+}
+```
+
+Access metrics: `curl http://localhost:9090/metrics`
+</details>
 
 ## Usage
 
