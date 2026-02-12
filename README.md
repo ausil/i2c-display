@@ -86,7 +86,12 @@ sudo reboot
 **Verify I2C is working:**
 ```bash
 # Install i2c-tools if not already installed
+# For Debian/Ubuntu/Raspberry Pi OS:
 sudo apt-get install -y i2c-tools
+
+# For Fedora/RHEL/CentOS:
+sudo dnf install -y i2c-tools
+# or: sudo yum install -y i2c-tools
 
 # Detect I2C devices (replace '1' with your I2C bus number if different)
 sudo i2cdetect -y 1
