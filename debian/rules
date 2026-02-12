@@ -6,7 +6,7 @@ export GOCACHE := $(CURDIR)/.cache/go-build
 export GOPATH := $(CURDIR)/.gopath
 
 %:
-	dh $@ --buildsystem=golang --with=systemd
+	dh $@ --buildsystem=golang
 
 override_dh_auto_build:
 	go build -o bin/i2c-displayd ./cmd/i2c-displayd/
