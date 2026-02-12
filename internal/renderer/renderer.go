@@ -25,8 +25,19 @@ func NewRenderer(disp display.Display, cfg *config.Config) *Renderer {
 func (r *Renderer) BuildPages(s *stats.SystemStats) {
 	pages := make([]Page, 0)
 
-	// Always add system page first
-	pages = append(pages, NewSystemPage())
+	// For small displays (128x32), create separate pages for each metric
+	bounds := r.display.GetBounds()
+	if bounds.Dy() <= 32 {
+		// Add individual metric pages for better readability
+		pages = append(pages, NewSystemPageForMetric(SystemMetricDisk))
+		pages = append(pages, NewSystemPageForMetric(SystemMetricMemory))
+		if s.CPUTemp > 0 {
+			pages = append(pages, NewSystemPageForMetric(SystemMetricCPU))
+		}
+	} else {
+		// Standard displays show all system info on one page
+		pages = append(pages, NewSystemPage())
+	}
 
 	// Add network pages based on interface count
 	if len(s.Interfaces) > 0 {

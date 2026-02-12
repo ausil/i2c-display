@@ -1,5 +1,5 @@
 {
-  "_comment": "Configuration optimized for 128x32 displays. Layout automatically adapts: hostname always shown at top, 2 lines of compact content. Network interfaces limited to 2 per page for readability.",
+  "_comment": "Configuration optimized for 128x32 displays. Layout automatically adapts: hostname always shown at top with separator line, one metric per page. System metrics rotate through disk, memory, and CPU temperature on separate pages for clarity.",
   "display": {
     "type": "ssd1306_128x32",
     "i2c_bus": "/dev/i2c-1",
@@ -7,7 +7,7 @@
     "rotation": 0
   },
   "pages": {
-    "rotation_interval": "5s",
+    "rotation_interval": "2s",
     "refresh_interval": "1s"
   },
   "system_info": {
@@ -24,7 +24,7 @@
     },
     "show_ipv4": true,
     "show_ipv6": false,
-    "max_interfaces_per_page": 2
+    "max_interfaces_per_page": 1
   },
   "logging": {
     "level": "info",

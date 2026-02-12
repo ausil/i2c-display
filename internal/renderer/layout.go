@@ -5,9 +5,9 @@ import "image"
 // Layout constants
 const (
 	// Margins
-	MarginLeft  = 2
-	MarginRight = 2
-	MarginTop   = 2
+	MarginLeft  = 1
+	MarginRight = 1
+	MarginTop   = 1
 
 	// Font sizes (approximations for basic font)
 	FontHeight = 8
@@ -52,21 +52,22 @@ func NewLayout(bounds image.Rectangle) *Layout {
 	case height <= 32:
 		// Small display (128x32 or 96x16)
 		// Only 32 pixels tall - compact layout
-		// Font is 13px tall, so header (0-11) + one content line (14-25) fits cleanly
-		layout.ShowHeader = true     // Always show hostname
-		layout.ShowSeparator = false // Skip separator to save space
+		// Font is 13px tall, so header (0-11) + separator (12) + one content line (14-25) fits cleanly
+		layout.ShowHeader = true    // Always show hostname
+		layout.ShowSeparator = true // Show separator line after header
 		layout.HeaderY = 0
-		layout.SeparatorY = -1
+		layout.SeparatorY = 12
 		layout.ContentLines = []int{14} // Single content line with proper spacing
 		layout.FooterY = -1             // No footer
 		layout.MaxContentLines = 1
 
 	case height <= 64:
 		// Standard display (128x64)
+		// Header (0-11) + separator (12) + content lines
 		layout.ShowHeader = true
 		layout.ShowSeparator = true
 		layout.HeaderY = 0
-		layout.SeparatorY = 10
+		layout.SeparatorY = 12
 		layout.ContentLines = []int{16, 28, 40} // 3 main content lines
 		layout.FooterY = 52
 		layout.MaxContentLines = 3

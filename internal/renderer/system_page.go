@@ -7,17 +7,43 @@ import (
 	"github.com/ausil/i2c-display/internal/stats"
 )
 
-// SystemPage displays system statistics (disk, RAM, CPU temp)
-type SystemPage struct{}
+// SystemMetricType represents the type of metric to display
+type SystemMetricType int
 
-// NewSystemPage creates a new system stats page
+const (
+	SystemMetricAll SystemMetricType = iota
+	SystemMetricDisk
+	SystemMetricMemory
+	SystemMetricCPU
+)
+
+// SystemPage displays system statistics (disk, RAM, CPU temp)
+type SystemPage struct {
+	metricType SystemMetricType
+}
+
+// NewSystemPage creates a new system stats page showing all metrics
 func NewSystemPage() *SystemPage {
-	return &SystemPage{}
+	return &SystemPage{metricType: SystemMetricAll}
+}
+
+// NewSystemPageForMetric creates a system page for a specific metric
+func NewSystemPageForMetric(metricType SystemMetricType) *SystemPage {
+	return &SystemPage{metricType: metricType}
 }
 
 // Title returns the page title
 func (p *SystemPage) Title() string {
-	return "System"
+	switch p.metricType {
+	case SystemMetricDisk:
+		return "Disk"
+	case SystemMetricMemory:
+		return "Memory"
+	case SystemMetricCPU:
+		return "CPU"
+	default:
+		return "System"
+	}
 }
 
 // Render draws the system stats page
@@ -49,21 +75,34 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 	// Build content lines based on available space
 	contentLines := make([]string, 0, layout.MaxContentLines)
 
-	// For small displays (128x32), show compact info on one line
+	// For small displays (128x32), show one metric at a time
 	if layout.Height <= 32 {
-		// Single line with all system info
-		if s.CPUTemp > 0 {
-			text := fmt.Sprintf("D:%.0f%% R:%.0f%% C:%.0fC",
-				s.DiskPercent(),
-				s.MemoryPercent(),
-				s.CPUTemp)
-			contentLines = append(contentLines, text)
-		} else {
-			text := fmt.Sprintf("D:%.0f%% R:%.0f%%",
-				s.DiskPercent(),
-				s.MemoryPercent())
-			contentLines = append(contentLines, text)
+		var text string
+		switch p.metricType {
+		case SystemMetricDisk:
+			text = fmt.Sprintf("Disk: %.1f/%.1fG", s.DiskUsedGB(), s.DiskTotalGB())
+		case SystemMetricMemory:
+			text = fmt.Sprintf("Mem: %.1f/%.1fG", s.MemoryUsedGB(), s.MemoryTotalGB())
+		case SystemMetricCPU:
+			if s.CPUTemp > 0 {
+				text = fmt.Sprintf("CPU Temp: %.1fC", s.CPUTemp)
+			} else {
+				text = "CPU Temp: N/A"
+			}
+		default:
+			// Fallback to compact all-in-one view
+			if s.CPUTemp > 0 {
+				text = fmt.Sprintf("D:%.0f%% R:%.0f%% C:%.0fC",
+					s.DiskPercent(),
+					s.MemoryPercent(),
+					s.CPUTemp)
+			} else {
+				text = fmt.Sprintf("D:%.0f%% R:%.0f%%",
+					s.DiskPercent(),
+					s.MemoryPercent())
+			}
 		}
+		contentLines = append(contentLines, text)
 	} else {
 		// Standard display - show full info
 		// Disk usage
