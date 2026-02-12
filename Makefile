@@ -160,14 +160,14 @@ install-rpm:
 # Build Debian source package
 deb-src:
 	@echo "Building Debian source package..."
-	@dpkg-buildpackage -S -us -uc
+	@dpkg-buildpackage -d -S -us -uc
 	@echo "Debian source package created:"
 	@ls -lh ../$(PROJECT_NAME)_*.dsc
 
 # Build Debian binary package
 deb:
 	@echo "Building Debian binary package..."
-	@dpkg-buildpackage -b -us -uc
+	@dpkg-buildpackage -d -b -us -uc
 	@echo "Debian package created:"
 	@ls -lh ../$(PROJECT_NAME)_*.deb
 
