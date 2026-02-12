@@ -134,16 +134,21 @@ jobs:
 
             ## Installation
 
+            ### Binaries (All Platforms)
+
             Download the appropriate binary for your platform:
             - `i2c-displayd-linux-amd64` - x86_64 Linux
-            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4, Rock 3C/5B)
+            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4, Rock 3C/5B) **← Recommended for ARM SBCs**
             - `i2c-displayd-linux-armv7` - ARMv7 (Raspberry Pi 2/3)
 
-            Or use the packages:
-            - RPM: `i2c-display-*.rpm`
-            - DEB: `i2c-display_*.deb`
+            ### Packages (x86_64 only)
 
-            See [README.md](https://github.com/ausil/i2c-display/blob/main/README.md) for setup instructions.
+            - RPM: `i2c-display-*.x86_64.rpm` (Fedora, RHEL, CentOS)
+            - DEB: `i2c-display_*_amd64.deb` (Debian, Ubuntu)
+
+            **Note:** Packages are built for x86_64. ARM users should use the standalone binaries above.
+
+            See [README.md](https://github.com/ausil/i2c-display/blob/main/README.md) for detailed installation instructions.
           files: |
             i2c-displayd-linux-*/i2c-displayd-*
             packages/dist/*.tar.gz
