@@ -7,7 +7,7 @@ Wants=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/i2c-displayd -config /etc/i2c-display/config.json
+ExecStart=/usr/bin/i2c-displayd -config /etc/i2c-display/config.json
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
@@ -18,7 +18,6 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/dev/i2c-1 /dev/i2c-0
 
 # Resource limits
 MemoryLimit=128M
