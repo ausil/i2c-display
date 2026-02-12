@@ -1,6 +1,6 @@
 module github.com/ausil/i2c-display
 
-go 1.25.6
+go 1.21
 
 require (
 	golang.org/x/image v0.36.0

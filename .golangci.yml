@@ -78,13 +78,13 @@ issues:
     - linters:
         - lll
       source: "^//go:generate "
+  exclude-files:
+    - ".*\\.pb\\.go$"
+  exclude-dirs:
+    - vendor
+    - testdata
   max-issues-per-linter: 0
   max-same-issues: 0
 
 run:
   timeout: 5m
-  skip-dirs:
-    - vendor
-    - testdata
-  skip-files:
-    - ".*\\.pb\\.go$"
