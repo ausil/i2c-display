@@ -1,3 +1,18 @@
+i2c-display (0.2.0-1) unstable; urgency=medium
+
+  * Enhanced small display support for 128x32 screens
+  * Split system metrics into individual rotating pages
+  * Show actual GB usage instead of percentages for disk and memory
+  * Reduce page rotation interval to 2 seconds for faster updates
+  * Add separator line after header on all display sizes
+  * Fix text rendering to ensure hostname always visible
+  * Reduce margins to 1px for maximum text space
+  * Downgrade golang.org/x/image for Go 1.21-1.23 compatibility
+  * Resolve all golangci-lint warnings and code quality issues
+  * Fix CI configuration and build process
+
+ -- Dennis Gilmore <dennis@ausil.us>  Wed, 12 Feb 2025 12:52:00 -0500
+
 i2c-display (0.1.0-1) unstable; urgency=medium
 
   * Adaptive layout system for different display sizes

@@ -1,5 +1,5 @@
 Name:           i2c-display
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
@@ -62,6 +62,18 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 %{_unitdir}/i2c-display.service
 
 %changelog
+* Wed Feb 12 2025 Dennis Gilmore <dennis@ausil.us> - 0.2.0-1
+- Enhanced small display support for 128x32 screens
+- Split system metrics into individual rotating pages
+- Show actual GB usage instead of percentages for disk and memory
+- Reduce page rotation interval to 2 seconds for faster updates
+- Add separator line after header on all display sizes
+- Fix text rendering to ensure hostname always visible
+- Reduce margins to 1px for maximum text space
+- Downgrade golang.org/x/image for Go 1.21-1.23 compatibility
+- Resolve all golangci-lint warnings and code quality issues
+- Fix CI configuration and build process
+
 * Wed Feb 12 2025 Dennis Gilmore <dennis@ausil.us> - 0.1.0-1
 - Adaptive layout system for different display sizes
 - Fix text rendering to prevent content from overwriting header
