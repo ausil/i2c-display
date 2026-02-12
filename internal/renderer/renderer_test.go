@@ -195,3 +195,324 @@ func TestTextHelpers(t *testing.T) {
 		t.Error("truncated text exceeds max width")
 	}
 }
+
+func TestNewLayout(t *testing.T) {
+	tests := []struct {
+		name        string
+		width       int
+		height      int
+		wantHeader  bool
+		wantSep     bool
+		minLines    int
+	}{
+		{
+			name:        "small 128x32",
+			width:       128,
+			height:      32,
+			wantHeader:  true,
+			wantSep:     true,
+			minLines:    1,
+		},
+		{
+			name:        "medium 128x64",
+			width:       128,
+			height:      64,
+			wantHeader:  true,
+			wantSep:     true,
+			minLines:    3,
+		},
+		{
+			name:        "large 256x128",
+			width:       256,
+			height:      128,
+			wantHeader:  true,
+			wantSep:     true,
+			minLines:    6,
+		},
+		{
+			name:        "tiny 96x16",
+			width:       96,
+			height:      16,
+			wantHeader:  true,
+			wantSep:     true,
+			minLines:    1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bounds := display.NewMockDisplay(tt.width, tt.height).GetBounds()
+			layout := NewLayout(bounds)
+
+			if layout.ShowHeader != tt.wantHeader {
+				t.Errorf("ShowHeader = %v, want %v", layout.ShowHeader, tt.wantHeader)
+			}
+
+			if layout.ShowSeparator != tt.wantSep {
+				t.Errorf("ShowSeparator = %v, want %v", layout.ShowSeparator, tt.wantSep)
+			}
+
+			if len(layout.ContentLines) < tt.minLines {
+				t.Errorf("ContentLines has %d lines, want at least %d",
+					len(layout.ContentLines), tt.minLines)
+			}
+
+			if layout.MaxContentLines < tt.minLines {
+				t.Errorf("MaxContentLines = %d, want at least %d",
+					layout.MaxContentLines, tt.minLines)
+			}
+		})
+	}
+}
+
+func TestCenterText(t *testing.T) {
+	tests := []struct {
+		text  string
+		width int
+	}{
+		{"Hello", 128},
+		{"X", 128},
+		{"Long text that is quite wide", 256}, // Use wider display for long text
+		{"Test", 64},
+		{"", 128},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.text, func(t *testing.T) {
+			x := CenterText(tt.text, tt.width)
+
+			textWidth := MeasureText(tt.text)
+
+			// If text fits within display, x should be non-negative
+			if textWidth < tt.width {
+				if x < 0 {
+					t.Errorf("CenterText returned negative x: %d for text that fits", x)
+				}
+			}
+			// Negative x is okay if text is too wide to center
+		})
+	}
+}
+
+func TestPageTitles(t *testing.T) {
+	t.Run("network page title", func(t *testing.T) {
+		page := NewNetworkPage(1, 3, 9)
+		title := page.Title()
+		if title == "" {
+			t.Error("expected non-empty title")
+		}
+		// Should contain page number
+		if title != "Network 1/3" {
+			t.Errorf("expected 'Network 1/3', got %q", title)
+		}
+	})
+
+	t.Run("system page title", func(t *testing.T) {
+		page := NewSystemPage()
+		title := page.Title()
+		if title == "" {
+			t.Error("expected non-empty title")
+		}
+		if title != "System" {
+			t.Errorf("expected 'System', got %q", title)
+		}
+	})
+
+	t.Run("system metric page titles", func(t *testing.T) {
+		tests := []struct {
+			metric SystemMetricType
+			want   string
+		}{
+			{SystemMetricDisk, "Disk"},
+			{SystemMetricMemory, "Memory"},
+			{SystemMetricCPU, "CPU"},
+			{SystemMetricAll, "System"},
+		}
+
+		for _, tt := range tests {
+			page := NewSystemPageForMetric(tt.metric)
+			title := page.Title()
+			if title != tt.want {
+				t.Errorf("metric %d: expected title %q, got %q", tt.metric, tt.want, title)
+			}
+		}
+	})
+}
+
+func TestGetPages(t *testing.T) {
+	disp := display.NewMockDisplay(128, 64)
+	cfg := config.Default()
+	renderer := NewRenderer(disp, cfg)
+
+	testStats := &stats.SystemStats{
+		Hostname: "testhost",
+		Interfaces: []stats.NetInterface{
+			{Name: "eth0", IPv4Addrs: []string{"192.168.1.100"}},
+		},
+	}
+
+	renderer.BuildPages(testStats)
+	pages := renderer.GetPages()
+
+	if len(pages) != renderer.PageCount() {
+		t.Errorf("GetPages returned %d pages, PageCount is %d",
+			len(pages), renderer.PageCount())
+	}
+
+	if len(pages) == 0 {
+		t.Error("expected at least one page")
+	}
+}
+
+func TestSystemPageMetricTypes(t *testing.T) {
+	disp := display.NewMockDisplay(128, 32)
+
+	testStats := &stats.SystemStats{
+		Hostname:    "testhost",
+		CPUTemp:     55.5,
+		MemoryUsed:  2 * 1024 * 1024 * 1024,
+		MemoryTotal: 4 * 1024 * 1024 * 1024,
+		DiskUsed:    50 * 1024 * 1024 * 1024,
+		DiskTotal:   100 * 1024 * 1024 * 1024,
+	}
+
+	metrics := []SystemMetricType{
+		SystemMetricDisk,
+		SystemMetricMemory,
+		SystemMetricCPU,
+		SystemMetricAll,
+	}
+
+	for _, metric := range metrics {
+		t.Run(string(rune(metric)), func(t *testing.T) {
+			page := NewSystemPageForMetric(metric)
+			if err := page.Render(disp, testStats); err != nil {
+				t.Errorf("Render failed for metric %d: %v", metric, err)
+			}
+		})
+	}
+}
+
+func TestSystemPageZeroCPUTemp(t *testing.T) {
+	disp := display.NewMockDisplay(128, 64)
+
+	testStats := &stats.SystemStats{
+		Hostname:    "testhost",
+		CPUTemp:     0, // Zero temp should skip CPU line
+		MemoryUsed:  2 * 1024 * 1024 * 1024,
+		MemoryTotal: 4 * 1024 * 1024 * 1024,
+		DiskUsed:    50 * 1024 * 1024 * 1024,
+		DiskTotal:   100 * 1024 * 1024 * 1024,
+	}
+
+	page := NewSystemPage()
+	if err := page.Render(disp, testStats); err != nil {
+		t.Errorf("Render with zero CPU temp failed: %v", err)
+	}
+}
+
+func TestNetworkPageIPv6(t *testing.T) {
+	disp := display.NewMockDisplay(128, 64)
+
+	testStats := &stats.SystemStats{
+		Hostname: "testhost",
+		Interfaces: []stats.NetInterface{
+			{
+				Name:       "eth0",
+				IPv4Addrs:  []string{},
+				IPv6Addrs:  []string{"fe80::1234:5678:90ab:cdef"},
+			},
+			{
+				Name:       "eth1",
+				IPv4Addrs:  []string{"192.168.1.100"},
+				IPv6Addrs:  []string{"fe80::abcd:ef12:3456:7890"},
+			},
+		},
+	}
+
+	page := NewNetworkPage(1, 3, 2)
+	if err := page.Render(disp, testStats); err != nil {
+		t.Errorf("Render with IPv6 failed: %v", err)
+	}
+}
+
+func TestNetworkPageNoAddress(t *testing.T) {
+	disp := display.NewMockDisplay(128, 64)
+
+	testStats := &stats.SystemStats{
+		Hostname: "testhost",
+		Interfaces: []stats.NetInterface{
+			{
+				Name:       "eth0",
+				IPv4Addrs:  []string{},
+				IPv6Addrs:  []string{},
+			},
+		},
+	}
+
+	page := NewNetworkPage(1, 3, 1)
+	if err := page.Render(disp, testStats); err != nil {
+		t.Errorf("Render with no address failed: %v", err)
+	}
+}
+
+func TestRendererSmallDisplay(t *testing.T) {
+	disp := display.NewMockDisplay(128, 32)
+	cfg := config.Default()
+	renderer := NewRenderer(disp, cfg)
+
+	testStats := &stats.SystemStats{
+		Hostname:    "testhost",
+		CPUTemp:     55.5,
+		MemoryUsed:  2 * 1024 * 1024 * 1024,
+		MemoryTotal: 4 * 1024 * 1024 * 1024,
+		DiskUsed:    50 * 1024 * 1024 * 1024,
+		DiskTotal:   100 * 1024 * 1024 * 1024,
+		Interfaces: []stats.NetInterface{
+			{Name: "eth0", IPv4Addrs: []string{"192.168.1.100"}},
+		},
+	}
+
+	renderer.BuildPages(testStats)
+
+	// Small displays should create separate metric pages
+	if renderer.PageCount() < 3 {
+		t.Errorf("expected at least 3 pages for small display, got %d", renderer.PageCount())
+	}
+
+	// Render all pages
+	for i := 0; i < renderer.PageCount(); i++ {
+		if err := renderer.RenderPage(i, testStats); err != nil {
+			t.Errorf("RenderPage(%d) failed: %v", i, err)
+		}
+	}
+}
+
+func TestDrawHelpers(t *testing.T) {
+	disp := display.NewMockDisplay(128, 64)
+
+	t.Run("DrawText", func(t *testing.T) {
+		if err := DrawText(disp, 0, 0, "Hello"); err != nil {
+			t.Errorf("DrawText failed: %v", err)
+		}
+	})
+
+	t.Run("DrawTextCentered", func(t *testing.T) {
+		if err := DrawTextCentered(disp, 32, "Centered"); err != nil {
+			t.Errorf("DrawTextCentered failed: %v", err)
+		}
+	})
+
+	t.Run("DrawLine", func(t *testing.T) {
+		if err := DrawLine(disp, 10); err != nil {
+			t.Errorf("DrawLine failed: %v", err)
+		}
+	})
+}
+
+func TestMeasureTextEmpty(t *testing.T) {
+	width := MeasureText("")
+	if width != 0 {
+		t.Errorf("expected width 0 for empty string, got %d", width)
+	}
+}

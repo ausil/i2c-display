@@ -34,7 +34,7 @@ See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add
 - **Flexible Configuration**: JSON-based configuration with multiple search paths and hot reload
 - **Systemd Integration**: Run as a system service with automatic start
 - **Hardware Abstraction**: Mock display for testing without physical hardware
-- **Comprehensive Testing**: Over 80% test coverage with CI/CD support
+- **Comprehensive Testing**: 75% test coverage with CI/CD support
 - **Structured Logging**: JSON and console logging with configurable levels
 - **Prometheus Metrics**: Optional metrics endpoint for monitoring
 - **Error Handling**: Automatic retry with exponential backoff for I2C errors
