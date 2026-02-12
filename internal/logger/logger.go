@@ -4,10 +4,15 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+)
+
+var (
+	globalLoggerMu sync.RWMutex // Protects global logger operations
 )
 
 // Logger wraps zerolog with application-specific configuration
@@ -24,9 +29,11 @@ type Config struct {
 
 // New creates a new configured logger
 func New(cfg Config) *Logger {
-	// Set log level
+	// Set log level (protected by mutex)
+	globalLoggerMu.Lock()
 	level := parseLevel(cfg.Level)
 	zerolog.SetGlobalLevel(level)
+	globalLoggerMu.Unlock()
 
 	// Choose output
 	var output io.Writer
@@ -185,10 +192,14 @@ func (e *Event) Logger() *Logger {
 
 // SetGlobalLogger sets a global logger for use throughout the app
 func SetGlobalLogger(l *Logger) {
+	globalLoggerMu.Lock()
+	defer globalLoggerMu.Unlock()
 	log.Logger = l.logger
 }
 
 // Global returns the global logger
 func Global() *Logger {
+	globalLoggerMu.RLock()
+	defer globalLoggerMu.RUnlock()
 	return &Logger{logger: log.Logger}
 }

@@ -3,6 +3,7 @@ package rotation
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ausil/i2c-display/internal/config"
@@ -16,6 +17,7 @@ type Manager struct {
 	collector       *stats.SystemCollector
 	renderer        *renderer.Renderer
 	currentPage     int
+	mu              sync.Mutex // Protects currentPage
 	rotationTicker  *time.Ticker
 	refreshTicker   *time.Ticker
 	stopChan        chan struct{}
@@ -64,7 +66,13 @@ func (m *Manager) Start(ctx context.Context) error {
 
 // run is the main rotation loop
 func (m *Manager) run(ctx context.Context) {
-	defer close(m.stoppedChan)
+	defer func() {
+		if r := recover(); r != nil {
+			// Log panic and ensure cleanup
+			fmt.Printf("PANIC in rotation manager: %v\n", r)
+		}
+		close(m.stoppedChan)
+	}()
 	defer m.rotationTicker.Stop()
 	defer m.refreshTicker.Stop()
 
@@ -97,16 +105,22 @@ func (m *Manager) refreshCurrentPage() error {
 	m.renderer.BuildPages(systemStats)
 
 	// Ensure current page is valid
+	m.mu.Lock()
 	if m.currentPage >= m.renderer.PageCount() {
 		m.currentPage = 0
 	}
+	pageIdx := m.currentPage
+	m.mu.Unlock()
 
 	// Render current page
-	return m.renderer.RenderPage(m.currentPage, systemStats)
+	return m.renderer.RenderPage(pageIdx, systemStats)
 }
 
 // rotatePage advances to the next page
 func (m *Manager) rotatePage() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.currentPage++
 	if m.currentPage >= m.renderer.PageCount() {
 		m.currentPage = 0
@@ -118,10 +132,20 @@ func (m *Manager) rotatePage() {
 // Stop stops the rotation manager gracefully
 func (m *Manager) Stop() {
 	close(m.stopChan)
-	<-m.stoppedChan
+
+	// Wait for goroutine to stop with timeout to prevent deadlock
+	select {
+	case <-m.stoppedChan:
+		// Normal shutdown
+	case <-time.After(5 * time.Second):
+		// Timeout - goroutine may have panicked
+		fmt.Println("Warning: rotation manager stop timed out")
+	}
 }
 
 // CurrentPage returns the current page index
 func (m *Manager) CurrentPage() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.currentPage
 }

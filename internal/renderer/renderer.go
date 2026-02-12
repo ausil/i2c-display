@@ -1,6 +1,8 @@
 package renderer
 
 import (
+	"sync"
+
 	"github.com/ausil/i2c-display/internal/config"
 	"github.com/ausil/i2c-display/internal/display"
 	"github.com/ausil/i2c-display/internal/stats"
@@ -10,6 +12,7 @@ import (
 type Renderer struct {
 	display display.Display
 	pages   []Page
+	mu      sync.RWMutex // Protects pages slice
 	config  *config.Config
 }
 
@@ -48,24 +51,37 @@ func (r *Renderer) BuildPages(s *stats.SystemStats) {
 		}
 	}
 
+	r.mu.Lock()
 	r.pages = pages
+	r.mu.Unlock()
 }
 
 // GetPages returns the current pages
 func (r *Renderer) GetPages() []Page {
-	return r.pages
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	// Return a copy to prevent external modification
+	pagesCopy := make([]Page, len(r.pages))
+	copy(pagesCopy, r.pages)
+	return pagesCopy
 }
 
 // RenderPage renders a specific page by index
 func (r *Renderer) RenderPage(pageIdx int, s *stats.SystemStats) error {
+	r.mu.RLock()
 	if pageIdx < 0 || pageIdx >= len(r.pages) {
+		r.mu.RUnlock()
 		return nil // Silently ignore invalid page index
 	}
+	page := r.pages[pageIdx]
+	r.mu.RUnlock()
 
-	return r.pages[pageIdx].Render(r.display, s)
+	return page.Render(r.display, s)
 }
 
 // PageCount returns the number of pages
 func (r *Renderer) PageCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return len(r.pages)
 }

@@ -2,6 +2,7 @@ package screensaver
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -75,6 +76,13 @@ func (s *ScreenSaver) Start(ctx context.Context) error {
 	s.ticker = time.NewTicker(10 * time.Second)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				// Log panic but don't crash the application
+				s.log.With().Str("panic", fmt.Sprintf("%v", r)).Logger().Error("PANIC in screen saver")
+			}
+		}()
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -105,20 +113,16 @@ func (s *ScreenSaver) Stop() {
 // check checks if screen saver should activate or deactivate
 func (s *ScreenSaver) check() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	idle := time.Since(s.lastActive)
+	shouldActivate := idle >= s.cfg.IdleTimeout && !s.isActive
+	shouldDeactivate := idle < s.cfg.IdleTimeout && s.isActive
+	s.mu.Unlock()
 
-	if idle >= s.cfg.IdleTimeout {
-		// Should activate screen saver
-		if !s.isActive {
-			s.activate()
-		}
-	} else {
-		// Should deactivate screen saver
-		if s.isActive {
-			s.deactivate()
-		}
+	// Call activate/deactivate without holding the lock
+	if shouldActivate {
+		s.activate()
+	} else if shouldDeactivate {
+		s.deactivate()
 	}
 }
 
@@ -126,32 +130,40 @@ func (s *ScreenSaver) check() {
 func (s *ScreenSaver) activate() {
 	s.log.With().Str("mode", string(s.cfg.Mode)).Logger().Info("Activating screen saver")
 
+	// Perform display operations without holding the lock
+	var err error
 	switch s.cfg.Mode {
 	case ModeDim:
-		if err := s.disp.SetBrightness(s.cfg.DimBrightness); err != nil {
-			s.log.ErrorWithErr(err, "Failed to dim display")
-			return
-		}
+		err = s.disp.SetBrightness(s.cfg.DimBrightness)
 	case ModeBlank:
-		if err := s.disp.SetBrightness(0); err != nil {
-			s.log.ErrorWithErr(err, "Failed to blank display")
-			return
-		}
+		err = s.disp.SetBrightness(0)
 	}
 
+	if err != nil {
+		s.log.ErrorWithErr(err, "Failed to activate screen saver")
+		return
+	}
+
+	// Only set isActive flag if brightness change succeeded
+	s.mu.Lock()
 	s.isActive = true
+	s.mu.Unlock()
 }
 
 // deactivate deactivates the screen saver
 func (s *ScreenSaver) deactivate() {
 	s.log.Debug("Deactivating screen saver")
 
+	// Perform display operation without holding the lock
 	if err := s.disp.SetBrightness(s.cfg.NormalBrightness); err != nil {
 		s.log.ErrorWithErr(err, "Failed to restore brightness")
 		return
 	}
 
+	// Only clear isActive flag if brightness change succeeded
+	s.mu.Lock()
 	s.isActive = false
+	s.mu.Unlock()
 }
 
 // ResetActivity resets the idle timer (call when user activity detected)
@@ -161,12 +173,11 @@ func (s *ScreenSaver) ResetActivity() {
 	}
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	wasActive := s.isActive
 	s.lastActive = time.Now()
+	s.mu.Unlock()
 
-	// If screen saver was active, deactivate immediately
+	// If screen saver was active, deactivate immediately (without holding lock)
 	if wasActive {
 		s.deactivate()
 	}
