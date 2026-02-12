@@ -1,10 +1,11 @@
-version: 2
+version: "2"
 
-linters-settings:
+settings:
   govet:
     enable-all: true
-    disable:
-      - shadow
+    settings:
+      shadow:
+        strict: false
   gocyclo:
     min-complexity: 15
   dupl:
@@ -35,7 +36,6 @@ linters-settings:
     statements: 50
 
 linters:
-  disable-all: true
   enable:
     - bodyclose
     - dogsled
@@ -66,27 +66,15 @@ linters:
     - whitespace
 
 issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - funlen
-    - path: internal/display/mock\.go
-      linters:
-        - unused
-    - linters:
-        - lll
-      source: "^//go:generate "
+  exclude-files:
+    - ".*_test\\.go$"
+    - "internal/display/mock\\.go$"
+    - ".*\\.pb\\.go$"
+  exclude-dirs:
+    - vendor
+    - testdata
   max-issues-per-linter: 0
   max-same-issues: 0
 
 run:
   timeout: 5m
-  skip-dirs:
-    - vendor
-    - testdata
-  skip-files:
-    - ".*\\.pb\\.go$"
