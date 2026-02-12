@@ -67,7 +67,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y rpm debhelper devscripts
+          sudo apt-get install -y rpm debhelper devscripts dh-golang
 
       - name: Build source tarball
         run: make dist
