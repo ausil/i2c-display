@@ -126,7 +126,11 @@ dist:
 # Build source RPM
 srpm: dist
 	@echo "Building source RPM..."
-	@mkdir -p $(RPM_TOPDIR)/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+	@mkdir -p $(RPM_TOPDIR)/BUILD
+	@mkdir -p $(RPM_TOPDIR)/RPMS
+	@mkdir -p $(RPM_TOPDIR)/SOURCES
+	@mkdir -p $(RPM_TOPDIR)/SPECS
+	@mkdir -p $(RPM_TOPDIR)/SRPMS
 	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
 	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
 	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -bs $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
@@ -136,7 +140,11 @@ srpm: dist
 # Build binary RPM
 rpm: dist
 	@echo "Building binary RPM..."
-	@mkdir -p $(RPM_TOPDIR)/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+	@mkdir -p $(RPM_TOPDIR)/BUILD
+	@mkdir -p $(RPM_TOPDIR)/RPMS
+	@mkdir -p $(RPM_TOPDIR)/SOURCES
+	@mkdir -p $(RPM_TOPDIR)/SPECS
+	@mkdir -p $(RPM_TOPDIR)/SRPMS
 	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
 	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
 	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -ba $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
