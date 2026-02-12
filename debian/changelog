@@ -1,3 +1,11 @@
+i2c-display (0.0.3-1) unstable; urgency=medium
+
+  * Fix display dimension auto-detection for different display types
+  * Display dimensions now automatically set based on display type
+  * Fixes configuration validation error for ssd1306_128x32 displays
+
+ -- Dennis Gilmore <dennis@ausil.us>  Wed, 12 Feb 2025 01:40:00 -0500
+
 i2c-display (0.0.2-1) unstable; urgency=medium
 
   * Production-ready enhancements

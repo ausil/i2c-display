@@ -98,29 +98,29 @@ func TestApplyDisplayDefaults(t *testing.T) {
 			},
 		},
 		{
-			name: "preserve explicit dimensions",
+			name: "override dimensions to match type",
 			config: DisplayConfig{
 				Type:   "ssd1306",
-				Width:  128,
-				Height: 64,
+				Width:  96,  // Wrong dimensions
+				Height: 16,  // Will be overridden
 			},
 			want: DisplayConfig{
 				Type:   "ssd1306",
-				Width:  128,
-				Height: 64,
+				Width:  128, // Corrected to match type
+				Height: 64,  // Corrected to match type
 			},
 		},
 		{
-			name: "auto-fill only missing dimension",
+			name: "correct wrong dimensions for type",
 			config: DisplayConfig{
 				Type:   "ssd1306_128x32",
 				Width:  128,
-				Height: 0,
+				Height: 64, // Wrong for this type
 			},
 			want: DisplayConfig{
 				Type:   "ssd1306_128x32",
 				Width:  128,
-				Height: 32,
+				Height: 32, // Corrected to match type
 			},
 		},
 		{

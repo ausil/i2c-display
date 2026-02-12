@@ -34,6 +34,7 @@ func GetDisplaySpec(displayType string) (DisplaySpec, bool) {
 }
 
 // ApplyDisplayDefaults applies default width/height based on display type
+// The display type is authoritative - dimensions are always set to match the type
 func (c *DisplayConfig) ApplyDisplayDefaults() {
 	if c.Type == "" {
 		c.Type = "ssd1306"
@@ -45,11 +46,8 @@ func (c *DisplayConfig) ApplyDisplayDefaults() {
 		return // Unknown type, let validation handle it
 	}
 
-	// Auto-fill width and height if not set
-	if c.Width == 0 {
-		c.Width = spec.Width
-	}
-	if c.Height == 0 {
-		c.Height = spec.Height
-	}
+	// Always set width and height to match the display type
+	// This makes the type authoritative over explicit dimension values
+	c.Width = spec.Width
+	c.Height = spec.Height
 }

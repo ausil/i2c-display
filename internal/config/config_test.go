@@ -250,6 +250,39 @@ func TestLoad(t *testing.T) {
 		}
 	}`
 
+	configWithSsd1306_128x32 := `{
+		"display": {
+			"type": "ssd1306_128x32",
+			"i2c_bus": "/dev/i2c-1",
+			"i2c_address": "0x3C",
+			"rotation": 0
+		},
+		"pages": {
+			"rotation_interval": "5s",
+			"refresh_interval": "1s"
+		},
+		"system_info": {
+			"hostname_display": "short",
+			"disk_path": "/",
+			"temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+			"temperature_unit": "celsius"
+		},
+		"network": {
+			"auto_detect": true,
+			"interface_filter": {
+				"include": ["eth0"],
+				"exclude": ["lo"]
+			},
+			"show_ipv4": true,
+			"show_ipv6": false,
+			"max_interfaces_per_page": 3
+		},
+		"logging": {
+			"level": "info",
+			"output": "stdout"
+		}
+	}`
+
 	tests := []struct {
 		name    string
 		content string
@@ -266,6 +299,22 @@ func TestLoad(t *testing.T) {
 				}
 				if cfg.Logging.Level != "debug" {
 					t.Errorf("expected Level=debug, got %s", cfg.Logging.Level)
+				}
+			},
+		},
+		{
+			name:    "ssd1306_128x32 without dimensions",
+			content: configWithSsd1306_128x32,
+			wantErr: false,
+			check: func(t *testing.T, cfg *Config) {
+				if cfg.Display.Type != "ssd1306_128x32" {
+					t.Errorf("expected Type=ssd1306_128x32, got %s", cfg.Display.Type)
+				}
+				if cfg.Display.Width != 128 {
+					t.Errorf("expected Width=128 (auto-filled from type), got %d", cfg.Display.Width)
+				}
+				if cfg.Display.Height != 32 {
+					t.Errorf("expected Height=32 (auto-filled from type), got %d", cfg.Display.Height)
 				}
 			},
 		},

@@ -1,5 +1,5 @@
 Name:           i2c-display
-Version:        0.0.2
+Version:        0.0.3
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
@@ -62,6 +62,11 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 %{_unitdir}/i2c-display.service
 
 %changelog
+* Wed Feb 12 2025 Dennis Gilmore <dennis@ausil.us> - 0.0.3-1
+- Fix display dimension auto-detection for different display types
+- Display dimensions now automatically set based on display type
+- Fixes configuration validation error for ssd1306_128x32 displays
+
 * Sun Feb 09 2025 Dennis Gilmore <dennis@ausil.us> - 0.0.2-1
 - Production-ready enhancements
 - Added structured logging with zerolog

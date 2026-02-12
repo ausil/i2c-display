@@ -5,6 +5,7 @@
     "i2c_address": "0x3C",
     "rotation": 0
   },
+  "_comment": "Display dimensions (width/height) are automatically set based on the display type and don't need to be specified",
   "pages": {
     "rotation_interval": "5s",
     "refresh_interval": "1s"

@@ -92,13 +92,13 @@ func (p *PagesConfig) GetRefreshInterval() (time.Duration, error) {
 
 // Default returns a configuration with sensible defaults
 func Default() *Config {
-	return &Config{
+	cfg := &Config{
 		Display: DisplayConfig{
 			Type:       "ssd1306",
 			I2CBus:     "/dev/i2c-1",
 			I2CAddress: "0x3C",
-			Width:      128,
-			Height:     64,
+			Width:      0, // Will be set by ApplyDisplayDefaults based on type
+			Height:     0, // Will be set by ApplyDisplayDefaults based on type
 			Rotation:   0,
 		},
 		Pages: PagesConfig{
@@ -138,6 +138,11 @@ func Default() *Config {
 			NormalBrightness: 255,
 		},
 	}
+
+	// Apply display defaults based on type
+	cfg.Display.ApplyDisplayDefaults()
+
+	return cfg
 }
 
 // Load loads configuration from a file path
