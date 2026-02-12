@@ -133,7 +133,7 @@ srpm: dist
 	@mkdir -p $(RPM_TOPDIR)/SRPMS
 	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
 	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
-	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -bs $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
+	@rpmbuild --define "_topdir $(RPM_TOPDIR)" --nodeps -bs $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
 	@echo "Source RPM created:"
 	@ls -lh $(RPM_TOPDIR)/SRPMS/*.src.rpm
 
@@ -147,7 +147,7 @@ rpm: dist
 	@mkdir -p $(RPM_TOPDIR)/SRPMS
 	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
 	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
-	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -ba $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
+	@rpmbuild --define "_topdir $(RPM_TOPDIR)" --nodeps -ba $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
 	@echo "RPM packages created:"
 	@ls -lh $(RPM_TOPDIR)/RPMS/*/*.rpm
 	@ls -lh $(RPM_TOPDIR)/SRPMS/*.src.rpm
