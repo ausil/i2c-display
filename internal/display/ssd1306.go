@@ -114,6 +114,7 @@ func (d *SSD1306Display) DrawPixel(x, y int, on bool) error {
 }
 
 // DrawRect draws a rectangle
+//nolint:gocyclo // drawing logic naturally has many conditional branches
 func (d *SSD1306Display) DrawRect(x, y, width, height int, fill bool) error {
 	if fill {
 		for dy := 0; dy < height && y+dy < d.height; dy++ {

@@ -43,17 +43,17 @@ func Do(ctx context.Context, cfg Config, op Operation) error {
 				return fmt.Errorf("operation failed after %d attempts: %w", cfg.MaxAttempts, lastErr)
 			}
 
-			// Check if context is cancelled
+			// Check if context is canceled
 			select {
 			case <-ctx.Done():
-				return fmt.Errorf("operation cancelled: %w", ctx.Err())
+				return fmt.Errorf("operation canceled: %w", ctx.Err())
 			default:
 			}
 
 			// Wait before retrying with exponential backoff
 			select {
 			case <-ctx.Done():
-				return fmt.Errorf("operation cancelled during backoff: %w", ctx.Err())
+				return fmt.Errorf("operation canceled during backoff: %w", ctx.Err())
 			case <-time.After(delay):
 			}
 
@@ -90,17 +90,17 @@ func DoWithResult[T any](ctx context.Context, cfg Config, op func() (T, error)) 
 				return result, fmt.Errorf("operation failed after %d attempts: %w", cfg.MaxAttempts, lastErr)
 			}
 
-			// Check if context is cancelled
+			// Check if context is canceled
 			select {
 			case <-ctx.Done():
-				return result, fmt.Errorf("operation cancelled: %w", ctx.Err())
+				return result, fmt.Errorf("operation canceled: %w", ctx.Err())
 			default:
 			}
 
 			// Wait before retrying with exponential backoff
 			select {
 			case <-ctx.Done():
-				return result, fmt.Errorf("operation cancelled during backoff: %w", ctx.Err())
+				return result, fmt.Errorf("operation canceled during backoff: %w", ctx.Err())
 			case <-time.After(delay):
 			}
 

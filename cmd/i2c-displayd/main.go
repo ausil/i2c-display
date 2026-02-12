@@ -15,6 +15,7 @@ import (
 	"github.com/ausil/i2c-display/internal/stats"
 )
 
+//nolint:funlen // main function naturally has many statements for initialization
 func main() {
 	// Parse command-line flags
 	configPath := flag.String("config", "", "Path to configuration file")

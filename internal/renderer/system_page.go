@@ -47,6 +47,7 @@ func (p *SystemPage) Title() string {
 }
 
 // Render draws the system stats page
+//nolint:gocyclo // rendering logic naturally has many conditional branches for different display sizes
 func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 	// Clear display
 	if err := disp.Clear(); err != nil {
