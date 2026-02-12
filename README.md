@@ -103,29 +103,84 @@ ls /dev/i2c-*
 
 ## Installation
 
-### Using Pre-built Binaries (Recommended for ARM devices)
+### For ARM/aarch64 Single Board Computers (Recommended)
 
-Download the latest release from [GitHub Releases](https://github.com/ausil/i2c-display/releases):
+**Build and install packages locally on your SBC** (Raspberry Pi, Radxa, Orange Pi, Pine64, etc.):
 
-**For Raspberry Pi and ARM Single Board Computers:**
-- `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4, Rock 3C/5B)
-- `i2c-displayd-linux-armv7` - ARMv7 (Raspberry Pi 2/3)
+Building packages locally on ARM is fast and integrates better with your system's package manager.
 
-**For x86_64 systems:**
-- `i2c-displayd-linux-amd64` - x86_64 Linux
-- RPM package: `i2c-display-*.x86_64.rpm`
-- DEB package: `i2c-display_*_amd64.deb`
+<details>
+<summary><strong>Debian/Ubuntu/Raspberry Pi OS (DEB Package)</strong></summary>
 
 ```bash
-# Download for ARM64 (e.g., Raspberry Pi 4)
+# Install build dependencies
+sudo apt-get update
+sudo apt-get install -y git golang debhelper devscripts dh-golang
+
+# Clone and build
+git clone https://github.com/ausil/i2c-display.git
+cd i2c-display
+make deb
+
+# Install the package
+sudo apt install ../i2c-display_*_arm64.deb  # or *_armhf.deb for 32-bit
+
+# Enable and start
+sudo systemctl enable --now i2c-display.service
+```
+
+The package automatically:
+- Installs the binary to `/usr/bin/i2c-displayd`
+- Creates config at `/etc/i2c-display/config.json`
+- Installs and enables the systemd service
+- Can be removed with: `sudo apt remove i2c-display`
+
+</details>
+
+<details>
+<summary><strong>Fedora/RHEL on ARM (RPM Package)</strong></summary>
+
+```bash
+# Install build dependencies
+sudo dnf install -y git golang rpm-build systemd-rpm-macros
+
+# Clone and build
+git clone https://github.com/ausil/i2c-display.git
+cd i2c-display
+make rpm
+
+# Install the package
+sudo dnf install rpm-build/RPMS/*/i2c-display-*.aarch64.rpm
+
+# Enable and start
+sudo systemctl enable --now i2c-display.service
+```
+
+The package automatically:
+- Installs the binary to `/usr/bin/i2c-displayd`
+- Creates config at `/etc/i2c-display/config.json`
+- Installs and enables the systemd service
+- Can be removed with: `sudo dnf remove i2c-display`
+
+</details>
+
+**Alternative: Pre-built Binaries**
+
+If you prefer not to build packages, you can use pre-built binaries:
+
+```bash
+# Download for ARM64 (e.g., Raspberry Pi 4, Rock 5B)
 wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-displayd-linux-arm64
 chmod +x i2c-displayd-linux-arm64
 sudo mv i2c-displayd-linux-arm64 /usr/bin/i2c-displayd
 
-# Create config directory
-sudo mkdir -p /etc/i2c-display
+# Download for ARMv7 (e.g., Raspberry Pi 2/3)
+# wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-displayd-linux-armv7
+# chmod +x i2c-displayd-linux-armv7
+# sudo mv i2c-displayd-linux-armv7 /usr/bin/i2c-displayd
 
-# Download example config
+# Create config directory and download config
+sudo mkdir -p /etc/i2c-display
 sudo wget -O /etc/i2c-display/config.json \
   https://raw.githubusercontent.com/ausil/i2c-display/main/configs/config.example.json
 
@@ -135,36 +190,45 @@ sudo wget -O /etc/systemd/system/i2c-display.service \
 
 # Enable and start
 sudo systemctl daemon-reload
-sudo systemctl enable i2c-display.service
-sudo systemctl start i2c-display.service
+sudo systemctl enable --now i2c-display.service
 ```
 
-### Using Packages (x86_64 only)
+**Note:** Using packages is recommended as they integrate with your system's package manager for easier updates and removal.
 
-**RPM (Fedora, RHEL, Rocky Linux, AlmaLinux, CentOS):**
+### For x86_64 Systems
 
-Download the RPM from [GitHub Releases](https://github.com/ausil/i2c-display/releases/latest)
+**Pre-built packages available** from [GitHub Releases](https://github.com/ausil/i2c-display/releases/latest):
+
+<details>
+<summary><strong>RPM (Fedora, RHEL, Rocky Linux, AlmaLinux, CentOS)</strong></summary>
 
 ```bash
-# Using dnf (Fedora 22+, RHEL 8+)
-sudo dnf install ./i2c-display-*.x86_64.rpm
-sudo systemctl enable --now i2c-display.service
+# Download the RPM
+wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-display-*.x86_64.rpm
 
-# Or using rpm directly
-sudo rpm -Uvh i2c-display-*.x86_64.rpm
+# Install using dnf (Fedora 22+, RHEL 8+)
+sudo dnf install ./i2c-display-*.x86_64.rpm
 sudo systemctl enable --now i2c-display.service
 
 # Or using yum (older RHEL/CentOS)
 sudo yum localinstall i2c-display-*.x86_64.rpm
 sudo systemctl enable --now i2c-display.service
+
+# Or using rpm directly
+sudo rpm -Uvh i2c-display-*.x86_64.rpm
+sudo systemctl enable --now i2c-display.service
 ```
 
-**DEB (Debian, Ubuntu, Linux Mint, Pop!_OS):**
+</details>
 
-Download the DEB from [GitHub Releases](https://github.com/ausil/i2c-display/releases/latest)
+<details>
+<summary><strong>DEB (Debian, Ubuntu, Linux Mint, Pop!_OS)</strong></summary>
 
 ```bash
-# Using apt (recommended)
+# Download the DEB
+wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-display_*_amd64.deb
+
+# Install using apt (recommended)
 sudo apt install ./i2c-display_*_amd64.deb
 sudo systemctl enable --now i2c-display.service
 
@@ -174,7 +238,16 @@ sudo apt-get install -f  # Install any missing dependencies
 sudo systemctl enable --now i2c-display.service
 ```
 
-**Note:** RPM and DEB packages are currently built for x86_64 only. ARM users (Raspberry Pi, Radxa, Orange Pi, Pine64, etc.) should use the pre-built binaries as shown in the "Using Pre-built Binaries" section above.
+</details>
+
+**Or use the pre-built binary:**
+
+```bash
+wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-displayd-linux-amd64
+chmod +x i2c-displayd-linux-amd64
+sudo mv i2c-displayd-linux-amd64 /usr/bin/i2c-displayd
+# Then follow manual setup steps from ARM binary installation above
+```
 
 ### Building from Source
 
@@ -196,19 +269,6 @@ sudo make install
 # Enable and start the service
 sudo systemctl enable i2c-display.service
 sudo systemctl start i2c-display.service
-```
-
-**Build ARM Packages Locally:**
-
-To build RPM or DEB packages for ARM on your Raspberry Pi or ARM SBC:
-```bash
-# For DEB packages
-make deb
-
-# For RPM packages
-make rpm
-
-# Packages will be in ../ (DEB) or rpm-build/ (RPM)
 ```
 
 ## Configuration

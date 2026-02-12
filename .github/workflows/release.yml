@@ -134,21 +134,40 @@ jobs:
 
             ## Installation
 
-            ### Binaries (All Platforms)
+            ### For ARM/aarch64 SBCs (Raspberry Pi, Radxa, Orange Pi, Pine64, etc.)
 
-            Download the appropriate binary for your platform:
-            - `i2c-displayd-linux-amd64` - x86_64 Linux
-            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4, Rock 3C/5B) **← Recommended for ARM SBCs**
+            **Recommended:** Build packages locally on your SBC for best integration:
+
+            ```bash
+            # Debian/Ubuntu/Raspberry Pi OS
+            git clone https://github.com/ausil/i2c-display.git
+            cd i2c-display
+            sudo apt-get install -y git golang debhelper devscripts dh-golang
+            make deb
+            sudo apt install ../i2c-display_*_arm64.deb
+
+            # Fedora/RHEL on ARM
+            git clone https://github.com/ausil/i2c-display.git
+            cd i2c-display
+            sudo dnf install -y git golang rpm-build systemd-rpm-macros
+            make rpm
+            sudo dnf install rpm-build/RPMS/*/i2c-display-*.aarch64.rpm
+            ```
+
+            **Alternative:** Use standalone binaries:
+            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4, Rock 3C/5B)
             - `i2c-displayd-linux-armv7` - ARMv7 (Raspberry Pi 2/3)
 
-            ### Packages (x86_64 only)
+            ### For x86_64 Systems
 
-            - RPM: `i2c-display-*.x86_64.rpm` (Fedora, RHEL, CentOS)
+            **Packages (pre-built):**
+            - RPM: `i2c-display-*.x86_64.rpm` (Fedora, RHEL, Rocky, CentOS)
             - DEB: `i2c-display_*_amd64.deb` (Debian, Ubuntu)
 
-            **Note:** Packages are built for x86_64. ARM users should use the standalone binaries above.
+            **Or standalone binary:**
+            - `i2c-displayd-linux-amd64`
 
-            See [README.md](https://github.com/ausil/i2c-display/blob/main/README.md) for detailed installation instructions.
+            See [README.md](https://github.com/ausil/i2c-display/blob/main/README.md) for complete installation instructions.
           files: |
             i2c-displayd-linux-*/i2c-displayd-*
             packages/dist/*.tar.gz
