@@ -1,21 +1,25 @@
 # I2C Display Controller
 
-A Go application for Single Board Computers that controls I2C OLED displays, showing system stats and network information with rotating pages.
+A Go application for Single Board Computers that controls OLED and TFT displays, showing system stats and network information with rotating pages. Supports both I2C (OLED) and SPI (TFT colour) displays.
 
-**Works with any SBC that provides I2C devices:**
-- **Raspberry Pi** (all models with I2C support)
+**Works with any SBC that provides I2C or SPI devices:**
+- **Raspberry Pi** (all models)
 - **Radxa** (Rock 3C, Rock 5B, Rock 4, etc.)
 - **Orange Pi** (all models)
 - **Pine64** (all models)
-- **Banana Pi**, **Odroid**, and any other Linux SBC with I2C support
+- **Banana Pi**, **Odroid**, and any other Linux SBC
 
 ## Supported Displays
 
 ### Fully Working ✅
-- **SSD1306** - 128x64, 128x32, or 96x16 monochrome OLED
+- **SSD1306** - 128x64, 128x32, or 96x16 monochrome OLED (I2C)
   - Most common I2C OLED display
   - Full support via periph.io
   - Types: `ssd1306`, `ssd1306_128x64`, `ssd1306_128x32`, `ssd1306_96x16`
+
+- **ST7735** - Color TFT LCD (SPI)
+  - White-on-black rendering, RGB565 colour
+  - Types: `st7735` / `st7735_128x160` (1.8"), `st7735_128x128` (1.44"), `st7735_160x80` (0.96" Waveshare)
 
 ### Framework Ready (Drivers Needed) 🔧
 - **SH1106** - 128x64 monochrome (similar to SSD1306)
@@ -44,22 +48,31 @@ See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add
 ## Requirements
 
 - Go 1.19 or later (for building from source)
-- Supported OLED display (see Supported Displays section)
-- Any Linux-based SBC with I2C support
-- I2C enabled on the system
+- Supported display (see Supported Displays section)
+- Any Linux-based SBC with I2C or SPI support
 
 ## Hardware Setup
 
-### Wiring
+### Wiring — I2C (SSD1306)
 
-Connect the SSD1306 display to your SBC:
+| SSD1306 Pin | SBC Pin   | Description |
+|-------------|-----------|-------------|
+| VCC         | 3.3V      | Power       |
+| GND         | GND       | Ground      |
+| SCL         | I2C SCL   | Clock       |
+| SDA         | I2C SDA   | Data        |
 
-| SSD1306 Pin | SBC Pin     | Description |
-|-------------|-------------|-------------|
-| VCC         | 3.3V        | Power       |
-| GND         | GND         | Ground      |
-| SCL         | I2C SCL     | I2C Clock   |
-| SDA         | I2C SDA     | I2C Data    |
+### Wiring — SPI (ST7735)
+
+| ST7735 Pin | SBC Pin         | Description                    |
+|------------|-----------------|--------------------------------|
+| VCC        | 3.3V            | Power                          |
+| GND        | GND             | Ground                         |
+| SCL/SCK    | SPI SCLK        | SPI Clock                      |
+| SDA/MOSI   | SPI MOSI        | SPI Data                       |
+| CS         | SPI CS0 (CE0)   | Chip Select                    |
+| DC/RS      | Any GPIO (e.g. GPIO24) | Data/Command select     |
+| RST        | Any GPIO (e.g. GPIO25) | Reset (optional but recommended) |
 
 ### Enable I2C
 
@@ -335,10 +348,15 @@ See `configs/config.example.json` for a complete example:
 #### Display
 
 - **`type`**: Display controller type (default: `ssd1306`)
-  - `ssd1306` or `ssd1306_128x64` - Standard 128x64 OLED
-  - `ssd1306_128x32` - Compact 128x32 OLED
-  - `ssd1306_96x16` - Small 96x16 OLED
+  - `ssd1306` or `ssd1306_128x64` - Standard 128x64 OLED (I2C)
+  - `ssd1306_128x32` - Compact 128x32 OLED (I2C)
+  - `ssd1306_96x16` - Small 96x16 OLED (I2C)
+  - `st7735` / `st7735_128x160` - 1.8" 128x160 TFT (SPI)
+  - `st7735_128x128` - 1.44" 128x128 TFT (SPI)
+  - `st7735_160x80` - 0.96" 160x80 TFT (SPI, e.g. Waveshare)
   - See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for all supported types
+
+**I2C displays only:**
 
 - **`i2c_bus`**: I2C bus device path (default: `/dev/i2c-1`)
   - Find your bus: `ls /dev/i2c-*`
@@ -347,6 +365,18 @@ See `configs/config.example.json` for a complete example:
 - **`i2c_address`**: I2C device address in hexadecimal (default: `0x3C`)
   - Detect with: `sudo i2cdetect -y 1`
   - Common addresses: `0x3C` or `0x3D`
+
+**SPI displays only:**
+
+- **`spi_bus`**: SPI bus identifier (e.g. `SPI0.0`)
+  - Find your bus: `ls /dev/spidev*`
+  - `SPI0.0` corresponds to `/dev/spidev0.0`
+
+- **`dc_pin`**: GPIO pin name for the Data/Command line (required)
+  - Example: `GPIO24`
+
+- **`rst_pin`**: GPIO pin name for the hardware reset line (optional but recommended)
+  - Example: `GPIO25`
 
 - **`rotation`**: Display rotation in 90° increments (default: `0`)
   - `0` - Normal orientation
@@ -619,6 +649,48 @@ When enabled, metrics are available at `http://address/metrics`
 </details>
 
 <details>
+<summary><strong>ST7735 0.96" TFT (160x80, Waveshare) on Raspberry Pi</strong></summary>
+
+```json
+{
+  "display": {
+    "type": "st7735_160x80",
+    "spi_bus": "SPI0.0",
+    "dc_pin": "GPIO24",
+    "rst_pin": "GPIO25",
+    "rotation": 0
+  },
+  "system_info": {
+    "temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  }
+}
+```
+
+Enable SPI on Raspberry Pi: `raspi-config` → Interface Options → SPI → Enable
+</details>
+
+<details>
+<summary><strong>ST7735 1.44" TFT (128x128) on Raspberry Pi</strong></summary>
+
+```json
+{
+  "display": {
+    "type": "st7735_128x128",
+    "spi_bus": "SPI0.0",
+    "dc_pin": "GPIO24",
+    "rst_pin": "GPIO25",
+    "rotation": 0
+  },
+  "system_info": {
+    "temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  }
+}
+```
+</details>
+
+<details>
 <summary><strong>Server/Headless Setup with Metrics</strong></summary>
 
 ```json
@@ -786,6 +858,29 @@ i2c-display/
 4. Check service logs:
    ```bash
    sudo journalctl -u i2c-display.service -n 50
+   ```
+
+### ST7735 Display Not Working
+
+1. Ensure SPI is enabled:
+   ```bash
+   ls /dev/spidev*
+   # Should show /dev/spidev0.0 (or similar)
+   ```
+
+2. On Raspberry Pi, enable SPI via `raspi-config` → Interface Options → SPI
+
+3. Verify GPIO pin numbers match your wiring:
+   ```bash
+   # Check available GPIO names
+   gpio readall   # if wiringpi installed
+   # or check /sys/class/gpio/
+   ```
+
+4. Check permissions:
+   ```bash
+   sudo usermod -a -G spi $USER
+   # Log out and back in
    ```
 
 ### Temperature Not Showing

@@ -1,38 +1,21 @@
 # Supported Display Types
 
-This document describes the I2C OLED displays currently supported and how to add new ones.
+This document describes all displays currently supported and how to add new ones.
 
 ## Currently Supported ✅
 
-### SSD1306 Family (via periph.io)
-
-All SSD1306 variants are fully supported through the periph.io library:
+### SSD1306 Family — I2C monochrome OLED (via periph.io)
 
 | Type | Resolution | Description | Status |
 |------|------------|-------------|--------|
 | `ssd1306` | 128x64 | Default, most common variant | ✅ Working |
 | `ssd1306_128x64` | 128x64 | Explicit 128x64 variant | ✅ Working |
-| `ssd1306_128x32` | 128x32 | Smaller variant, common in compact displays | ✅ Working |
+| `ssd1306_128x32` | 128x32 | Smaller variant | ✅ Working |
 | `ssd1306_96x16` | 96x16 | Very small variant | ✅ Working |
 
-## Framework Ready (Drivers Needed) 🔧
+**Wiring:** VCC, GND, SCL, SDA to the I2C bus on your SBC.
 
-These displays are recognized by the configuration system but need driver implementations:
-
-| Type | Resolution | Color | Driver Status |
-|------|------------|-------|---------------|
-| `sh1106` | 128x64 | Monochrome | Third-party available (SPI only) |
-| `sh1106_128x64` | 128x64 | Monochrome | Third-party available (SPI only) |
-| `ssd1327` | 128x128 | 4-bit grayscale | No Go I2C driver found |
-| `ssd1327_96x96` | 96x96 | 4-bit grayscale | No Go I2C driver found |
-| `ssd1331` | 96x64 | 16-bit color | No Go I2C driver found |
-
-**Note:** The configuration will accept these types and auto-set dimensions, but will return an error message explaining the driver is not implemented.
-
-### Configuration
-
-Set the display type in your config file. Width and height are automatically determined:
-
+**Example config:**
 ```json
 {
   "display": {
@@ -44,182 +27,141 @@ Set the display type in your config file. Width and height are automatically det
 }
 ```
 
-For a 128x32 display:
+### ST7735 Family — SPI colour TFT (native driver, no extra dependencies)
 
+| Type | Resolution | Module | Col offset | Row offset |
+|------|------------|--------|-----------|-----------|
+| `st7735` | 128x160 | 1.8" (default) | 0 | 0 |
+| `st7735_128x160` | 128x160 | 1.8" | 0 | 0 |
+| `st7735_128x128` | 128x128 | 1.44" red tab | 2 | 3 |
+| `st7735_160x80` | 160x80 | 0.96" (e.g. Waveshare) | 0 | 24 |
+
+Colour: white-on-black (RGB565), consistent with OLED rendering.
+
+**Wiring:**
+
+| ST7735 Pin | SBC Pin               | Description              |
+|------------|-----------------------|--------------------------|
+| VCC        | 3.3V                  | Power                    |
+| GND        | GND                   | Ground                   |
+| SCL/SCK    | SPI SCLK              | SPI Clock                |
+| SDA/MOSI   | SPI MOSI              | SPI Data                 |
+| CS         | SPI CS0 (CE0)         | Chip Select              |
+| DC/RS      | Any GPIO (e.g. GPIO24) | Data/Command select     |
+| RST        | Any GPIO (e.g. GPIO25) | Reset (optional)        |
+
+**Example config:**
 ```json
 {
   "display": {
-    "type": "ssd1306_128x32",
-    "i2c_bus": "/dev/i2c-1",
-    "i2c_address": "0x3C",
+    "type": "st7735_160x80",
+    "spi_bus": "SPI0.0",
+    "dc_pin": "GPIO24",
+    "rst_pin": "GPIO25",
     "rotation": 0
   }
 }
 ```
 
-The dimensions (128x32) are automatically set based on the display type.
+See `configs/config.st7735_160x80.json` and `configs/config.st7735_128x128.json` for complete examples.
 
-### Example Configurations
+---
 
-- **Standard 128x64**: `configs/config.example.json`
-- **Compact 128x32**: `configs/config.ssd1306_128x32.json`
+## Framework Ready (Drivers Needed) 🔧
 
-## Display Type Detection
+These displays are recognized by the configuration system (dimensions auto-set) but need driver implementations. They return a descriptive error until a driver is added.
 
-The application automatically selects the correct driver based on the `type` field. All `ssd1306*` types use the same periph.io driver with different dimensions.
+| Type | Resolution | Interface | Color | Driver Status |
+|------|------------|-----------|-------|---------------|
+| `sh1106` / `sh1106_128x64` | 128x64 | I2C | Monochrome | Third-party available |
+| `ssd1327` / `ssd1327_128x128` | 128x128 | I2C | 4-bit grayscale | No Go driver found |
+| `ssd1327_96x96` | 96x96 | I2C | 4-bit grayscale | No Go driver found |
+| `ssd1331` / `ssd1331_96x64` | 96x64 | SPI | 16-bit color | No Go driver found |
 
-## Driver Availability Research
-
-Based on searches of available Go libraries:
-
-### SH1106
-- **GitHub:** [danielgatis/go-sh1106](https://github.com/danielgatis/go-sh1106) - **SPI only**, not I2C
-- **Alternative:** [sandbankdisperser/go-i2c-oled](https://pkg.go.dev/github.com/sandbankdisperser/go-i2c-oled/sh1106) - May support I2C
-- **Status:** Possible to add with third-party library
-- **Compatibility:** Very similar to SSD1306, just different memory mapping
-
-### SSD1327 (Grayscale)
-- **Status:** No mature Go I2C drivers found
-- **Python:** Many Python libraries exist (Adafruit, Luma.OLED)
-- **Would need:** Port from Python or write from datasheet
-
-### SSD1331/SSD1351 (Color)
-- **Status:** No Go I2C drivers found
-- **Note:** Most color OLEDs use SPI, not I2C
-- **Would need:** Implement from datasheet
+---
 
 ## Adding New Display Types
 
-To add support for additional I2C OLED displays:
+### 1. Add to display specs
 
-### 1. Check periph.io Support
-
-First, check if the display is supported by periph.io:
-- Visit: https://pkg.go.dev/periph.io/x/devices/v3
-- Look for your display controller (e.g., sh1106, ssd1327)
-
-### 2. Create Display Implementation
-
-If periph.io supports it, create a new file like `internal/display/sh1106.go`:
+Add an entry to the `specs` map in `internal/config/display_specs.go`:
 
 ```go
-package display
-
-import (
-    "periph.io/x/devices/v3/sh1106"
-    // ... other imports
-)
-
-type SH1106Display struct {
-    dev *sh1106.Dev
-    // ... fields
-}
-
-func NewSH1106Display(i2cBus string, width, height, rotation int) (*SH1106Display, error) {
-    // Implementation similar to ssd1306.go
-}
-
-// Implement all Display interface methods
+"mynewdisplay": {Width: 128, Height: 64},
 ```
 
-### 3. Update Factory
+### 2. Update connection type helpers (if new bus type)
 
-Add the new type to `internal/display/factory.go`:
+If your display uses a bus type not yet covered, update `IsI2C()` or `IsSPI()` in
+`internal/config/config.go`, or add a new helper (e.g. `IsCustomBus()`).
+
+### 3. Create the driver
+
+Create `internal/display/mynewdisplay.go` implementing all methods of the `Display` interface:
 
 ```go
-func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
-    displayType := strings.ToLower(cfg.Type)
+type MyNewDisplay struct { ... }
 
-    if strings.HasPrefix(displayType, "ssd1306") {
-        return NewSSD1306Display(...)
-    }
+func NewMyNewDisplay(...) (*MyNewDisplay, error) { ... }
 
-    // Add new display type
-    if strings.HasPrefix(displayType, "sh1106") {
-        return NewSH1106Display(...)
-    }
-
-    return nil, fmt.Errorf("unsupported display type: %s", cfg.Type)
-}
+// Init, Clear, DrawText, DrawLine, DrawPixel, DrawRect,
+// DrawImage, Show, Close, GetBounds, GetBuffer, SetBrightness
 ```
 
-### 4. Update Configuration Validation
+See `internal/display/ssd1306.go` (I2C) or `internal/display/st7735.go` (SPI) as reference implementations.
 
-Add the new type to `internal/config/config.go`:
+### 4. Wire into the factory
+
+Add a case in `internal/display/factory.go`:
 
 ```go
-validTypes := map[string]bool{
-    "ssd1306":        true,
-    "ssd1306_128x32": true,
-    "ssd1306_128x64": true,
-    "ssd1306_96x16":  true,
-    "sh1106":         true,  // NEW
-    "sh1106_128x64":  true,  // NEW
+if strings.HasPrefix(displayType, "mynewdisplay") {
+    return NewMyNewDisplay(cfg.SPIBus, cfg.DCPin, cfg.Width, cfg.Height, cfg.Rotation)
 }
 ```
 
-### 5. Add Example Configuration
+### 5. Update validation
 
-Create `configs/config.sh1106.json` with appropriate settings.
+If the new display requires new config fields, add validation to
+`validateDisplay()` in `internal/config/config.go`.
 
-### 6. Update Documentation
+### 6. Add tests and an example config
 
-Update README.md with the new display type.
+- Add the type to `internal/config/display_specs_test.go`
+- Create `configs/config.mynewdisplay.json`
 
-## Third-Party Display Drivers
-
-If periph.io doesn't support your display, you can use third-party libraries:
-
-### SH1106 (Third-Party)
-
-The [danielgatis/go-sh1106](https://github.com/danielgatis/go-sh1106) library provides SH1106 support using periph.io's I2C interfaces.
-
-To add it:
-```bash
-go get github.com/danielgatis/go-sh1106
-```
-
-Then create `internal/display/sh1106_thirdparty.go` using this library.
+---
 
 ## Common I2C Addresses
 
 | Display | Common Address |
 |---------|----------------|
-| SSD1306 | 0x3C or 0x3D |
-| SH1106  | 0x3C or 0x3D |
-| SSD1327 | 0x3C or 0x3D |
+| SSD1306 | `0x3C` or `0x3D` |
+| SH1106  | `0x3C` or `0x3D` |
+| SSD1327 | `0x3C` or `0x3D` |
 
-Use `i2cdetect -y 1` on your SBC to find the actual address.
+Use `sudo i2cdetect -y 1` on your SBC to find the actual address.
 
-## Display Differences
+SPI displays (ST7735) do not use I2C addresses — use `spi_bus`, `dc_pin`, and optionally `rst_pin` instead.
 
-### Resolution
+---
 
-Different displays support different resolutions. Adjust the renderer based on available space:
-- 128x64: Can show ~8 lines of text
-- 128x32: Can show ~4 lines of text
-- 96x16: Very limited, ~2 lines
+## Display Comparison
 
-### Color Depth
+| Display | Interface | Resolution | Color | Bits/pixel |
+|---------|-----------|------------|-------|-----------|
+| SSD1306 | I2C | 128x64 max | Monochrome | 1 |
+| SH1106  | I2C | 128x64 | Monochrome | 1 |
+| SSD1327 | I2C | 128x128 | Grayscale | 4 |
+| SSD1331 | SPI | 96x64 | Color | 16 |
+| ST7735  | SPI | up to 128x160 | Color | 16 |
 
-- **SSD1306**: Monochrome (1-bit)
-- **SSD1327**: 4-bit grayscale (16 levels)
-- **SSD1331**: 16-bit color (RGB565)
-
-The current implementation is optimized for monochrome displays. Grayscale/color support would require renderer updates.
-
-### Communication
-
-All supported displays use I2C. SPI displays would require significant changes to the display layer.
+---
 
 ## Resources
 
 - [periph.io Devices](https://pkg.go.dev/periph.io/x/devices/v3)
 - [periph.io SSD1306 Docs](https://periph.io/device/ssd1306/)
-- [I2C Display Guide](https://learn.adafruit.com/adafruit-pioled-128x32-mini-oled-for-raspberry-pi)
-
-## Sources
-
-- [periph.io devices v3](https://pkg.go.dev/periph.io/x/devices/v3)
-- [SSD1306 driver](https://pkg.go.dev/periph.io/x/devices/v3/ssd1306)
-- [danielgatis/go-sh1106 (third-party)](https://github.com/danielgatis/go-sh1106)
+- [periph.io SPI Docs](https://pkg.go.dev/periph.io/x/conn/v3/spi)
+- [ST7735 datasheet](https://www.displayfuture.com/Display/datasheet/controller/ST7735.pdf)
+- [danielgatis/go-sh1106 (third-party SH1106)](https://github.com/danielgatis/go-sh1106)
