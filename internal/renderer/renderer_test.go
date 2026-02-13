@@ -153,9 +153,9 @@ func TestRenderer(t *testing.T) {
 		t.Fatalf("RenderPage(1) failed: %v", err)
 	}
 
-	// Invalid page index should not error
-	if err := renderer.RenderPage(99, testStats); err != nil {
-		t.Errorf("RenderPage(99) should not error, got %v", err)
+	// Invalid page index should return an error
+	if err := renderer.RenderPage(99, testStats); err == nil {
+		t.Errorf("RenderPage(99) should return an error for out-of-range index")
 	}
 }
 

@@ -88,7 +88,11 @@ func (n *NetworkCollector) GetInterfaces() ([]NetInterface, error) {
 func (n *NetworkCollector) shouldInclude(name string) bool {
 	// First check exclude patterns
 	for _, pattern := range n.config.InterfaceFilter.Exclude {
-		matched, _ := filepath.Match(pattern, name)
+		matched, err := filepath.Match(pattern, name)
+		if err != nil {
+			// Pattern was validated at config load time; treat invalid patterns as non-matching
+			continue
+		}
 		if matched {
 			return false
 		}
@@ -101,7 +105,11 @@ func (n *NetworkCollector) shouldInclude(name string) bool {
 
 	// Check include patterns
 	for _, pattern := range n.config.InterfaceFilter.Include {
-		matched, _ := filepath.Match(pattern, name)
+		matched, err := filepath.Match(pattern, name)
+		if err != nil {
+			// Pattern was validated at config load time; treat invalid patterns as non-matching
+			continue
+		}
 		if matched {
 			return true
 		}

@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/ausil/i2c-display/internal/config"
@@ -70,8 +71,9 @@ func (r *Renderer) GetPages() []Page {
 func (r *Renderer) RenderPage(pageIdx int, s *stats.SystemStats) error {
 	r.mu.RLock()
 	if pageIdx < 0 || pageIdx >= len(r.pages) {
+		pageCount := len(r.pages)
 		r.mu.RUnlock()
-		return nil // Silently ignore invalid page index
+		return fmt.Errorf("invalid page index %d (have %d pages)", pageIdx, pageCount)
 	}
 	page := r.pages[pageIdx]
 	r.mu.RUnlock()

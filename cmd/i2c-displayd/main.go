@@ -3,15 +3,19 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/ausil/i2c-display/internal/config"
 	"github.com/ausil/i2c-display/internal/display"
 	"github.com/ausil/i2c-display/internal/logger"
+	"github.com/ausil/i2c-display/internal/metrics"
 	"github.com/ausil/i2c-display/internal/renderer"
 	"github.com/ausil/i2c-display/internal/rotation"
+	"github.com/ausil/i2c-display/internal/screensaver"
 	"github.com/ausil/i2c-display/internal/stats"
 )
 
@@ -108,9 +112,32 @@ func main() {
 	// Create rotation manager
 	mgr := rotation.NewManager(cfg, collector, rend)
 
+	// Create and attach metrics collector
+	metricsCollector := metrics.New(log)
+	mgr.SetMetrics(metricsCollector)
+
 	// Set up context for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// Start metrics server if enabled
+	metricsServer, err := metrics.StartMetricsServer(metrics.Config{
+		Enabled: cfg.Metrics.Enabled,
+		Address: cfg.Metrics.Address,
+	}, metricsCollector, log)
+	if err != nil {
+		log.ErrorWithErr(err, "Failed to start metrics server")
+	}
+
+	// Create and start screensaver
+	ss, err := newScreenSaver(cfg, disp, log)
+	if err != nil {
+		log.FatalWithErr(err, "Invalid screensaver configuration")
+	}
+	if err := ss.Start(ctx); err != nil {
+		log.ErrorWithErr(err, "Failed to start screensaver")
+	}
+	defer ss.Stop()
 
 	// Start rotation manager
 	if err := mgr.Start(ctx); err != nil {
@@ -137,6 +164,10 @@ func main() {
 				log.ErrorWithErr(err, "New configuration invalid, keeping current config")
 				continue
 			}
+			// Warn if display hardware config changed — requires a restart
+			if newCfg.Display != cfg.Display {
+				log.Warn("Display configuration changed — restart required for changes to take effect")
+			}
 			// Update logging if changed
 			if newCfg.Logging != cfg.Logging {
 				log = logger.New(logger.Config{
@@ -146,6 +177,13 @@ func main() {
 				})
 				logger.SetGlobalLogger(log)
 				log.Info("Logging configuration updated")
+			}
+			// Update screensaver config
+			newSS, ssErr := newScreenSaver(newCfg, disp, log)
+			if ssErr != nil {
+				log.ErrorWithErr(ssErr, "Invalid screensaver configuration, keeping current")
+			} else {
+				ss.UpdateConfig(newSS.Config())
 			}
 			cfg = newCfg
 			log.Info("Configuration reloaded successfully")
@@ -159,12 +197,37 @@ func main() {
 
 shutdown:
 
-	// Cancel context to stop rotation manager
+	// Cancel context to stop rotation manager and screensaver
 	cancel()
 
 	// Stop manager gracefully
 	mgr.Stop()
 
+	// Stop metrics server if running
+	if metricsServer != nil {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		if err := metricsServer.Stop(shutdownCtx); err != nil {
+			log.ErrorWithErr(err, "Error stopping metrics server")
+		}
+	}
+
 	log.Info("Shutdown complete")
+}
+
+// newScreenSaver constructs a screensaver from application config.
+func newScreenSaver(cfg *config.Config, disp display.Display, log *logger.Logger) (*screensaver.ScreenSaver, error) {
+	idleTimeout, err := time.ParseDuration(cfg.ScreenSaver.IdleTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("invalid screensaver.idle_timeout: %w", err)
+	}
+	ssCfg := screensaver.Config{
+		Enabled:          cfg.ScreenSaver.Enabled,
+		Mode:             screensaver.Mode(cfg.ScreenSaver.Mode),
+		IdleTimeout:      idleTimeout,
+		DimBrightness:    cfg.ScreenSaver.DimBrightness,
+		NormalBrightness: cfg.ScreenSaver.NormalBrightness,
+	}
+	return screensaver.New(ssCfg, disp, log), nil
 }
 

@@ -190,6 +190,13 @@ func (s *ScreenSaver) IsActive() bool {
 	return s.isActive
 }
 
+// Config returns the current screen saver configuration
+func (s *ScreenSaver) Config() Config {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.cfg
+}
+
 // UpdateConfig updates the screen saver configuration
 func (s *ScreenSaver) UpdateConfig(cfg Config) {
 	s.mu.Lock()

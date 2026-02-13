@@ -32,11 +32,17 @@ func NewSSD1306Display(i2cBus, i2cAddr string, width, height, rotation int) (*SS
 		return nil, fmt.Errorf("failed to open I2C bus %s: %w", i2cBus, err)
 	}
 
+	// SSD1306 only supports 0° (no rotation) and 180° (Rotated flag).
+	// Hardware-level 90°/270° rotation is not available on this chip.
+	if rotation != 0 && rotation != 2 {
+		return nil, fmt.Errorf("SSD1306 only supports rotation 0 (0°) and 2 (180°), got %d", rotation)
+	}
+
 	// Determine display options
 	opts := ssd1306.Opts{
 		W:             width,
 		H:             height,
-		Rotated:       rotation == 2, // 180 degree rotation
+		Rotated:       rotation == 2,
 		Sequential:    true,
 		SwapTopBottom: false,
 	}

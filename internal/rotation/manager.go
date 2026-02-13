@@ -7,32 +7,46 @@ import (
 	"time"
 
 	"github.com/ausil/i2c-display/internal/config"
+	"github.com/ausil/i2c-display/internal/logger"
+	"github.com/ausil/i2c-display/internal/metrics"
 	"github.com/ausil/i2c-display/internal/renderer"
 	"github.com/ausil/i2c-display/internal/stats"
 )
 
 // Manager handles page rotation and refresh
 type Manager struct {
-	config          *config.Config
-	collector       *stats.SystemCollector
-	renderer        *renderer.Renderer
-	currentPage     int
-	mu              sync.Mutex // Protects currentPage
-	rotationTicker  *time.Ticker
-	refreshTicker   *time.Ticker
-	stopChan        chan struct{}
-	stoppedChan     chan struct{}
+	config               *config.Config
+	collector            *stats.SystemCollector
+	renderer             *renderer.Renderer
+	log                  *logger.Logger
+	metricsCollector     *metrics.Collector // optional, nil if metrics disabled
+	currentPage          int
+	lastInterfaceCount   int
+	mu                   sync.Mutex // Protects currentPage and lastInterfaceCount
+	stopOnce             sync.Once
+	rotationTicker       *time.Ticker
+	refreshTicker        *time.Ticker
+	stopChan             chan struct{}
+	stoppedChan          chan struct{}
+}
+
+// SetMetrics attaches a metrics collector to the manager.
+// Must be called before Start.
+func (m *Manager) SetMetrics(c *metrics.Collector) {
+	m.metricsCollector = c
 }
 
 // NewManager creates a new rotation manager
 func NewManager(cfg *config.Config, collector *stats.SystemCollector, rend *renderer.Renderer) *Manager {
 	return &Manager{
-		config:      cfg,
-		collector:   collector,
-		renderer:    rend,
-		currentPage: 0,
-		stopChan:    make(chan struct{}),
-		stoppedChan: make(chan struct{}),
+		config:             cfg,
+		collector:          collector,
+		renderer:           rend,
+		log:                logger.Global(),
+		currentPage:        0,
+		lastInterfaceCount: -1, // -1 forces a BuildPages on the first refresh
+		stopChan:           make(chan struct{}),
+		stoppedChan:        make(chan struct{}),
 	}
 }
 
@@ -68,8 +82,7 @@ func (m *Manager) Start(ctx context.Context) error {
 func (m *Manager) run(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			// Log panic and ensure cleanup
-			fmt.Printf("PANIC in rotation manager: %v\n", r)
+			m.log.Errorf("PANIC in rotation manager: %v", r)
 		}
 		close(m.stoppedChan)
 	}()
@@ -86,8 +99,7 @@ func (m *Manager) run(ctx context.Context) {
 			m.rotatePage()
 		case <-m.refreshTicker.C:
 			if err := m.refreshCurrentPage(); err != nil {
-				// Log error but continue
-				fmt.Printf("refresh error: %v\n", err)
+				m.log.ErrorWithErr(err, "refresh error")
 			}
 		}
 	}
@@ -101,10 +113,19 @@ func (m *Manager) refreshCurrentPage() error {
 		return fmt.Errorf("failed to collect stats: %w", err)
 	}
 
-	// Rebuild pages in case interface count changed
-	m.renderer.BuildPages(systemStats)
+	// Only rebuild pages when the interface count changes to avoid unnecessary work
+	m.mu.Lock()
+	interfaceCountChanged := len(systemStats.Interfaces) != m.lastInterfaceCount
+	if interfaceCountChanged {
+		m.lastInterfaceCount = len(systemStats.Interfaces)
+	}
+	m.mu.Unlock()
 
-	// Ensure current page is valid
+	if interfaceCountChanged {
+		m.renderer.BuildPages(systemStats)
+	}
+
+	// Ensure current page is valid after any rebuild
 	m.mu.Lock()
 	if m.currentPage >= m.renderer.PageCount() {
 		m.currentPage = 0
@@ -113,33 +134,48 @@ func (m *Manager) refreshCurrentPage() error {
 	m.mu.Unlock()
 
 	// Render current page
-	return m.renderer.RenderPage(pageIdx, systemStats)
+	start := time.Now()
+	err = m.renderer.RenderPage(pageIdx, systemStats)
+	if m.metricsCollector != nil {
+		m.metricsCollector.RecordDisplayRefresh(err == nil, time.Since(start), "system")
+		m.metricsCollector.UpdateSystemMetrics(
+			systemStats.CPUTemp,
+			systemStats.MemoryPercent(),
+			systemStats.DiskPercent(),
+			len(systemStats.Interfaces),
+		)
+	}
+	return err
 }
 
 // rotatePage advances to the next page
 func (m *Manager) rotatePage() {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	m.currentPage++
 	if m.currentPage >= m.renderer.PageCount() {
 		m.currentPage = 0
 	}
+	page := m.currentPage
+	m.mu.Unlock()
 
+	if m.metricsCollector != nil {
+		m.metricsCollector.RecordPageRotation(page)
+	}
 	// Refresh will happen on next refresh tick
 }
 
 // Stop stops the rotation manager gracefully
 func (m *Manager) Stop() {
-	close(m.stopChan)
+	m.stopOnce.Do(func() {
+		close(m.stopChan)
+	})
 
 	// Wait for goroutine to stop with timeout to prevent deadlock
 	select {
 	case <-m.stoppedChan:
 		// Normal shutdown
 	case <-time.After(5 * time.Second):
-		// Timeout - goroutine may have panicked
-		fmt.Println("Warning: rotation manager stop timed out")
+		m.log.Warn("rotation manager stop timed out")
 	}
 }
 

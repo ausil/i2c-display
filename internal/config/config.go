@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -230,7 +232,13 @@ func (c *Config) Validate() error {
 	if err := c.validateNetwork(); err != nil {
 		return err
 	}
-	return c.validateLogging()
+	if err := c.validateLogging(); err != nil {
+		return err
+	}
+	if err := c.validateScreenSaver(); err != nil {
+		return err
+	}
+	return c.validateMetrics()
 }
 
 func (c *Config) validateDisplay() error {
@@ -246,8 +254,18 @@ func (c *Config) validateDisplay() error {
 	if c.Display.I2CBus == "" {
 		return fmt.Errorf("display.i2c_bus cannot be empty")
 	}
+	if !strings.HasPrefix(c.Display.I2CBus, "/") {
+		return fmt.Errorf("display.i2c_bus must be an absolute path, got %s", c.Display.I2CBus)
+	}
 	if c.Display.I2CAddress == "" {
 		return fmt.Errorf("display.i2c_address cannot be empty")
+	}
+	addrLower := strings.ToLower(c.Display.I2CAddress)
+	if !strings.HasPrefix(addrLower, "0x") {
+		return fmt.Errorf("display.i2c_address must be in hex format (e.g., 0x3C), got %s", c.Display.I2CAddress)
+	}
+	if _, err := strconv.ParseUint(addrLower[2:], 16, 8); err != nil {
+		return fmt.Errorf("display.i2c_address is not a valid 8-bit hex address (e.g., 0x3C), got %s", c.Display.I2CAddress)
 	}
 	if c.Display.Width <= 0 {
 		return fmt.Errorf("display.width must be positive, got %d", c.Display.Width)
@@ -285,6 +303,9 @@ func (c *Config) validateSystemInfo() error {
 	if c.SystemInfo.DiskPath == "" {
 		return fmt.Errorf("system_info.disk_path cannot be empty")
 	}
+	if _, err := os.Stat(c.SystemInfo.DiskPath); err != nil {
+		return fmt.Errorf("system_info.disk_path %q does not exist: %w", c.SystemInfo.DiskPath, err)
+	}
 	if c.SystemInfo.TemperatureUnit != "celsius" && c.SystemInfo.TemperatureUnit != "fahrenheit" {
 		return fmt.Errorf("system_info.temperature_unit must be 'celsius' or 'fahrenheit', got %s", c.SystemInfo.TemperatureUnit)
 	}
@@ -295,6 +316,16 @@ func (c *Config) validateNetwork() error {
 	if c.Network.MaxInterfacesPerPage <= 0 {
 		return fmt.Errorf("network.max_interfaces_per_page must be positive, got %d", c.Network.MaxInterfacesPerPage)
 	}
+	for _, pattern := range c.Network.InterfaceFilter.Include {
+		if _, err := filepath.Match(pattern, ""); err != nil {
+			return fmt.Errorf("network.interface_filter.include contains invalid glob pattern %q: %w", pattern, err)
+		}
+	}
+	for _, pattern := range c.Network.InterfaceFilter.Exclude {
+		if _, err := filepath.Match(pattern, ""); err != nil {
+			return fmt.Errorf("network.interface_filter.exclude contains invalid glob pattern %q: %w", pattern, err)
+		}
+	}
 	return nil
 }
 
@@ -303,5 +334,43 @@ func (c *Config) validateLogging() error {
 	if !validLevels[c.Logging.Level] {
 		return fmt.Errorf("logging.level must be one of [debug, info, warn, error], got %s", c.Logging.Level)
 	}
+	return nil
+}
+
+func (c *Config) validateScreenSaver() error {
+	if !c.ScreenSaver.Enabled {
+		return nil
+	}
+
+	validModes := map[string]bool{"off": true, "dim": true, "blank": true}
+	if !validModes[c.ScreenSaver.Mode] {
+		return fmt.Errorf("screensaver.mode must be one of [off, dim, blank], got %s", c.ScreenSaver.Mode)
+	}
+
+	d, err := time.ParseDuration(c.ScreenSaver.IdleTimeout)
+	if err != nil {
+		return fmt.Errorf("screensaver.idle_timeout is not a valid duration: %w", err)
+	}
+	if d <= 0 {
+		return fmt.Errorf("screensaver.idle_timeout must be positive, got %s", c.ScreenSaver.IdleTimeout)
+	}
+
+	if c.ScreenSaver.Mode == "dim" && c.ScreenSaver.DimBrightness >= c.ScreenSaver.NormalBrightness {
+		return fmt.Errorf("screensaver.dim_brightness (%d) must be less than normal_brightness (%d)",
+			c.ScreenSaver.DimBrightness, c.ScreenSaver.NormalBrightness)
+	}
+
+	return nil
+}
+
+func (c *Config) validateMetrics() error {
+	if !c.Metrics.Enabled {
+		return nil
+	}
+
+	if c.Metrics.Address == "" {
+		return fmt.Errorf("metrics.address cannot be empty when metrics are enabled")
+	}
+
 	return nil
 }
