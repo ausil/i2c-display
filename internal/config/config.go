@@ -23,12 +23,29 @@ type Config struct {
 
 // DisplayConfig holds display-related settings
 type DisplayConfig struct {
-	Type       string `json:"type"`        // Display type: "ssd1306", "ssd1306_128x32", etc.
+	Type       string `json:"type"`        // Display type: "ssd1306", "ssd1306_128x32", "st7735", etc.
 	I2CBus     string `json:"i2c_bus"`
 	I2CAddress string `json:"i2c_address"`
+	SPIBus     string `json:"spi_bus"`
+	DCPin      string `json:"dc_pin"`
+	RSTPin     string `json:"rst_pin"`
 	Width      int    `json:"width"`
 	Height     int    `json:"height"`
 	Rotation   int    `json:"rotation"`
+}
+
+// IsI2C returns true if this display connects via I2C
+func (c *DisplayConfig) IsI2C() bool {
+	t := strings.ToLower(c.Type)
+	return strings.HasPrefix(t, "ssd1306") ||
+		strings.HasPrefix(t, "sh1106") ||
+		strings.HasPrefix(t, "ssd1327") ||
+		strings.HasPrefix(t, "ssd1331")
+}
+
+// IsSPI returns true if this display connects via SPI
+func (c *DisplayConfig) IsSPI() bool {
+	return strings.HasPrefix(strings.ToLower(c.Type), "st7735")
 }
 
 // PagesConfig holds page rotation settings
@@ -248,25 +265,37 @@ func (c *Config) validateDisplay() error {
 
 	spec, validType := GetDisplaySpec(c.Display.Type)
 	if !validType {
-		return fmt.Errorf("display.type must be one of [ssd1306, ssd1306_128x32, ssd1306_128x64, ssd1306_96x16], got %s", c.Display.Type)
+		return fmt.Errorf("display.type %q is not a recognized display type", c.Display.Type)
 	}
 
-	if c.Display.I2CBus == "" {
-		return fmt.Errorf("display.i2c_bus cannot be empty")
+	if c.Display.IsI2C() {
+		if c.Display.I2CBus == "" {
+			return fmt.Errorf("display.i2c_bus cannot be empty")
+		}
+		if !strings.HasPrefix(c.Display.I2CBus, "/") {
+			return fmt.Errorf("display.i2c_bus must be an absolute path, got %s", c.Display.I2CBus)
+		}
+		if c.Display.I2CAddress == "" {
+			return fmt.Errorf("display.i2c_address cannot be empty")
+		}
+		addrLower := strings.ToLower(c.Display.I2CAddress)
+		if !strings.HasPrefix(addrLower, "0x") {
+			return fmt.Errorf("display.i2c_address must be in hex format (e.g., 0x3C), got %s", c.Display.I2CAddress)
+		}
+		if _, err := strconv.ParseUint(addrLower[2:], 16, 8); err != nil {
+			return fmt.Errorf("display.i2c_address is not a valid 8-bit hex address (e.g., 0x3C), got %s", c.Display.I2CAddress)
+		}
 	}
-	if !strings.HasPrefix(c.Display.I2CBus, "/") {
-		return fmt.Errorf("display.i2c_bus must be an absolute path, got %s", c.Display.I2CBus)
+
+	if c.Display.IsSPI() {
+		if c.Display.SPIBus == "" {
+			return fmt.Errorf("display.spi_bus cannot be empty for SPI display type %s", c.Display.Type)
+		}
+		if c.Display.DCPin == "" {
+			return fmt.Errorf("display.dc_pin cannot be empty for SPI display type %s", c.Display.Type)
+		}
 	}
-	if c.Display.I2CAddress == "" {
-		return fmt.Errorf("display.i2c_address cannot be empty")
-	}
-	addrLower := strings.ToLower(c.Display.I2CAddress)
-	if !strings.HasPrefix(addrLower, "0x") {
-		return fmt.Errorf("display.i2c_address must be in hex format (e.g., 0x3C), got %s", c.Display.I2CAddress)
-	}
-	if _, err := strconv.ParseUint(addrLower[2:], 16, 8); err != nil {
-		return fmt.Errorf("display.i2c_address is not a valid 8-bit hex address (e.g., 0x3C), got %s", c.Display.I2CAddress)
-	}
+
 	if c.Display.Width <= 0 {
 		return fmt.Errorf("display.width must be positive, got %d", c.Display.Width)
 	}

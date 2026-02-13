@@ -22,6 +22,18 @@ func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
 		)
 	}
 
+	// ST7735 variants (SPI TFT)
+	if strings.HasPrefix(displayType, "st7735") {
+		return NewST7735Display(
+			cfg.SPIBus,
+			cfg.DCPin,
+			cfg.RSTPin,
+			cfg.Width,
+			cfg.Height,
+			cfg.Rotation,
+		)
+	}
+
 	// Other display types - Framework ready, awaiting drivers
 	supportedButNeedDrivers := map[string]string{
 		"sh1106":  "SH1106 (128x64 mono) - compatible with SSD1306, driver available at github.com/danielgatis/go-sh1106 (SPI)",

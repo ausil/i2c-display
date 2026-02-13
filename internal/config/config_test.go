@@ -435,6 +435,106 @@ func TestLoadWithPriority(t *testing.T) {
 	}
 }
 
+func TestIsI2CAndIsSPI(t *testing.T) {
+	tests := []struct {
+		displayType string
+		wantIsI2C   bool
+		wantIsSPI   bool
+	}{
+		{"ssd1306", true, false},
+		{"ssd1306_128x32", true, false},
+		{"ssd1306_128x64", true, false},
+		{"ssd1306_96x16", true, false},
+		{"sh1106", true, false},
+		{"sh1106_128x64", true, false},
+		{"ssd1327", true, false},
+		{"ssd1327_128x128", true, false},
+		{"ssd1331", true, false},
+		{"ssd1331_96x64", true, false},
+		{"st7735", false, true},
+		{"st7735_128x160", false, true},
+		{"st7735_128x128", false, true},
+		{"st7735_160x80", false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.displayType, func(t *testing.T) {
+			d := DisplayConfig{Type: tt.displayType}
+			if d.IsI2C() != tt.wantIsI2C {
+				t.Errorf("IsI2C() = %v, want %v", d.IsI2C(), tt.wantIsI2C)
+			}
+			if d.IsSPI() != tt.wantIsSPI {
+				t.Errorf("IsSPI() = %v, want %v", d.IsSPI(), tt.wantIsSPI)
+			}
+		})
+	}
+}
+
+func TestValidateST7735(t *testing.T) {
+	makeST7735Config := func() *Config {
+		cfg := Default()
+		cfg.Display.Type = "st7735"
+		cfg.Display.SPIBus = "SPI0.0"
+		cfg.Display.DCPin = "GPIO24"
+		cfg.Display.RSTPin = "GPIO25"
+		cfg.Display.I2CBus = ""
+		cfg.Display.I2CAddress = ""
+		cfg.Display.ApplyDisplayDefaults()
+		return cfg
+	}
+
+	tests := []struct {
+		name    string
+		modify  func(*Config)
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "valid st7735 config",
+			modify:  func(c *Config) {},
+			wantErr: false,
+		},
+		{
+			name: "missing spi_bus",
+			modify: func(c *Config) {
+				c.Display.SPIBus = ""
+			},
+			wantErr: true,
+			errMsg:  "spi_bus cannot be empty",
+		},
+		{
+			name: "missing dc_pin",
+			modify: func(c *Config) {
+				c.Display.DCPin = ""
+			},
+			wantErr: true,
+			errMsg:  "dc_pin cannot be empty",
+		},
+		{
+			name: "rst_pin is optional",
+			modify: func(c *Config) {
+				c.Display.RSTPin = ""
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := makeST7735Config()
+			tt.modify(cfg)
+			err := cfg.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && tt.errMsg != "" && !contains(err.Error(), tt.errMsg) {
+				t.Errorf("Validate() error = %v, should contain %q", err, tt.errMsg)
+			}
+		})
+	}
+}
+
 // Helper function to check if string contains substring
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) &&

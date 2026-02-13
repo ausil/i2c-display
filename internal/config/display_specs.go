@@ -27,6 +27,12 @@ func GetDisplaySpec(displayType string) (DisplaySpec, bool) {
 		// SSD1331 (color OLED) - Driver needed
 		"ssd1331":        {Width: 96, Height: 64},
 		"ssd1331_96x64":  {Width: 96, Height: 64},
+
+		// ST7735 (color TFT via SPI)
+		"st7735":          {Width: 128, Height: 160},
+		"st7735_128x160":  {Width: 128, Height: 160},
+		"st7735_128x128":  {Width: 128, Height: 128},
+		"st7735_160x80":   {Width: 160, Height: 80},
 	}
 
 	spec, ok := specs[displayType]
