@@ -1,0 +1,46 @@
+{
+  "display": {
+    "type": "st7735_160x80",
+    "spi_bus": "SPI0.0",
+    "dc_pin": "GPIO24",
+    "rst_pin": "GPIO25",
+    "rotation": 0
+  },
+  "_comment": "ST7735 0.96\" 160x80 TFT (Waveshare) connected via SPI. dc_pin and spi_bus are required; rst_pin is optional.",
+  "pages": {
+    "rotation_interval": "5s",
+    "refresh_interval": "1s"
+  },
+  "system_info": {
+    "hostname_display": "short",
+    "disk_path": "/",
+    "temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  },
+  "network": {
+    "auto_detect": true,
+    "interface_filter": {
+      "include": ["eth0", "wlan0", "usb0"],
+      "exclude": ["lo", "docker*", "veth*"]
+    },
+    "show_ipv4": true,
+    "show_ipv6": false,
+    "max_interfaces_per_page": 3
+  },
+  "logging": {
+    "level": "info",
+    "output": "stdout",
+    "json": false
+  },
+  "metrics": {
+    "enabled": false,
+    "address": ":9090"
+  },
+  "screensaver": {
+    "enabled": false,
+    "mode": "dim",
+    "idle_timeout": "5m",
+    "dim_brightness": 50,
+    "normal_brightness": 255
+  }
+}
