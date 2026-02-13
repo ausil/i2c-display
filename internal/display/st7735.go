@@ -225,12 +225,26 @@ func (d *ST7735Display) sendCmd(cmd byte) error {
 	return d.conn.Tx([]byte{cmd}, nil)
 }
 
-// sendData asserts DC high and transmits data bytes.
+// spiMaxTx is the maximum number of bytes per SPI transaction on sysfs.
+const spiMaxTx = 4096
+
+// sendData asserts DC high and transmits data bytes, chunking as needed
+// to respect the sysfs SPI driver's 4096-byte per-transaction limit.
 func (d *ST7735Display) sendData(data ...byte) error {
 	if err := d.dc.Out(gpio.High); err != nil {
 		return err
 	}
-	return d.conn.Tx(data, nil)
+	for len(data) > 0 {
+		chunk := data
+		if len(chunk) > spiMaxTx {
+			chunk = data[:spiMaxTx]
+		}
+		if err := d.conn.Tx(chunk, nil); err != nil {
+			return err
+		}
+		data = data[len(chunk):]
+	}
+	return nil
 }
 
 // sendCmdData sends a command followed by data bytes.
