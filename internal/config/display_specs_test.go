@@ -67,8 +67,8 @@ func TestGetDisplaySpec(t *testing.T) {
 			wantOK:      true,
 		},
 		{
-			name:        "st7735_160x80_uctronics",
-			displayType: "st7735_160x80_uctronics",
+			name:        "uctronics_colour",
+			displayType: "uctronics_colour",
 			wantWidth:   160,
 			wantHeight:  80,
 			wantOK:      true,

@@ -40,7 +40,8 @@ func (c *DisplayConfig) IsI2C() bool {
 	return strings.HasPrefix(t, "ssd1306") ||
 		strings.HasPrefix(t, "sh1106") ||
 		strings.HasPrefix(t, "ssd1327") ||
-		strings.HasPrefix(t, "ssd1331")
+		strings.HasPrefix(t, "ssd1331") ||
+		strings.HasPrefix(t, "uctronics")
 }
 
 // IsSPI returns true if this display connects via SPI

@@ -35,7 +35,6 @@ This document describes all displays currently supported and how to add new ones
 | `st7735_128x160` | 128x160 | 1.8" | 0 | 0 |
 | `st7735_128x128` | 128x128 | 1.44" red tab | 2 | 3 |
 | `st7735_160x80` | 160x80 | 0.96" (e.g. Waveshare) | 1 | 26 |
-| `st7735_160x80_uctronics` | 160x80 | 0.96" UCTRONICS Pi Rack Pro | 0 | 24 |
 
 Colour: white-on-black (RGB565), consistent with OLED rendering.
 
@@ -64,9 +63,28 @@ Colour: white-on-black (RGB565), consistent with OLED rendering.
 }
 ```
 
-The UCTRONICS variant uses BGR subpixel order (vs RGB for Waveshare) and different RAM offsets. Use `st7735_160x80_uctronics` for the UCTRONICS Pi Rack Pro (SKU_RM0004) and similar UCTRONICS rack products with built-in 0.96" displays.
+See `configs/config.st7735_160x80.json` and `configs/config.st7735_128x128.json` for complete examples.
 
-See `configs/config.st7735_160x80.json`, `configs/config.st7735_160x80_uctronics.json`, and `configs/config.st7735_128x128.json` for complete examples.
+### UCTRONICS Family — I2C colour TFT (via onboard MCU bridge)
+
+| Type | Resolution | Description | Status |
+|------|------------|-------------|--------|
+| `uctronics_colour` | 160x80 | Pi Rack Pro 0.96" colour TFT (SKU_RM0004) | ✅ Working |
+
+The UCTRONICS Pi Rack Pro has an onboard MCU that bridges I2C to the ST7735 display internally. The host communicates with the MCU at I2C address `0x18` — no SPI, DC, or RST pins are needed.
+
+**Example config:**
+```json
+{
+  "display": {
+    "type": "uctronics_colour",
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x18"
+  }
+}
+```
+
+See `configs/config.uctronics_colour.json` for a complete example.
 
 ---
 
@@ -142,6 +160,7 @@ If the new display requires new config fields, add validation to
 | SSD1306 | `0x3C` or `0x3D` |
 | SH1106  | `0x3C` or `0x3D` |
 | SSD1327 | `0x3C` or `0x3D` |
+| UCTRONICS (colour) | `0x18` |
 
 Use `sudo i2cdetect -y 1` on your SBC to find the actual address.
 
@@ -158,6 +177,7 @@ SPI displays (ST7735) do not use I2C addresses — use `spi_bus`, `dc_pin`, and 
 | SSD1327 | I2C | 128x128 | Grayscale | 4 |
 | SSD1331 | SPI | 96x64 | Color | 16 |
 | ST7735  | SPI | up to 128x160 | Color | 16 |
+| UCTRONICS (colour) | I2C (MCU bridge) | 160x80 | Color | 16 |
 
 ---
 

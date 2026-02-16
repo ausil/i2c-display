@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 // DisplaySpec holds the specifications for a display type
 type DisplaySpec struct {
 	Width  int
@@ -33,7 +35,9 @@ func GetDisplaySpec(displayType string) (DisplaySpec, bool) {
 		"st7735_128x160":            {Width: 128, Height: 160},
 		"st7735_128x128":            {Width: 128, Height: 128},
 		"st7735_160x80":             {Width: 160, Height: 80},
-		"st7735_160x80_uctronics":   {Width: 160, Height: 80},
+
+		// UCTRONICS (I2C-bridged ST7735 via onboard MCU)
+		"uctronics_colour": {Width: 160, Height: 80},
 	}
 
 	spec, ok := specs[displayType]
@@ -57,4 +61,12 @@ func (c *DisplayConfig) ApplyDisplayDefaults() {
 	// This makes the type authoritative over explicit dimension values
 	c.Width = spec.Width
 	c.Height = spec.Height
+
+	// UCTRONICS displays use an I2C bridge MCU at address 0x18
+	if strings.HasPrefix(strings.ToLower(c.Type), "uctronics") {
+		c.I2CAddress = "0x18"
+		if c.I2CBus == "" {
+			c.I2CBus = "/dev/i2c-1"
+		}
+	}
 }

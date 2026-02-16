@@ -205,24 +205,6 @@ func (d *ST7735Display) applyRotation(rotation int) error {
 // columns × 162 rows of RAM, so the 160-pixel dimension MUST be mapped to
 // the row axis via the MV (row/column exchange) bit.
 func (d *ST7735Display) st7735RotationParams(rotation int) (madctl byte, colOffset, rowOffset uint8) {
-	if d.displayType == "st7735_160x80_uctronics" {
-		// UCTRONICS Pi Rack Pro 0.96" 160x80 (SKU_RM0004).
-		// Uses BGR subpixel order and different RAM offsets from the Waveshare.
-		// Rotation 0 MADCTL (MY|MV|BGR) and offsets (0, 24) taken directly
-		// from the UCTRONICS reference driver. Other rotations derived by
-		// applying the same MX/MY/ML transformations as the Waveshare variant.
-		switch rotation {
-		case 0: // landscape normal — UCTRONICS reference: 0xA8
-			return madctlMY | madctlMV | madctlBGR, 0, 24
-		case 1: // landscape 90° CW
-			return madctlMX | madctlMV | madctlBGR, 24, 0
-		case 2: // landscape 180°
-			return madctlMX | madctlMV | madctlML | madctlBGR, 0, 24
-		default: // landscape 270° CW
-			return madctlMY | madctlMV | madctlML | madctlBGR, 24, 0
-		}
-	}
-
 	if d.panelWidth == 160 && d.panelHeight == 80 {
 		// MADCTL values confirmed against Waveshare 0.96" 160x80 reference driver.
 		// MV must be set for all landscape orientations so the 160-pixel dimension

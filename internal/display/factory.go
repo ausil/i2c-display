@@ -35,6 +35,16 @@ func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
 		)
 	}
 
+	// UCTRONICS displays (I2C-bridged ST7735 via onboard MCU)
+	if strings.HasPrefix(displayType, "uctronics") {
+		return NewUCTRONICSDisplay(
+			cfg.I2CBus,
+			cfg.I2CAddress,
+			cfg.Width,
+			cfg.Height,
+		)
+	}
+
 	// Other display types - Framework ready, awaiting drivers
 	supportedButNeedDrivers := map[string]string{
 		"sh1106":  "SH1106 (128x64 mono) - compatible with SSD1306, driver available at github.com/danielgatis/go-sh1106 (SPI)",

@@ -1,12 +1,10 @@
 {
   "display": {
-    "type": "st7735_160x80_uctronics",
-    "spi_bus": "SPI0.0",
-    "dc_pin": "GPIO24",
-    "rst_pin": "GPIO25",
-    "rotation": 0
+    "type": "uctronics_colour",
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x18"
   },
-  "_comment": "UCTRONICS Pi Rack Pro 0.96\" 160x80 TFT (SKU_RM0004) connected via SPI. Uses BGR subpixel order. dc_pin and spi_bus are required; rst_pin is optional.",
+  "_comment": "UCTRONICS Pi Rack Pro 0.96\" 160x80 colour TFT (SKU_RM0004). Uses I2C bridge MCU at address 0x18. Width/height are set automatically from the type.",
   "pages": {
     "rotation_interval": "5s",
     "refresh_interval": "1s"

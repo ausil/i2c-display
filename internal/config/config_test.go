@@ -455,7 +455,7 @@ func TestIsI2CAndIsSPI(t *testing.T) {
 		{"st7735_128x160", false, true},
 		{"st7735_128x128", false, true},
 		{"st7735_160x80", false, true},
-		{"st7735_160x80_uctronics", false, true},
+		{"uctronics_colour", true, false},
 	}
 
 	for _, tt := range tests {
