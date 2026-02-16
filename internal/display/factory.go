@@ -31,6 +31,7 @@ func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
 			cfg.Width,
 			cfg.Height,
 			cfg.Rotation,
+			displayType,
 		)
 	}
 

@@ -29,10 +29,11 @@ func GetDisplaySpec(displayType string) (DisplaySpec, bool) {
 		"ssd1331_96x64":  {Width: 96, Height: 64},
 
 		// ST7735 (color TFT via SPI)
-		"st7735":          {Width: 128, Height: 160},
-		"st7735_128x160":  {Width: 128, Height: 160},
-		"st7735_128x128":  {Width: 128, Height: 128},
-		"st7735_160x80":   {Width: 160, Height: 80},
+		"st7735":                    {Width: 128, Height: 160},
+		"st7735_128x160":            {Width: 128, Height: 160},
+		"st7735_128x128":            {Width: 128, Height: 128},
+		"st7735_160x80":             {Width: 160, Height: 80},
+		"st7735_160x80_uctronics":   {Width: 160, Height: 80},
 	}
 
 	spec, ok := specs[displayType]

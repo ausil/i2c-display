@@ -75,6 +75,19 @@ func TestNewDisplay(t *testing.T) {
 			wantErr: true, // Will fail without hardware
 		},
 		{
+			name: "st7735_160x80_uctronics",
+			config: config.DisplayConfig{
+				Type:    "st7735_160x80_uctronics",
+				SPIBus:  "SPI0.0",
+				DCPin:   "GPIO24",
+				RSTPin:  "GPIO25",
+				Width:   160,
+				Height:  80,
+				Rotation: 0,
+			},
+			wantErr: true, // Will fail without hardware
+		},
+		{
 			name: "unsupported type",
 			config: config.DisplayConfig{
 				Type:       "unknown",

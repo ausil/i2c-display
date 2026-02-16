@@ -34,7 +34,8 @@ This document describes all displays currently supported and how to add new ones
 | `st7735` | 128x160 | 1.8" (default) | 0 | 0 |
 | `st7735_128x160` | 128x160 | 1.8" | 0 | 0 |
 | `st7735_128x128` | 128x128 | 1.44" red tab | 2 | 3 |
-| `st7735_160x80` | 160x80 | 0.96" (e.g. Waveshare) | 0 | 24 |
+| `st7735_160x80` | 160x80 | 0.96" (e.g. Waveshare) | 1 | 26 |
+| `st7735_160x80_uctronics` | 160x80 | 0.96" UCTRONICS Pi Rack Pro | 0 | 24 |
 
 Colour: white-on-black (RGB565), consistent with OLED rendering.
 
@@ -63,7 +64,9 @@ Colour: white-on-black (RGB565), consistent with OLED rendering.
 }
 ```
 
-See `configs/config.st7735_160x80.json` and `configs/config.st7735_128x128.json` for complete examples.
+The UCTRONICS variant uses BGR subpixel order (vs RGB for Waveshare) and different RAM offsets. Use `st7735_160x80_uctronics` for the UCTRONICS Pi Rack Pro (SKU_RM0004) and similar UCTRONICS rack products with built-in 0.96" displays.
+
+See `configs/config.st7735_160x80.json`, `configs/config.st7735_160x80_uctronics.json`, and `configs/config.st7735_128x128.json` for complete examples.
 
 ---
 

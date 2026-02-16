@@ -67,6 +67,13 @@ func TestGetDisplaySpec(t *testing.T) {
 			wantOK:      true,
 		},
 		{
+			name:        "st7735_160x80_uctronics",
+			displayType: "st7735_160x80_uctronics",
+			wantWidth:   160,
+			wantHeight:  80,
+			wantOK:      true,
+		},
+		{
 			name:        "unknown type",
 			displayType: "unknown",
 			wantWidth:   0,
