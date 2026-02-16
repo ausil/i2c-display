@@ -306,10 +306,11 @@ func (d *ST7735Display) setWindow(x0, y0, x1, y1 int) error {
 
 // Init initializes the display (already done in constructor; clears screen).
 func (d *ST7735Display) Init() error {
-	return d.Clear()
+	d.Clear()
+	return d.Show()
 }
 
-// Clear fills the display with black.
+// Clear fills the image buffer with black without flushing to the display.
 func (d *ST7735Display) Clear() error {
 	bounds := d.img.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
@@ -317,7 +318,7 @@ func (d *ST7735Display) Clear() error {
 			d.img.SetNRGBA(x, y, color.NRGBA{R: 0, G: 0, B: 0, A: 255})
 		}
 	}
-	return d.Show()
+	return nil
 }
 
 // DrawPixel sets a single pixel (white if on, black if off).

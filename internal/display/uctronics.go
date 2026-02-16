@@ -141,10 +141,11 @@ func (d *UCTRONICSDisplay) burstTransfer(data []byte) error {
 
 // Init initializes the display (MCU handles ST7735 init; we just clear).
 func (d *UCTRONICSDisplay) Init() error {
-	return d.Clear()
+	d.Clear()
+	return d.Show()
 }
 
-// Clear fills the display with black.
+// Clear fills the image buffer with black without flushing to the display.
 func (d *UCTRONICSDisplay) Clear() error {
 	bounds := d.img.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
@@ -152,7 +153,7 @@ func (d *UCTRONICSDisplay) Clear() error {
 			d.img.SetNRGBA(x, y, color.NRGBA{A: 255})
 		}
 	}
-	return d.Show()
+	return nil
 }
 
 // DrawPixel sets a single pixel (white if on, black if off).

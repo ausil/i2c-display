@@ -261,7 +261,10 @@ func runDisplayTest(disp display.Display, log *logger.Logger) error {
 				if err := disp.Clear(); err != nil {
 					return err
 				}
-				return disp.DrawRect(0, 0, w, h, false)
+				if err := disp.DrawRect(0, 0, w, h, false); err != nil {
+					return err
+				}
+				return disp.Show()
 			},
 		},
 		{
@@ -306,7 +309,12 @@ func runDisplayTest(disp display.Display, log *logger.Logger) error {
 		{
 			// Step 5 — clear: leave the display blank.
 			name: "clear",
-			fn:   disp.Clear,
+			fn: func() error {
+				if err := disp.Clear(); err != nil {
+					return err
+				}
+				return disp.Show()
+			},
 		},
 	}
 

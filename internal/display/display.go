@@ -10,7 +10,8 @@ type Display interface {
 	// Init initializes the display hardware
 	Init() error
 
-	// Clear clears the entire display
+	// Clear clears the image buffer without flushing to the display.
+	// Call Show() afterwards to update the physical display.
 	Clear() error
 
 	// DrawText draws text at the specified position
