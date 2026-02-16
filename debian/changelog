@@ -1,3 +1,14 @@
+i2c-display (0.3.0-1) unstable; urgency=medium
+
+  * Add UCTRONICS colour display support (uctronics_colour) via I2C bridge MCU
+  * Render hostname in green on colour displays
+  * Preserve source colours in DrawImage on colour displays (ST7735, UCTRONICS)
+  * Fix display flicker by not flushing framebuffer on Clear()
+  * Use max-channel brightness for monochrome DrawImage so saturated colours
+    render as white
+
+ -- Dennis Gilmore <dennis@ausil.us>  Sun, 16 Feb 2025 12:00:00 -0500
+
 i2c-display (0.2.0-1) unstable; urgency=medium
 
   * Enhanced small display support for 128x32 screens

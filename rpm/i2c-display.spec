@@ -1,5 +1,5 @@
 Name:           i2c-display
-Version:        0.2.0
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
@@ -62,6 +62,13 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 %{_unitdir}/i2c-display.service
 
 %changelog
+* Sun Feb 16 2025 Dennis Gilmore <dennis@ausil.us> - 0.3.0-1
+- Add UCTRONICS colour display support (uctronics_colour) via I2C bridge MCU
+- Render hostname in green on colour displays
+- Preserve source colours in DrawImage on colour displays (ST7735, UCTRONICS)
+- Fix display flicker by not flushing framebuffer on Clear()
+- Use max-channel brightness for monochrome DrawImage so saturated colours render as white
+
 * Wed Feb 12 2025 Dennis Gilmore <dennis@ausil.us> - 0.2.0-1
 - Enhanced small display support for 128x32 screens
 - Split system metrics into individual rotating pages
