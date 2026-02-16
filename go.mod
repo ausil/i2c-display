@@ -1,11 +1,11 @@
 module github.com/ausil/i2c-display
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/rs/zerolog v1.34.0
-	golang.org/x/image v0.23.0
+	golang.org/x/image v0.36.0
 	periph.io/x/conn/v3 v3.7.2
 	periph.io/x/devices/v3 v3.7.4
 	periph.io/x/host/v3 v3.8.5
