@@ -19,6 +19,7 @@ const (
 	st7735SWRESET = 0x01
 	st7735SLPOUT  = 0x11
 	st7735NORON   = 0x13
+	st7735INVON   = 0x21
 	st7735DISPON  = 0x29
 	st7735CASET   = 0x2A
 	st7735RASET   = 0x2B
@@ -44,20 +45,23 @@ const (
 	madctlMY  = 0x80
 	madctlMX  = 0x40
 	madctlMV  = 0x20
+	madctlML  = 0x10
 	madctlBGR = 0x08
 )
 
 // ST7735Display implements Display interface for ST7735 TFT displays via SPI
 type ST7735Display struct {
-	port      spi.PortCloser
-	conn      spi.Conn
-	dc        gpio.PinOut
-	rst       gpio.PinOut // nil if not configured
-	img       *image.NRGBA
-	width     int
-	height    int
-	colOffset uint8
-	rowOffset uint8
+	port       spi.PortCloser
+	conn       spi.Conn
+	dc         gpio.PinOut
+	rst        gpio.PinOut // nil if not configured
+	img        *image.NRGBA
+	width      int
+	height     int
+	panelWidth int // physical panel width (before rotation)
+	panelHeight int // physical panel height (before rotation)
+	colOffset  uint8
+	rowOffset  uint8
 }
 
 // NewST7735Display creates a new ST7735 display driver
@@ -92,18 +96,16 @@ func NewST7735Display(spiBus, dcPin, rstPin string, width, height, rotation int)
 		}
 	}
 
-	colOffset, rowOffset := st7735Offsets(width, height)
-
 	d := &ST7735Display{
-		port:      port,
-		conn:      conn,
-		dc:        dc,
-		rst:       rst,
-		img:       image.NewNRGBA(image.Rect(0, 0, width, height)),
-		width:     width,
-		height:    height,
-		colOffset: colOffset,
-		rowOffset: rowOffset,
+		port:        port,
+		conn:        conn,
+		dc:          dc,
+		rst:         rst,
+		img:         image.NewNRGBA(image.Rect(0, 0, width, height)),
+		width:       width,
+		height:      height,
+		panelWidth:  width,
+		panelHeight: height,
 	}
 
 	if err := d.hardwareReset(); err != nil {
@@ -124,19 +126,6 @@ func NewST7735Display(spiBus, dcPin, rstPin string, width, height, rotation int)
 	return d, nil
 }
 
-// st7735Offsets returns the column and row offsets for the given display dimensions.
-// Different ST7735 panel variants require pixel offsets to address the correct
-// area of the controller's internal RAM.
-func st7735Offsets(width, height int) (colOffset, rowOffset uint8) {
-	switch {
-	case width == 160 && height == 80:
-		return 0, 24
-	case width == 128 && height == 128:
-		return 2, 3
-	default: // 128x160
-		return 0, 0
-	}
-}
 
 func (d *ST7735Display) hardwareReset() error {
 	if d.rst == nil {
@@ -188,6 +177,14 @@ func (d *ST7735Display) initSequence() error {
 				0x2E, 0x2E, 0x37, 0x3F, 0x00, 0x00, 0x02, 0x10)
 		},
 		func() error { return d.sendCmd(st7735NORON) },
+		func() error {
+			// 160x80 panels require display inversion for correct colors;
+			// without INVON the display shows black-on-black.
+			if d.panelWidth == 160 && d.panelHeight == 80 {
+				return d.sendCmd(st7735INVON)
+			}
+			return nil
+		},
 		func() error { return d.sendCmd(st7735DISPON) },
 		func() error { time.Sleep(100 * time.Millisecond); return nil },
 	}
@@ -201,20 +198,60 @@ func (d *ST7735Display) initSequence() error {
 }
 
 func (d *ST7735Display) applyRotation(rotation int) error {
-	var madctl byte
-	switch rotation {
-	case 0:
-		madctl = madctlMX | madctlMY
-	case 1:
-		madctl = madctlMY | madctlMV
-	case 2:
-		madctl = 0x00
-	case 3:
-		madctl = madctlMX | madctlMV
-	default:
+	madctl, colOff, rowOff := d.st7735RotationParams(rotation)
+	if rotation < 0 || rotation > 3 {
 		return fmt.Errorf("ST7735 rotation must be 0-3, got %d", rotation)
 	}
+	d.colOffset = colOff
+	d.rowOffset = rowOff
 	return d.sendCmdData(st7735MADCTL, madctl)
+}
+
+// st7735RotationParams returns the MADCTL byte and RAM offsets for a given
+// rotation.  The 160x80 panel is special: the ST7735 controller has 132
+// columns × 162 rows of RAM, so the 160-pixel dimension MUST be mapped to
+// the row axis via the MV (row/column exchange) bit.
+func (d *ST7735Display) st7735RotationParams(rotation int) (madctl byte, colOffset, rowOffset uint8) {
+	if d.panelWidth == 160 && d.panelHeight == 80 {
+		// MADCTL values confirmed against Waveshare 0.96" 160x80 reference driver.
+		// MV must be set for all landscape orientations so the 160-pixel dimension
+		// maps to the controller's 162-row axis (max columns is only 132).
+		switch rotation {
+		case 0: // landscape normal — Waveshare reference: 0x70
+			return madctlMX | madctlMV | madctlML, 1, 26
+		case 1: // landscape 90° CW
+			return madctlMY | madctlMV | madctlML, 26, 1
+		case 2: // landscape 180°
+			return madctlMY | madctlMV, 1, 26
+		default: // landscape 270° CW
+			return madctlMX | madctlMV, 26, 1
+		}
+	}
+
+	if d.panelWidth == 128 && d.panelHeight == 128 {
+		switch rotation {
+		case 0:
+			return madctlMX | madctlMY, 2, 3
+		case 1:
+			return madctlMY | madctlMV, 3, 2
+		case 2:
+			return 0x00, 2, 1
+		default:
+			return madctlMX | madctlMV, 1, 2
+		}
+	}
+
+	// 128x160 — uses the full RAM, no offset needed
+	switch rotation {
+	case 0:
+		return madctlMX | madctlMY, 0, 0
+	case 1:
+		return madctlMY | madctlMV, 0, 0
+	case 2:
+		return 0x00, 0, 0
+	default:
+		return madctlMX | madctlMV, 0, 0
+	}
 }
 
 // sendCmd asserts DC low and transmits a single command byte.
