@@ -59,9 +59,9 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 	layout := NewLayout(bounds)
 	maxWidth := bounds.Dx() - 2*MarginLeft
 
-	// Optional: Hostname header
+	// Optional: Hostname header (green on colour displays)
 	if layout.ShowHeader {
-		if err := DrawTextCentered(disp, layout.HeaderY, s.Hostname); err != nil {
+		if err := DrawTextCenteredColor(disp, layout.HeaderY, s.Hostname, ColorGreen); err != nil {
 			return err
 		}
 	}

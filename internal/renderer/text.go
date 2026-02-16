@@ -2,12 +2,19 @@ package renderer
 
 import (
 	"image"
+	"image/color"
 
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
 
 	"github.com/ausil/i2c-display/internal/display"
+)
+
+// Colours used for rendering on colour displays.
+// On monochrome displays these are thresholded to white.
+var (
+	ColorGreen = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
 )
 
 // DrawText renders text at the specified position using a simple bitmap font
@@ -44,6 +51,34 @@ func DrawTextCentered(disp display.Display, y int, text string) error {
 	width := font.MeasureString(face, text).Ceil()
 	x := (bounds.Dx() - width) / 2
 	return DrawText(disp, x, y, text)
+}
+
+// DrawTextColor renders text in a specific colour at the given position.
+// On colour displays the colour is preserved; on monochrome displays
+// any bright colour is rendered as white.
+func DrawTextColor(disp display.Display, x, y int, text string, c color.Color) error {
+	face := basicfont.Face7x13
+	width := font.MeasureString(face, text).Ceil()
+	height := int(face.Metrics().Ascent.Ceil()) + int(face.Metrics().Descent.Ceil())
+
+	textImg := image.NewNRGBA(image.Rect(0, 0, width, height))
+	drawer := &font.Drawer{
+		Dst:  textImg,
+		Src:  &image.Uniform{c},
+		Face: face,
+		Dot:  fixed.P(0, int(face.Metrics().Ascent.Ceil())),
+	}
+	drawer.DrawString(text)
+	return disp.DrawImage(x, y, textImg)
+}
+
+// DrawTextCenteredColor draws coloured text centered horizontally.
+func DrawTextCenteredColor(disp display.Display, y int, text string, c color.Color) error {
+	bounds := disp.GetBounds()
+	face := basicfont.Face7x13
+	width := font.MeasureString(face, text).Ceil()
+	x := (bounds.Dx() - width) / 2
+	return DrawTextColor(disp, x, y, text, c)
 }
 
 // DrawLine draws a horizontal line (used for separator)

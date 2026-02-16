@@ -159,7 +159,15 @@ func (d *SSD1306Display) DrawImage(x, y int, img image.Image) error {
 		for dx := 0; dx < bounds.Dx() && x+dx < d.width; dx++ {
 			if x+dx >= 0 && y+dy >= 0 {
 				r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
-				brightness := (r + g + b) / 3
+				// Use max channel so saturated colours (e.g. pure green)
+				// render as white on the monochrome display.
+				brightness := r
+				if g > brightness {
+					brightness = g
+				}
+				if b > brightness {
+					brightness = b
+				}
 				if brightness > 32768 && a > 32768 {
 					d.img.SetGray(x+dx, y+dy, color.Gray{Y: 255})
 				} else {

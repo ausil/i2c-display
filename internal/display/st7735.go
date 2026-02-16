@@ -392,18 +392,22 @@ func (d *ST7735Display) DrawRect(x, y, width, height int, fill bool) error {
 	return nil
 }
 
-// DrawImage draws an image at the specified position (thresholded to white/black).
+// DrawImage draws an image at the specified position, preserving source colours.
 func (d *ST7735Display) DrawImage(x, y int, img image.Image) error {
 	bounds := img.Bounds()
 	for dy := 0; dy < bounds.Dy() && y+dy < d.height; dy++ {
 		for dx := 0; dx < bounds.Dx() && x+dx < d.width; dx++ {
 			if x+dx >= 0 && y+dy >= 0 {
 				r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
-				brightness := (r + g + b) / 3
-				if brightness > 32768 && a > 32768 {
-					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{R: 255, G: 255, B: 255, A: 255})
+				if a > 32768 {
+					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{
+						R: uint8(r >> 8),
+						G: uint8(g >> 8),
+						B: uint8(b >> 8),
+						A: 255,
+					})
 				} else {
-					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{R: 0, G: 0, B: 0, A: 255})
+					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{A: 255})
 				}
 			}
 		}
