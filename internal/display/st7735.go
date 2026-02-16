@@ -19,7 +19,6 @@ const (
 	st7735SWRESET = 0x01
 	st7735SLPOUT  = 0x11
 	st7735NORON   = 0x13
-	st7735INVON   = 0x21
 	st7735DISPON  = 0x29
 	st7735CASET   = 0x2A
 	st7735RASET   = 0x2B
@@ -177,14 +176,6 @@ func (d *ST7735Display) initSequence() error {
 				0x2E, 0x2E, 0x37, 0x3F, 0x00, 0x00, 0x02, 0x10)
 		},
 		func() error { return d.sendCmd(st7735NORON) },
-		func() error {
-			// 160x80 panels require display inversion for correct colors;
-			// without INVON the display shows black-on-black.
-			if d.panelWidth == 160 && d.panelHeight == 80 {
-				return d.sendCmd(st7735INVON)
-			}
-			return nil
-		},
 		func() error { return d.sendCmd(st7735DISPON) },
 		func() error { time.Sleep(100 * time.Millisecond); return nil },
 	}
