@@ -25,6 +25,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to configuration file")
 	useMock := flag.Bool("mock", false, "Use mock display (for testing without hardware)")
 	validateConfig := flag.Bool("validate-config", false, "Validate configuration and exit")
+	testDisplay := flag.Bool("test-display", false, "Run display hardware test pattern and exit")
 	flag.Parse()
 
 	// Load configuration
@@ -90,6 +91,16 @@ func main() {
 			log.ErrorWithErr(err, "Error closing display")
 		}
 	}()
+
+	// Run hardware test pattern if requested
+	if *testDisplay {
+		log.Info("Running display test pattern...")
+		if err := runDisplayTest(disp, log); err != nil {
+			log.FatalWithErr(err, "Display test failed")
+		}
+		log.Info("Display test complete")
+		return
+	}
 
 	// Create stats collector
 	collector, err := stats.NewSystemCollector(cfg)
@@ -213,6 +224,102 @@ shutdown:
 	}
 
 	log.Info("Shutdown complete")
+}
+
+// runDisplayTest draws a sequence of test patterns to verify display hardware.
+// Each step pauses so the result can be inspected visually.
+//
+// Pass: solid white fill → border rectangle → cross-hairs → text → clear.
+func runDisplayTest(disp display.Display, log *logger.Logger) error {
+	bounds := disp.GetBounds()
+	w := bounds.Dx()
+	h := bounds.Dy()
+
+	steps := []struct {
+		name string
+		fn   func() error
+	}{
+		{
+			// Step 1 — solid white: verifies the full display area is addressed.
+			// If only part of the screen lights up the window/offset is wrong.
+			name: "solid white fill",
+			fn: func() error {
+				for y := 0; y < h; y++ {
+					for x := 0; x < w; x++ {
+						if err := disp.DrawPixel(x, y, true); err != nil {
+							return err
+						}
+					}
+				}
+				return disp.Show()
+			},
+		},
+		{
+			// Step 2 — border: verifies all four edges reach the display corners.
+			name: "border rectangle",
+			fn: func() error {
+				if err := disp.Clear(); err != nil {
+					return err
+				}
+				return disp.DrawRect(0, 0, w, h, false)
+			},
+		},
+		{
+			// Step 3 — cross-hairs: verifies centre coordinates and axis directions.
+			name: "cross-hairs",
+			fn: func() error {
+				if err := disp.Clear(); err != nil {
+					return err
+				}
+				// Horizontal centre line
+				if err := disp.DrawLine(0, h/2, w); err != nil {
+					return err
+				}
+				// Vertical centre line (pixel by pixel)
+				for y := 0; y < h; y++ {
+					if err := disp.DrawPixel(w/2, y, true); err != nil {
+						return err
+					}
+				}
+				return disp.Show()
+			},
+		},
+		{
+			// Step 4 — text: verifies the rendering pipeline end-to-end.
+			// Text appears top-left; if it is mirrored/upside-down the
+			// rotation or MADCTL value needs adjusting.
+			name: "text rendering",
+			fn: func() error {
+				if err := disp.Clear(); err != nil {
+					return err
+				}
+				if err := disp.DrawText(2, 2, "DISPLAY OK", display.FontSmall); err != nil {
+					return err
+				}
+				size := fmt.Sprintf("%dx%d", w, h)
+				if err := disp.DrawText(2, 14, size, display.FontSmall); err != nil {
+					return err
+				}
+				return disp.Show()
+			},
+		},
+		{
+			// Step 5 — clear: leave the display blank.
+			name: "clear",
+			fn:   disp.Clear,
+		},
+	}
+
+	for i, step := range steps {
+		log.With().Int("step", i+1).Str("name", step.name).Logger().Info("Test step")
+		if err := step.fn(); err != nil {
+			return fmt.Errorf("step %d (%s): %w", i+1, step.name, err)
+		}
+		if i < len(steps)-1 {
+			time.Sleep(2 * time.Second)
+		}
+	}
+	return nil
 }
 
 // newScreenSaver constructs a screensaver from application config.
