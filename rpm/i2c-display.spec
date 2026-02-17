@@ -3,13 +3,34 @@ Version:        0.3.0
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
-License:        BSD
+License:        BSD-3-Clause AND Apache-2.0 AND MIT AND BSD-2-Clause
 URL:            https://github.com/ausil/i2c-display
 Source0:        %{name}-%{version}.tar.gz
 
-BuildRequires:  golang >= 1.19
+BuildRequires:  golang >= 1.24
 BuildRequires:  systemd-rpm-macros
 Requires:       systemd
+
+# Bundled Go dependencies (vendored)
+Provides:       bundled(golang(github.com/beorn7/perks)) = 1.0.1
+Provides:       bundled(golang(github.com/cespare/xxhash/v2)) = 2.3.0
+Provides:       bundled(golang(github.com/mattn/go-colorable)) = 0.1.13
+Provides:       bundled(golang(github.com/mattn/go-isatty)) = 0.0.20
+Provides:       bundled(golang(github.com/munnerz/goautoneg)) = 0.0.0
+Provides:       bundled(golang(github.com/prometheus/client_golang)) = 1.23.2
+Provides:       bundled(golang(github.com/prometheus/client_model)) = 0.6.2
+Provides:       bundled(golang(github.com/prometheus/common)) = 0.66.1
+Provides:       bundled(golang(github.com/prometheus/procfs)) = 0.16.1
+Provides:       bundled(golang(github.com/rs/zerolog)) = 1.34.0
+Provides:       bundled(golang(go.yaml.in/yaml/v2)) = 2.4.2
+Provides:       bundled(golang(golang.org/x/image)) = 0.36.0
+Provides:       bundled(golang(golang.org/x/sys)) = 0.35.0
+Provides:       bundled(golang(google.golang.org/protobuf)) = 1.36.8
+Provides:       bundled(golang(periph.io/x/conn/v3)) = 3.7.2
+Provides:       bundled(golang(periph.io/x/devices/v3)) = 3.7.4
+Provides:       bundled(golang(periph.io/x/host/v3)) = 3.8.5
+
+ExclusiveArch:  %{go_arches}
 
 %description
 A Go application for Single Board Computers (Raspberry Pi 3/4, Rock 3C) that
@@ -27,8 +48,8 @@ Features:
 %setup -q
 
 %build
-# Build the binary
-make build
+# Build with vendored dependencies (no network access required)
+make build GOBUILD="go build -mod=vendor"
 
 %install
 # Create directories
@@ -56,6 +77,23 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 
 %files
 %license LICENSE
+%license vendor/github.com/beorn7/perks/LICENSE
+%license vendor/github.com/cespare/xxhash/v2/LICENSE.txt
+%license vendor/github.com/mattn/go-colorable/LICENSE
+%license vendor/github.com/mattn/go-isatty/LICENSE
+%license vendor/github.com/munnerz/goautoneg/LICENSE
+%license vendor/github.com/prometheus/client_golang/LICENSE
+%license vendor/github.com/prometheus/client_model/LICENSE
+%license vendor/github.com/prometheus/common/LICENSE
+%license vendor/github.com/prometheus/procfs/LICENSE
+%license vendor/github.com/rs/zerolog/LICENSE
+%license vendor/go.yaml.in/yaml/v2/LICENSE
+%license vendor/golang.org/x/image/LICENSE
+%license vendor/golang.org/x/sys/LICENSE
+%license vendor/google.golang.org/protobuf/LICENSE
+%license vendor/periph.io/x/conn/v3/LICENSE
+%license vendor/periph.io/x/devices/v3/LICENSE
+%license vendor/periph.io/x/host/v3/LICENSE
 %doc README.md LICENSES.md
 %{_bindir}/i2c-displayd
 %config(noreplace) %{_sysconfdir}/i2c-display/config.json
