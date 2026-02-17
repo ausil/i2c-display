@@ -89,10 +89,12 @@ uninstall:
 	@echo "Uninstall complete (config preserved in $(CONFIG_DIR))"
 
 # Cross-compile for Raspberry Pi (32-bit ARM)
+# Note: -buildmode=pie requires CGO for ARMv7 cross-compilation, so we use
+# plain 'go build' here instead of $(GOBUILD).
 build-arm7:
 	@echo "Building for ARMv7..."
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=arm GOARM=7 $(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME)-arm7 ./cmd/i2c-displayd/
+	GOOS=linux GOARCH=arm GOARM=7 $(GOCMD) build -o $(BUILD_DIR)/$(BINARY_NAME)-arm7 ./cmd/i2c-displayd/
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)-arm7"
 
 # Cross-compile for Raspberry Pi 4 / Rock 3C (64-bit ARM)

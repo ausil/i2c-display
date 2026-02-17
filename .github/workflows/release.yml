@@ -41,7 +41,11 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: |
-          make build
+          if [ "${{ matrix.goarch }}" = "arm" ]; then
+            make build GOBUILD="go build"
+          else
+            make build
+          fi
           mv bin/i2c-displayd bin/i2c-displayd-${{ matrix.suffix }}
 
       - name: Upload binary

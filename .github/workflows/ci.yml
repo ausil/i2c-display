@@ -23,9 +23,9 @@ jobs:
           go-version: '1.24'
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.61
+          version: v1.64
           args: --timeout=5m
 
   test:
@@ -84,7 +84,11 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: |
-          make build
+          if [ "${{ matrix.goarch }}" = "arm" ]; then
+            make build GOBUILD="go build"
+          else
+            make build
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
