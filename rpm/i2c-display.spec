@@ -1,5 +1,5 @@
 Name:           i2c-display
-Version:        0.3.0
+Version:        0.3.1
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
@@ -100,6 +100,17 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 %{_unitdir}/i2c-display.service
 
 %changelog
+* Mon Feb 17 2025 Dennis Gilmore <dennis@ausil.us> - 0.3.1-1
+- Pin gosec CI action to v2.23.0 and enforce security scan failures
+- Default metrics endpoint to 127.0.0.1:9090 to prevent network exposure
+- Align Makefile install path with systemd service ExecStart
+- Log ST7735 SPI port cleanup errors instead of suppressing
+- Add systemd security hardening (ProtectKernelLogs, RestrictRealtime, etc.)
+- Remove unnecessary network.target dependency from systemd service
+- Remove sudo from Makefile install targets
+- Vendor Go dependencies for offline/Fedora builds
+- Fix display flicker by not flushing framebuffer on Clear()
+
 * Sun Feb 16 2025 Dennis Gilmore <dennis@ausil.us> - 0.3.0-1
 - Add UCTRONICS colour display support (uctronics_colour) via I2C bridge MCU
 - Render hostname in green on colour displays
