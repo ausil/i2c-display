@@ -62,29 +62,28 @@ clean:
 	@echo "Clean complete"
 
 # Install the binary, config, and systemd service
+# Run with: sudo make install
 install: build
 	@echo "Installing $(BINARY_NAME)..."
-	@sudo install -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(INSTALL_DIR)/$(BINARY_NAME)
-	@sudo mkdir -p $(CONFIG_DIR)
-	@sudo cp configs/config.example.json $(CONFIG_DIR)/config.json
-	@sudo cp systemd/i2c-display.service $(SYSTEMD_DIR)/
-	@sudo systemctl daemon-reload
+	install -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(DESTDIR)$(INSTALL_DIR)/$(BINARY_NAME)
+	mkdir -p $(DESTDIR)$(CONFIG_DIR)
+	cp configs/config.example.json $(DESTDIR)$(CONFIG_DIR)/config.json
+	cp systemd/i2c-display.service $(DESTDIR)$(SYSTEMD_DIR)/
 	@echo "Installation complete"
 	@echo ""
 	@echo "To enable and start the service:"
-	@echo "  sudo systemctl enable ssd1306-display.service"
-	@echo "  sudo systemctl start ssd1306-display.service"
-	@echo ""
-	@echo "To check status:"
-	@echo "  sudo systemctl status ssd1306-display.service"
+	@echo "  systemctl daemon-reload"
+	@echo "  systemctl enable i2c-display.service"
+	@echo "  systemctl start i2c-display.service"
 
 # Uninstall the binary, config, and systemd service
+# Run with: sudo make uninstall
 uninstall:
 	@echo "Uninstalling $(BINARY_NAME)..."
-	@sudo systemctl stop i2c-display.service 2>/dev/null || true
-	@sudo systemctl disable i2c-display.service 2>/dev/null || true
-	@sudo rm -f $(SYSTEMD_DIR)/i2c-display.service
-	@sudo rm -f $(INSTALL_DIR)/$(BINARY_NAME)
+	systemctl stop i2c-display.service 2>/dev/null || true
+	systemctl disable i2c-display.service 2>/dev/null || true
+	rm -f $(DESTDIR)$(SYSTEMD_DIR)/i2c-display.service
+	rm -f $(DESTDIR)$(INSTALL_DIR)/$(BINARY_NAME)
 	@echo "Uninstall complete (config preserved in $(CONFIG_DIR))"
 
 # Cross-compile for Raspberry Pi (32-bit ARM)
@@ -154,9 +153,10 @@ rpm: dist
 	@ls -lh $(RPM_TOPDIR)/SRPMS/*.src.rpm
 
 # Install RPM (requires rpm to be built first)
+# Run with: sudo make install-rpm
 install-rpm:
 	@echo "Installing RPM..."
-	@sudo rpm -Uvh $(RPM_TOPDIR)/RPMS/*/*.rpm
+	rpm -Uvh $(RPM_TOPDIR)/RPMS/*/*.rpm
 
 # Build Debian source package
 deb-src:
@@ -173,10 +173,11 @@ deb:
 	@ls -lh ../$(PROJECT_NAME)_*.deb
 
 # Install DEB (requires deb to be built first)
+# Run with: sudo make install-deb
 install-deb:
 	@echo "Installing DEB..."
-	@sudo dpkg -i ../$(PROJECT_NAME)_*.deb
-	@sudo apt-get install -f -y
+	dpkg -i ../$(PROJECT_NAME)_*.deb
+	apt-get install -f -y
 
 # Show version
 version:
