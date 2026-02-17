@@ -9,6 +9,7 @@ i2c-display (0.3.1-1) unstable; urgency=medium
   * Remove sudo from Makefile install targets
   * Vendor Go dependencies for offline/Fedora builds
   * Fix display flicker by not flushing framebuffer on Clear()
+  * Install systemd unit to /usr/lib/systemd/system instead of /etc/systemd/system
 
  -- Dennis Gilmore <dennis@ausil.us>  Mon, 17 Feb 2025 12:00:00 -0500
 

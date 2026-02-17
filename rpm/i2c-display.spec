@@ -110,6 +110,7 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 - Remove sudo from Makefile install targets
 - Vendor Go dependencies for offline/Fedora builds
 - Fix display flicker by not flushing framebuffer on Clear()
+- Install systemd unit to /usr/lib/systemd/system instead of /etc/systemd/system
 
 * Sun Feb 16 2025 Dennis Gilmore <dennis@ausil.us> - 0.3.0-1
 - Add UCTRONICS colour display support (uctronics_colour) via I2C bridge MCU
