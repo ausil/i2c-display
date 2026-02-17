@@ -11,7 +11,7 @@ BUILD_DIR=bin
 DIST_DIR=dist
 INSTALL_DIR=/usr/bin
 CONFIG_DIR=/etc/i2c-display
-SYSTEMD_DIR=/etc/systemd/system
+SYSTEMD_DIR=/usr/lib/systemd/system
 
 # RPM configuration
 RPM_TOPDIR=$(shell pwd)/rpm-build
