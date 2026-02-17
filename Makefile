@@ -19,7 +19,7 @@ TARBALL=$(PROJECT_NAME)-$(VERSION).tar.gz
 
 # Go parameters
 GOCMD=go
-GOBUILD=$(GOCMD) build
+GOBUILD=$(GOCMD) build -buildmode=pie
 GOTEST=$(GOCMD) test
 GOCLEAN=$(GOCMD) clean
 
