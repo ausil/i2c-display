@@ -115,6 +115,7 @@ dist:
 	@mkdir -p $(DIST_DIR)
 	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
 	@mkdir -p $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
+	@go mod vendor
 	@cp -r cmd internal configs systemd scripts testdata vendor $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
 	@cp go.mod go.sum Makefile README.md LICENSE LICENSES.md VERSION $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
 	@cp rpm/$(PROJECT_NAME).spec $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/

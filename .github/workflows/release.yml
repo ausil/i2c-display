@@ -110,13 +110,12 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-          # Generate changelog from git log
-          if [ $(git tag | wc -l) -gt 1 ]; then
-            PREV_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))
-            CHANGELOG=$(git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
-          else
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
-          fi
+          # Extract changelog entries for this version from the RPM spec
+          CHANGELOG=$(sed -n "/^%changelog/,\$p" rpm/i2c-display.spec \
+            | sed '1d' \
+            | sed "/^$/q" \
+            | grep "^-" \
+            | sed 's/^/  /')
 
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
