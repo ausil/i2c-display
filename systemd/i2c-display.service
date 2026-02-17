@@ -1,8 +1,6 @@
 [Unit]
 Description=I2C OLED Display Service
 Documentation=https://github.com/ausil/i2c-display
-After=network.target
-Wants=network.target
 
 [Service]
 Type=simple
@@ -18,6 +16,11 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
+ProtectKernelLogs=true
+ProtectClock=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
 
 # Resource limits
 MemoryLimit=128M

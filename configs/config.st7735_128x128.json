@@ -34,7 +34,7 @@
   },
   "metrics": {
     "enabled": false,
-    "address": ":9090"
+    "address": "127.0.0.1:9090"
   },
   "screensaver": {
     "enabled": false,

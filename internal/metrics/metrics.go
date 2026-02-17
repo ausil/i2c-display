@@ -38,7 +38,7 @@ type Collector struct {
 // Config holds metrics server configuration
 type Config struct {
 	Enabled bool   `json:"enabled"`
-	Address string `json:"address"` // e.g., ":9090"
+	Address string `json:"address"` // e.g., "127.0.0.1:9090"
 }
 
 // New creates a new metrics collector

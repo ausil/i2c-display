@@ -9,7 +9,7 @@ PROJECT_NAME=i2c-display
 BINARY_NAME=i2c-displayd
 BUILD_DIR=bin
 DIST_DIR=dist
-INSTALL_DIR=/usr/local/bin
+INSTALL_DIR=/usr/bin
 CONFIG_DIR=/etc/i2c-display
 SYSTEMD_DIR=/etc/systemd/system
 

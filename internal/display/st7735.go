@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"log"
 	"time"
 
 	"periph.io/x/conn/v3/gpio"
@@ -77,13 +78,17 @@ func NewST7735Display(spiBus, dcPin, rstPin string, width, height, rotation int,
 
 	conn, err := port.Connect(15*physic.MegaHertz, spi.Mode0, 8)
 	if err != nil {
-		port.Close() //nolint:errcheck
+		if cerr := port.Close(); cerr != nil {
+			log.Printf("st7735: failed to close SPI port during cleanup: %v", cerr)
+		}
 		return nil, fmt.Errorf("failed to connect on SPI bus %s: %w", spiBus, err)
 	}
 
 	dc := gpioreg.ByName(dcPin)
 	if dc == nil {
-		port.Close() //nolint:errcheck
+		if cerr := port.Close(); cerr != nil {
+			log.Printf("st7735: failed to close SPI port during cleanup: %v", cerr)
+		}
 		return nil, fmt.Errorf("DC pin %q not found", dcPin)
 	}
 
@@ -91,7 +96,9 @@ func NewST7735Display(spiBus, dcPin, rstPin string, width, height, rotation int,
 	if rstPin != "" {
 		rst = gpioreg.ByName(rstPin)
 		if rst == nil {
-			port.Close() //nolint:errcheck
+			if cerr := port.Close(); cerr != nil {
+				log.Printf("st7735: failed to close SPI port during cleanup: %v", cerr)
+			}
 			return nil, fmt.Errorf("RST pin %q not found", rstPin)
 		}
 	}
@@ -110,17 +117,23 @@ func NewST7735Display(spiBus, dcPin, rstPin string, width, height, rotation int,
 	}
 
 	if err := d.hardwareReset(); err != nil {
-		port.Close() //nolint:errcheck
+		if cerr := port.Close(); cerr != nil {
+			log.Printf("st7735: failed to close SPI port during cleanup: %v", cerr)
+		}
 		return nil, err
 	}
 
 	if err := d.initSequence(); err != nil {
-		port.Close() //nolint:errcheck
+		if cerr := port.Close(); cerr != nil {
+			log.Printf("st7735: failed to close SPI port during cleanup: %v", cerr)
+		}
 		return nil, err
 	}
 
 	if err := d.applyRotation(rotation); err != nil {
-		port.Close() //nolint:errcheck
+		if cerr := port.Close(); cerr != nil {
+			log.Printf("st7735: failed to close SPI port during cleanup: %v", cerr)
+		}
 		return nil, err
 	}
 

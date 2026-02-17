@@ -88,7 +88,7 @@ type LoggingConfig struct {
 // MetricsConfig holds Prometheus metrics settings
 type MetricsConfig struct {
 	Enabled bool   `json:"enabled"`
-	Address string `json:"address"` // e.g., ":9090"
+	Address string `json:"address"` // e.g., "127.0.0.1:9090"
 }
 
 // ScreenSaverConfig holds screen saver settings
@@ -148,7 +148,7 @@ func Default() *Config {
 		},
 		Metrics: MetricsConfig{
 			Enabled: false,
-			Address: ":9090",
+			Address: "127.0.0.1:9090",
 		},
 		ScreenSaver: ScreenSaverConfig{
 			Enabled:          false,
