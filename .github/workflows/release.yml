@@ -50,51 +50,32 @@ jobs:
           name: i2c-displayd-${{ matrix.suffix }}
           path: bin/i2c-displayd-${{ matrix.suffix }}
 
-  build-packages:
-    name: Build RPM and DEB packages
+  build-tarball:
+    name: Build source tarball
     runs-on: ubuntu-latest
-    needs: build-binaries
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Fetch all history including tags for version detection
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           go-version: '1.24'
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rpm debhelper devscripts dh-golang
-
       - name: Build source tarball
         run: make dist
 
-      - name: Build RPM
-        run: make rpm
-
-      - name: Build DEB
-        run: make deb
-
-      - name: Collect DEB packages
-        run: mv ../*.deb dist/ || true
-
-      - name: Upload packages
+      - name: Upload tarball
         uses: actions/upload-artifact@v6
         with:
-          name: packages
-          path: |
-            dist/*.tar.gz
-            dist/*.deb
-            rpm-build/RPMS/*/*.rpm
-            rpm-build/SRPMS/*.src.rpm
+          name: source-tarball
+          path: dist/*.tar.gz
 
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-binaries, build-packages]
+    needs: [build-binaries, build-tarball]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -133,45 +114,33 @@ jobs:
 
             ## Installation
 
-            ### For ARM/aarch64 SBCs (Raspberry Pi, Radxa, Orange Pi, Pine64, etc.)
+            ### Binary downloads
 
-            **Recommended:** Build packages locally on your SBC for best integration:
+            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4/5, Rock 3C/5B)
+            - `i2c-displayd-linux-armv7` - ARMv7 (Raspberry Pi 2/3)
+            - `i2c-displayd-linux-amd64` - x86_64
+
+            ### Building packages locally
 
             ```bash
-            # Debian/Ubuntu/Raspberry Pi OS
-            git clone https://github.com/ausil/i2c-display.git
-            cd i2c-display
-            sudo apt-get install -y git golang debhelper devscripts dh-golang
-            make deb
-            sudo apt install ../i2c-display_*_arm64.deb
-
-            # Fedora/RHEL on ARM
-            git clone https://github.com/ausil/i2c-display.git
-            cd i2c-display
+            # Fedora/RHEL
             sudo dnf install -y git golang rpm-build systemd-rpm-macros
+            git clone https://github.com/ausil/i2c-display.git
+            cd i2c-display
             make rpm
-            sudo dnf install rpm-build/RPMS/*/i2c-display-*.aarch64.rpm
+            sudo dnf install rpm-build/RPMS/*/i2c-display-*.rpm
+
+            # Debian/Ubuntu/Raspberry Pi OS
+            sudo apt-get install -y git golang debhelper devscripts dh-golang
+            git clone https://github.com/ausil/i2c-display.git
+            cd i2c-display
+            make deb
+            sudo apt install ../i2c-display_*.deb
             ```
-
-            **Alternative:** Use standalone binaries:
-            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4, Rock 3C/5B)
-            - `i2c-displayd-linux-armv7` - ARMv7 (Raspberry Pi 2/3)
-
-            ### For x86_64 Systems
-
-            **Packages (pre-built):**
-            - RPM: `i2c-display-*.x86_64.rpm` (Fedora, RHEL, Rocky, CentOS)
-            - DEB: `i2c-display_*_amd64.deb` (Debian, Ubuntu)
-
-            **Or standalone binary:**
-            - `i2c-displayd-linux-amd64`
 
             See [README.md](https://github.com/ausil/i2c-display/blob/main/README.md) for complete installation instructions.
           files: |
             i2c-displayd-linux-*/i2c-displayd-*
-            packages/dist/*.tar.gz
-            packages/dist/*.deb
-            packages/rpm-build/RPMS/*/*.rpm
-            packages/rpm-build/SRPMS/*.src.rpm
+            source-tarball/*.tar.gz
           draft: false
           prerelease: false
