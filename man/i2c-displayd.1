@@ -1,0 +1,75 @@
+.TH I2C-DISPLAYD 1 "February 2025" "i2c-display 0.3.1" "User Commands"
+.SH NAME
+i2c\-displayd \- I2C display controller for single board computers
+.SH SYNOPSIS
+.B i2c\-displayd
+[\fB\-config\fR \fIpath\fR]
+[\fB\-mock\fR]
+[\fB\-validate\-config\fR]
+[\fB\-test\-display\fR]
+.SH DESCRIPTION
+.B i2c\-displayd
+drives small OLED and TFT displays attached to single board computers
+(Raspberry Pi, Rock 3C, etc.) over I2C or SPI.
+It shows rotating pages of system statistics (disk, RAM, CPU temperature)
+and network interface information.
+.PP
+Supported display types include SSD1306 (I2C), ST7735 (SPI), and
+UCTRONICS colour displays (I2C bridge).
+.SH OPTIONS
+.TP
+.BI \-config " path"
+Path to a JSON configuration file.
+If not specified, the daemon searches for configuration in
+.IR /etc/i2c-display/config.json ,
+then falls back to built\-in defaults.
+.TP
+.B \-mock
+Use a mock display for testing without hardware.
+.TP
+.B \-validate\-config
+Validate the configuration file and exit.
+Returns exit code 0 if valid, non\-zero otherwise.
+.TP
+.B \-test\-display
+Run a hardware test pattern on the display and exit.
+Cycles through solid white, border rectangle, diagonal lines,
+text rendering, and clear.
+.SH FILES
+.TP
+.I /etc/i2c-display/config.json
+Default configuration file.
+.TP
+.I /usr/lib/systemd/system/i2c-display.service
+Systemd service unit file.
+.SH EXIT STATUS
+.TP
+.B 0
+Successful operation (or valid configuration with \fB\-validate\-config\fR).
+.TP
+.B non\-zero
+An error occurred during startup or configuration validation.
+.SH EXAMPLES
+Run with a specific configuration file:
+.PP
+.nf
+i2c\-displayd \-config /etc/i2c\-display/config.json
+.fi
+.PP
+Test display hardware:
+.PP
+.nf
+i2c\-displayd \-config /etc/i2c\-display/config.json \-test\-display
+.fi
+.PP
+Validate configuration without starting the daemon:
+.PP
+.nf
+i2c\-displayd \-config /etc/i2c\-display/config.json \-validate\-config
+.fi
+.SH SEE ALSO
+.BR systemctl (1)
+.SH BUGS
+Report bugs at https://github.com/ausil/i2c\-display/issues
+.SH AUTHOR
+Dennis Gilmore <dennis@ausil.us>

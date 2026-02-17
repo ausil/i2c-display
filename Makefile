@@ -69,6 +69,8 @@ install: build
 	mkdir -p $(DESTDIR)$(CONFIG_DIR)
 	cp configs/config.example.json $(DESTDIR)$(CONFIG_DIR)/config.json
 	cp systemd/i2c-display.service $(DESTDIR)$(SYSTEMD_DIR)/
+	mkdir -p $(DESTDIR)/usr/share/man/man1
+	install -m 644 man/i2c-displayd.1 $(DESTDIR)/usr/share/man/man1/
 	@echo "Installation complete"
 	@echo ""
 	@echo "To enable and start the service:"
@@ -115,7 +117,7 @@ dist:
 	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
 	@mkdir -p $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
 	@go mod vendor
-	@cp -r cmd internal configs systemd scripts testdata vendor rpm debian $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
+	@cp -r cmd internal configs systemd scripts testdata vendor rpm debian man $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
 	@cp go.mod go.sum Makefile VERSION LICENSE $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
 	@cp README.md BUILDING.md CONTRIBUTING.md DISPLAY_TYPES.md LICENSES.md SECURITY.md $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
 	@tar -czf $(DIST_DIR)/$(TARBALL) -C $(DIST_DIR) $(PROJECT_NAME)-$(VERSION)

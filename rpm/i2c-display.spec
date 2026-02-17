@@ -49,13 +49,17 @@ Features:
 
 %build
 # Build with vendored dependencies (no network access required)
-make build GOBUILD="go build -mod=vendor"
+make build GOBUILD="go build -mod=vendor -buildmode=pie"
+
+%check
+make test GOTEST="go test -mod=vendor"
 
 %install
 # Create directories
 install -d %{buildroot}%{_bindir}
 install -d %{buildroot}%{_sysconfdir}/i2c-display
 install -d %{buildroot}%{_unitdir}
+install -d %{buildroot}%{_mandir}/man1
 
 # Install binary
 install -m 0755 bin/i2c-displayd %{buildroot}%{_bindir}/i2c-displayd
@@ -65,6 +69,9 @@ install -m 0644 configs/config.example.json %{buildroot}%{_sysconfdir}/i2c-displ
 
 # Install systemd service
 install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.service
+
+# Install man page
+install -m 0644 man/i2c-displayd.1 %{buildroot}%{_mandir}/man1/i2c-displayd.1
 
 %post
 %systemd_post i2c-display.service
@@ -96,6 +103,7 @@ install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.
 %license vendor/periph.io/x/host/v3/LICENSE
 %doc README.md LICENSES.md
 %{_bindir}/i2c-displayd
+%{_mandir}/man1/i2c-displayd.1*
 %config(noreplace) %{_sysconfdir}/i2c-display/config.json
 %{_unitdir}/i2c-display.service
 
