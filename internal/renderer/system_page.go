@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"fmt"
+	"image"
 
 	"github.com/ausil/i2c-display/internal/display"
 	"github.com/ausil/i2c-display/internal/stats"
@@ -47,6 +48,7 @@ func (p *SystemPage) Title() string {
 }
 
 // Render draws the system stats page
+//
 //nolint:gocyclo // rendering logic naturally has many conditional branches for different display sizes
 func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 	// Clear display
@@ -73,71 +75,82 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 		}
 	}
 
-	// Build content lines based on available space
-	contentLines := make([]string, 0, layout.MaxContentLines)
-
-	// For small displays (128x32), show one metric at a time
-	if layout.Height <= 32 {
+	// Render content based on display size and metric type
+	if layout.Height <= 32 && p.metricType == SystemMetricAll {
+		// Compact all-in-one view: text labels only (no room for icons)
+		var text string
+		if s.CPUTemp > 0 {
+			text = fmt.Sprintf("D:%.0f%% R:%.0f%% C:%.0fC",
+				s.DiskPercent(),
+				s.MemoryPercent(),
+				s.CPUTemp)
+		} else {
+			text = fmt.Sprintf("D:%.0f%% R:%.0f%%",
+				s.DiskPercent(),
+				s.MemoryPercent())
+		}
+		text = TruncateText(text, maxWidth)
+		if len(layout.ContentLines) > 0 {
+			if err := DrawText(disp, MarginLeft, layout.ContentLines[0], text); err != nil {
+				return err
+			}
+		}
+	} else if layout.Height <= 32 {
+		// Small display, individual metric page: icon + text
+		initIcons()
+		iconMaxWidth := maxWidth - IconWidth - IconGap
+		var icon *image.Gray
 		var text string
 		switch p.metricType {
 		case SystemMetricDisk:
-			text = fmt.Sprintf("Disk: %.1f/%.1fG", s.DiskUsedGB(), s.DiskTotalGB())
+			icon = iconDisk
+			text = fmt.Sprintf("%.1f/%.1fG", s.DiskUsedGB(), s.DiskTotalGB())
 		case SystemMetricMemory:
-			text = fmt.Sprintf("Mem: %.1f/%.1fG", s.MemoryUsedGB(), s.MemoryTotalGB())
+			icon = iconMemory
+			text = fmt.Sprintf("%.1f/%.1fG", s.MemoryUsedGB(), s.MemoryTotalGB())
 		case SystemMetricCPU:
+			icon = iconCPU
 			if s.CPUTemp > 0 {
-				text = fmt.Sprintf("CPU Temp: %.1fC", s.CPUTemp)
+				text = fmt.Sprintf("%.1fC", s.CPUTemp)
 			} else {
-				text = "CPU Temp: N/A"
-			}
-		default:
-			// Fallback to compact all-in-one view
-			if s.CPUTemp > 0 {
-				text = fmt.Sprintf("D:%.0f%% R:%.0f%% C:%.0fC",
-					s.DiskPercent(),
-					s.MemoryPercent(),
-					s.CPUTemp)
-			} else {
-				text = fmt.Sprintf("D:%.0f%% R:%.0f%%",
-					s.DiskPercent(),
-					s.MemoryPercent())
+				text = "N/A"
 			}
 		}
-		contentLines = append(contentLines, text)
+		text = TruncateText(text, iconMaxWidth)
+		if len(layout.ContentLines) > 0 {
+			if err := DrawIconText(disp, MarginLeft, layout.ContentLines[0], icon, text); err != nil {
+				return err
+			}
+		}
 	} else {
-		// Standard display - show full info
-		// Disk usage
-		diskText := fmt.Sprintf("Disk: %.1f%% (%.1f/%.1fGB)",
-			s.DiskPercent(),
-			s.DiskUsedGB(),
-			s.DiskTotalGB())
-		contentLines = append(contentLines, diskText)
+		// Standard display: icon + text for each metric
+		initIcons()
+		iconMaxWidth := maxWidth - IconWidth - IconGap
 
-		// RAM usage
-		ramText := fmt.Sprintf("RAM: %.1f%% (%.1f/%.1fGB)",
-			s.MemoryPercent(),
-			s.MemoryUsedGB(),
-			s.MemoryTotalGB())
-		contentLines = append(contentLines, ramText)
-
-		// CPU temperature
-		var cpuText string
+		type iconLine struct {
+			icon *image.Gray
+			text string
+		}
+		lines := []iconLine{
+			{iconDisk, fmt.Sprintf("%.1f%% (%.1f/%.1fGB)",
+				s.DiskPercent(), s.DiskUsedGB(), s.DiskTotalGB())},
+			{iconMemory, fmt.Sprintf("%.1f%% (%.1f/%.1fGB)",
+				s.MemoryPercent(), s.MemoryUsedGB(), s.MemoryTotalGB())},
+		}
 		if s.CPUTemp > 0 {
-			cpuText = fmt.Sprintf("CPU: %.1fC", s.CPUTemp)
+			lines = append(lines, iconLine{iconCPU, fmt.Sprintf("%.1fC", s.CPUTemp)})
 		} else {
-			cpuText = "CPU: N/A"
+			lines = append(lines, iconLine{iconCPU, "N/A"})
 		}
-		contentLines = append(contentLines, cpuText)
-	}
 
-	// Render content lines
-	for i, text := range contentLines {
-		if i >= len(layout.ContentLines) {
-			break // Don't exceed available lines
-		}
-		text = TruncateText(text, maxWidth)
-		if err := DrawText(disp, MarginLeft, layout.ContentLines[i], text); err != nil {
-			return err
+		for i, line := range lines {
+			if i >= len(layout.ContentLines) {
+				break
+			}
+			text := TruncateText(line.text, iconMaxWidth)
+			if err := DrawIconText(disp, MarginLeft, layout.ContentLines[i], line.icon, text); err != nil {
+				return err
+			}
 		}
 	}
 
