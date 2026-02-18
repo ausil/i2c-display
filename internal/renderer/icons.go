@@ -143,3 +143,13 @@ func DrawIconText(disp display.Display, x, y int, icon *image.Gray, text string)
 	}
 	return DrawText(disp, x+IconWidth+IconGap, y, text)
 }
+
+// DrawIconTextColor draws an icon (white) followed by coloured text.
+// The icon is drawn at (x, y+1), then the text is drawn at
+// (x + IconWidth + IconGap, y) in colour c.
+func DrawIconTextColor(disp display.Display, x, y int, icon *image.Gray, text string, c color.Color) error {
+	if err := disp.DrawImage(x, y+1, icon); err != nil {
+		return err
+	}
+	return DrawTextColor(disp, x+IconWidth+IconGap, y, text, c)
+}

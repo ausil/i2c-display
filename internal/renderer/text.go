@@ -14,8 +14,36 @@ import (
 // Colours used for rendering on colour displays.
 // On monochrome displays these are thresholded to white.
 var (
-	ColorGreen = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
+	ColorGreen  = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
+	ColorYellow = color.NRGBA{R: 255, G: 255, B: 0, A: 255}
+	ColorRed    = color.NRGBA{R: 255, G: 0, B: 0, A: 255}
 )
+
+// MetricColor returns green/yellow/red based on a usage percentage.
+// 0-60% → green, 60-85% → yellow, >85% → red.
+func MetricColor(percent float64) color.NRGBA {
+	switch {
+	case percent > 85:
+		return ColorRed
+	case percent >= 60:
+		return ColorYellow
+	default:
+		return ColorGreen
+	}
+}
+
+// TempColor returns green/yellow/red based on CPU temperature in Celsius.
+// <55C → green, 55-75C → yellow, >75C → red.
+func TempColor(celsius float64) color.NRGBA {
+	switch {
+	case celsius > 75:
+		return ColorRed
+	case celsius >= 55:
+		return ColorYellow
+	default:
+		return ColorGreen
+	}
+}
 
 // DrawText renders text at the specified position using a simple bitmap font
 func DrawText(disp display.Display, x, y int, text string) error {
