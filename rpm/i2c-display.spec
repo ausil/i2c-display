@@ -1,5 +1,5 @@
 Name:           i2c-display
-Version:        0.3.1
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
@@ -108,6 +108,12 @@ install -m 0644 man/i2c-displayd.1 %{buildroot}%{_mandir}/man1/i2c-displayd.1
 %{_unitdir}/i2c-display.service
 
 %changelog
+* Mon Feb 17 2025 Dennis Gilmore <dennis@ausil.us> - 0.4.0-1
+- Add rolling load average graph page with color-coded bars
+- Read /proc/loadavg for 1m, 5m, 15m load averages
+- Color thresholds based on per-core load (green/yellow/red)
+- Text-only fallback for small displays (128x32)
+
 * Mon Feb 17 2025 Dennis Gilmore <dennis@ausil.us> - 0.3.1-1
 - Pin gosec CI action to v2.23.0 and enforce security scan failures
 - Default metrics endpoint to 127.0.0.1:9090 to prevent network exposure

@@ -1,3 +1,12 @@
+i2c-display (0.4.0-1) unstable; urgency=medium
+
+  * Add rolling load average graph page with color-coded bars
+  * Read /proc/loadavg for 1m, 5m, 15m load averages
+  * Color thresholds based on per-core load (green/yellow/red)
+  * Text-only fallback for small displays (128x32)
+
+ -- Dennis Gilmore <dennis@ausil.us>  Mon, 17 Feb 2025 19:58:00 -0500
+
 i2c-display (0.3.1-1) unstable; urgency=medium
 
   * Pin gosec CI action to v2.23.0 and enforce security scan failures
