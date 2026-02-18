@@ -3,6 +3,7 @@ package stats
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/ausil/i2c-display/internal/config"
@@ -15,6 +16,7 @@ type SystemCollector struct {
 	memCollector  *MemoryCollector
 	diskCollector *DiskCollector
 	netCollector  *NetworkCollector
+	loadCollector *LoadAvgCollector
 	hostname      string
 }
 
@@ -38,6 +40,7 @@ func NewSystemCollector(cfg *config.Config) (*SystemCollector, error) {
 		memCollector:  NewMemoryCollector(),
 		diskCollector: NewDiskCollector(cfg.SystemInfo.DiskPath),
 		netCollector:  NewNetworkCollector(cfg.Network),
+		loadCollector: NewLoadAvgCollector(),
 		hostname:      hostname,
 	}, nil
 }
@@ -77,6 +80,17 @@ func (sc *SystemCollector) Collect() (*SystemStats, error) {
 	}
 	stats.DiskUsed = diskUsed
 	stats.DiskTotal = diskTotal
+
+	// Collect load averages
+	avg1, avg5, avg15, err := sc.loadCollector.GetLoadAvg()
+	if err != nil {
+		// load average unavailable — leave as zero
+	} else {
+		stats.LoadAvg1 = avg1
+		stats.LoadAvg5 = avg5
+		stats.LoadAvg15 = avg15
+	}
+	stats.NumCPU = runtime.NumCPU()
 
 	// Collect network interfaces
 	interfaces, err := sc.netCollector.GetInterfaces()

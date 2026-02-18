@@ -45,6 +45,23 @@ func TempColor(celsius float64) color.NRGBA {
 	}
 }
 
+// LoadColor returns green/yellow/red based on load average per CPU core.
+// loadAvg/numCPU < 0.7 → green, 0.7–1.0 → yellow, > 1.0 → red.
+func LoadColor(loadAvg float64, numCPU int) color.NRGBA {
+	if numCPU <= 0 {
+		numCPU = 1
+	}
+	perCore := loadAvg / float64(numCPU)
+	switch {
+	case perCore > 1.0:
+		return ColorRed
+	case perCore >= 0.7:
+		return ColorYellow
+	default:
+		return ColorGreen
+	}
+}
+
 // DrawText renders text at the specified position using a simple bitmap font
 func DrawText(disp display.Display, x, y int, text string) error {
 	// Use basicfont (7x13 font)

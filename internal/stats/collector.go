@@ -9,6 +9,10 @@ type SystemStats struct {
 	DiskUsed    uint64   // in bytes
 	DiskTotal   uint64   // in bytes
 	Interfaces  []NetInterface
+	LoadAvg1    float64 // 1-minute load average
+	LoadAvg5    float64 // 5-minute load average
+	LoadAvg15   float64 // 15-minute load average
+	NumCPU      int     // number of logical CPUs
 }
 
 // NetInterface represents a network interface with its addresses

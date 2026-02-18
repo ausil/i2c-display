@@ -11,10 +11,11 @@ import (
 
 // Renderer manages page rendering
 type Renderer struct {
-	display display.Display
-	pages   []Page
-	mu      sync.RWMutex // Protects pages slice
-	config  *config.Config
+	display       display.Display
+	pages         []Page
+	mu            sync.RWMutex // Protects pages slice
+	config        *config.Config
+	loadGraphPage *LoadGraphPage // persistent across rebuilds to preserve history
 }
 
 // NewRenderer creates a new renderer
@@ -40,6 +41,14 @@ func (r *Renderer) BuildPages(s *stats.SystemStats) {
 	} else {
 		// Standard displays show all system info on one page
 		pages = append(pages, NewSystemPage())
+	}
+
+	// Add load graph page if load data is available
+	if s.LoadAvg1 > 0 || s.LoadAvg5 > 0 || s.LoadAvg15 > 0 {
+		if r.loadGraphPage == nil {
+			r.loadGraphPage = NewLoadGraphPage()
+		}
+		pages = append(pages, r.loadGraphPage)
 	}
 
 	// Add network pages based on interface count
