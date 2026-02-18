@@ -71,6 +71,10 @@ install: build
 	cp systemd/i2c-display.service $(DESTDIR)$(SYSTEMD_DIR)/
 	mkdir -p $(DESTDIR)/usr/share/man/man1
 	install -m 644 man/i2c-displayd.1 $(DESTDIR)/usr/share/man/man1/
+	mkdir -p $(DESTDIR)/usr/share/doc/i2c-display/configs/platforms
+	install -m 644 configs/*.json $(DESTDIR)/usr/share/doc/i2c-display/configs/
+	install -m 644 configs/platforms/*.json $(DESTDIR)/usr/share/doc/i2c-display/configs/platforms/
+	install -m 644 configs/platforms/README.md $(DESTDIR)/usr/share/doc/i2c-display/configs/platforms/
 	@echo "Installation complete"
 	@echo ""
 	@echo "To enable and start the service:"

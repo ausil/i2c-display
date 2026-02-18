@@ -60,12 +60,18 @@ install -d %{buildroot}%{_bindir}
 install -d %{buildroot}%{_sysconfdir}/i2c-display
 install -d %{buildroot}%{_unitdir}
 install -d %{buildroot}%{_mandir}/man1
+install -d %{buildroot}%{_docdir}/i2c-display/configs/platforms
 
 # Install binary
 install -m 0755 bin/i2c-displayd %{buildroot}%{_bindir}/i2c-displayd
 
 # Install config
 install -m 0644 configs/config.example.json %{buildroot}%{_sysconfdir}/i2c-display/config.json
+
+# Install example configs to docdir
+install -m 0644 configs/*.json %{buildroot}%{_docdir}/i2c-display/configs/
+install -m 0644 configs/platforms/*.json %{buildroot}%{_docdir}/i2c-display/configs/platforms/
+install -m 0644 configs/platforms/README.md %{buildroot}%{_docdir}/i2c-display/configs/platforms/
 
 # Install systemd service
 install -m 0644 systemd/i2c-display.service %{buildroot}%{_unitdir}/i2c-display.service
@@ -102,6 +108,7 @@ install -m 0644 man/i2c-displayd.1 %{buildroot}%{_mandir}/man1/i2c-displayd.1
 %license vendor/periph.io/x/devices/v3/LICENSE
 %license vendor/periph.io/x/host/v3/LICENSE
 %doc README.md LICENSES.md
+%doc %{_docdir}/i2c-display/configs/
 %{_bindir}/i2c-displayd
 %{_mandir}/man1/i2c-displayd.1*
 %config(noreplace) %{_sysconfdir}/i2c-display/config.json
