@@ -21,10 +21,15 @@ A Go application for Single Board Computers that controls OLED and TFT displays,
   - White-on-black rendering, RGB565 colour
   - Types: `st7735` / `st7735_128x160` (1.8"), `st7735_128x128` (1.44"), `st7735_160x80` (0.96" Waveshare)
 
+- **UCTRONICS** - 0.96" 160x80 colour TFT (I2C, Pi Rack Pro SKU_RM0004)
+  - Onboard MCU bridges I2C to the internal ST7735 — no SPI, DC or RST pins needed
+  - Fixed address `0x18`; dimensions auto-set to 160x80
+  - Type: `uctronics_colour`
+
 ### Framework Ready (Drivers Needed) 🔧
-- **SH1106** - 128x64 monochrome (similar to SSD1306)
-- **SSD1327** - 128x128 4-bit grayscale OLED
-- **SSD1331** - 96x64 16-bit color OLED
+- **SH1106** - 128x64 monochrome (similar to SSD1306) — Types: `sh1106`, `sh1106_128x64`
+- **SSD1327** - 128x128 / 96x96 4-bit grayscale OLED — Types: `ssd1327`, `ssd1327_128x128`, `ssd1327_96x96`
+- **SSD1331** - 96x64 16-bit color OLED — Types: `ssd1331`, `ssd1331_96x64`
 
 These types are recognized and dimensions auto-set, but return a helpful error message explaining the driver is not yet implemented.
 
@@ -47,7 +52,7 @@ See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add
 
 ## Requirements
 
-- Go 1.19 or later (for building from source)
+- Go 1.24 or later (for building from source)
 - Supported display (see Supported Displays section)
 - Any Linux-based SBC with I2C or SPI support
 
@@ -354,6 +359,7 @@ See `configs/config.example.json` for a complete example:
   - `st7735` / `st7735_128x160` - 1.8" 128x160 TFT (SPI)
   - `st7735_128x128` - 1.44" 128x128 TFT (SPI)
   - `st7735_160x80` - 0.96" 160x80 TFT (SPI, e.g. Waveshare)
+  - `uctronics_colour` - 0.96" 160x80 colour TFT on UCTRONICS Pi Rack Pro (I2C, address `0x18` auto-set)
   - See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for all supported types
 
 **I2C displays only:**
@@ -793,16 +799,32 @@ make test-hardware
 ```
 i2c-display/
 ├── cmd/
-│   └── i2c-displayd/           # Main application
+│   └── i2c-displayd/       # Main application entry point
 ├── internal/
-│   ├── config/             # Configuration management
-│   ├── display/            # Display abstraction layer
+│   ├── config/             # Configuration loading and validation
+│   ├── display/            # Display abstraction layer and drivers
+│   │   ├── ssd1306.go      # SSD1306 I2C OLED driver
+│   │   ├── st7735.go       # ST7735 SPI TFT driver
+│   │   ├── uctronics.go    # UCTRONICS colour TFT driver
+│   │   ├── factory.go      # Display factory
+│   │   └── mock.go         # Mock display for testing
+│   ├── renderer/           # Page rendering and layout
+│   │   ├── layout.go       # Adaptive layout for different display sizes
+│   │   ├── system_page.go  # System stats page (disk, RAM, CPU temp)
+│   │   ├── network_page.go # Network interfaces page
+│   │   ├── load_graph_page.go # Rolling load average graph page
+│   │   ├── icons.go        # Bitmap icons for metrics
+│   │   └── text.go         # Text drawing helpers
 │   ├── stats/              # System statistics collectors
-│   ├── renderer/           # Page rendering
-│   └── rotation/           # Page rotation manager
-├── configs/                # Example configurations
+│   ├── rotation/           # Page rotation manager
+│   ├── screensaver/        # Screen saver (dim/blank on idle)
+│   ├── health/             # Component health tracking
+│   ├── metrics/            # Prometheus metrics endpoint
+│   ├── logger/             # Structured logging (zerolog)
+│   └── retry/              # Retry with exponential backoff
+├── configs/                # Example configurations per display type
 ├── systemd/                # Systemd service file
-├── scripts/                # Installation scripts
+├── scripts/                # Installation/uninstallation scripts
 ├── testdata/               # Test fixtures
 ├── Makefile
 └── README.md
@@ -810,30 +832,46 @@ i2c-display/
 
 ## Display Layout
 
+All pages show the hostname centered at the top, separated from content by a horizontal rule. Metric text is color-coded green/yellow/red based on usage thresholds (on colour displays).
+
 ### Page 1: System Stats
 
 ```
 ┌──────────────────────────┐
-│      hostname            │ (centered)
+│        hostname          │  ← centered header
 ├──────────────────────────┤
-│ Disk: 45.2% (12.5/27.6GB)│
-│ RAM: 62.8% (2.5/4GB)     │
-│ CPU: 45.2°C              │
+│ [disk]  45.2% (12.5/27.6GB) │
+│ [mem]   62.8% (2.5/4.0GB)   │
+│ [cpu]   45.2C               │
 └──────────────────────────┘
 ```
 
-### Page 2+: Network Interfaces
+### Page 2: Load Average Graph
 
 ```
 ┌──────────────────────────┐
-│      hostname            │ (centered)
+│        hostname          │
+├──────────────────────────┤
+│ 1m:0.42 5m:0.38 15m:0.31│
+│  ▂▃▄▃▂▁▂▃▅▄▃▂▁▂▃▄▃▂▁▂  │  ← rolling bar graph
+│  ░░░░░░░░░░░░░░░░░░░░░  │    color: green/yellow/red
+└──────────────────────────┘
+```
+
+### Page 3+: Network Interfaces
+
+```
+┌──────────────────────────┐
+│        hostname          │
 ├──────────────────────────┤
 │ eth0: 192.168.1.100      │
 │ wlan0: 10.0.0.50         │
 │ usb0: 172.16.0.1         │
-│                 Page 2/3 │
+│                 Page 3/4 │
 └──────────────────────────┘
 ```
+
+On small displays (128x32) the layout compacts to fit — metrics appear on one line and the load graph falls back to text only.
 
 ## Troubleshooting
 

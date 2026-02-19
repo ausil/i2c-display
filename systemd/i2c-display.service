@@ -23,7 +23,7 @@ RestrictSUIDSGID=true
 LockPersonality=true
 
 # Resource limits
-MemoryLimit=128M
+MemoryMax=128M
 CPUQuota=20%
 
 [Install]
