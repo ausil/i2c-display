@@ -8,7 +8,7 @@ import (
 )
 
 func TestLoadGraphPageTitle(t *testing.T) {
-	page := NewLoadGraphPage()
+	page := NewLoadGraphPage(0)
 	if title := page.Title(); title != "Load" {
 		t.Errorf("expected title 'Load', got %q", title)
 	}
@@ -16,7 +16,7 @@ func TestLoadGraphPageTitle(t *testing.T) {
 
 func TestLoadGraphPageRender(t *testing.T) {
 	disp := display.NewMockDisplay(128, 64)
-	page := NewLoadGraphPage()
+	page := NewLoadGraphPage(0)
 
 	testStats := &stats.SystemStats{
 		Hostname: "testhost",
@@ -45,7 +45,7 @@ func TestLoadGraphPageRender(t *testing.T) {
 
 func TestLoadGraphPageRenderSmall(t *testing.T) {
 	disp := display.NewMockDisplay(128, 32)
-	page := NewLoadGraphPage()
+	page := NewLoadGraphPage(0)
 
 	testStats := &stats.SystemStats{
 		Hostname: "testhost",
@@ -74,7 +74,7 @@ func TestLoadGraphPageRenderSmall(t *testing.T) {
 
 func TestLoadGraphPageHistory(t *testing.T) {
 	disp := display.NewMockDisplay(128, 64)
-	page := NewLoadGraphPage()
+	page := NewLoadGraphPage(0)
 
 	// Render multiple times to accumulate history
 	for i := 0; i < 10; i++ {
@@ -116,7 +116,7 @@ func TestLoadGraphPageHistory(t *testing.T) {
 
 func TestLoadGraphPageZeroLoad(t *testing.T) {
 	disp := display.NewMockDisplay(128, 64)
-	page := NewLoadGraphPage()
+	page := NewLoadGraphPage(0)
 
 	testStats := &stats.SystemStats{
 		Hostname: "testhost",
@@ -132,7 +132,7 @@ func TestLoadGraphPageZeroLoad(t *testing.T) {
 }
 
 func TestLoadGraphPageGetSamples(t *testing.T) {
-	page := NewLoadGraphPage()
+	page := NewLoadGraphPage(0)
 
 	// Empty history
 	samples := page.getSamples()

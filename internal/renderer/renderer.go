@@ -30,23 +30,24 @@ func NewRenderer(disp display.Display, cfg *config.Config) *Renderer {
 func (r *Renderer) BuildPages(s *stats.SystemStats) {
 	pages := make([]Page, 0)
 
-	// For small displays (128x32), create separate pages for each metric
+	lines := r.config.Display.Lines
 	bounds := r.display.GetBounds()
-	if bounds.Dy() <= 32 {
-		// Add individual metric pages for better readability
-		pages = append(pages, NewSystemPageForMetric(SystemMetricDisk), NewSystemPageForMetric(SystemMetricMemory))
+
+	if bounds.Dy() <= 32 && lines != 4 {
+		// Small display, default 2-line mode: one metric per page for readability.
+		pages = append(pages, NewSystemPageForMetric(SystemMetricDisk, lines), NewSystemPageForMetric(SystemMetricMemory, lines))
 		if s.CPUTemp > 0 {
-			pages = append(pages, NewSystemPageForMetric(SystemMetricCPU))
+			pages = append(pages, NewSystemPageForMetric(SystemMetricCPU, lines))
 		}
 	} else {
-		// Standard displays show all system info on one page
-		pages = append(pages, NewSystemPage())
+		// Standard displays and 4-line scaled mode both use a single system page.
+		pages = append(pages, NewSystemPage(lines))
 	}
 
-	// Add load graph page if load data is available
+	// Add load graph page if load data is available.
 	if s.LoadAvg1 > 0 || s.LoadAvg5 > 0 || s.LoadAvg15 > 0 {
 		if r.loadGraphPage == nil {
-			r.loadGraphPage = NewLoadGraphPage()
+			r.loadGraphPage = NewLoadGraphPage(lines)
 		}
 		pages = append(pages, r.loadGraphPage)
 	}
@@ -57,7 +58,7 @@ func (r *Renderer) BuildPages(s *stats.SystemStats) {
 		totalPages := (len(s.Interfaces) + maxPerPage - 1) / maxPerPage
 
 		for i := 0; i < totalPages; i++ {
-			pages = append(pages, NewNetworkPage(i+1, maxPerPage, len(s.Interfaces)))
+			pages = append(pages, NewNetworkPage(i+1, maxPerPage, len(s.Interfaces), lines))
 		}
 	}
 

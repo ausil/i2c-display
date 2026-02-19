@@ -22,16 +22,17 @@ const (
 // SystemPage displays system statistics (disk, RAM, CPU temp)
 type SystemPage struct {
 	metricType SystemMetricType
+	lines      int // configured line count (0=auto, 2=default, 4=compact)
 }
 
 // NewSystemPage creates a new system stats page showing all metrics
-func NewSystemPage() *SystemPage {
-	return &SystemPage{metricType: SystemMetricAll}
+func NewSystemPage(lines int) *SystemPage {
+	return &SystemPage{metricType: SystemMetricAll, lines: lines}
 }
 
 // NewSystemPageForMetric creates a system page for a specific metric
-func NewSystemPageForMetric(metricType SystemMetricType) *SystemPage {
-	return &SystemPage{metricType: metricType}
+func NewSystemPageForMetric(metricType SystemMetricType, lines int) *SystemPage {
+	return &SystemPage{metricType: metricType, lines: lines}
 }
 
 // Title returns the page title
@@ -59,12 +60,12 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 
 	// Create adaptive layout
 	bounds := disp.GetBounds()
-	layout := NewLayout(bounds)
+	layout := NewLayout(bounds, p.lines)
 	maxWidth := bounds.Dx() - 2*MarginLeft
 
 	// Optional: Hostname header (green on colour displays)
 	if layout.ShowHeader {
-		if err := DrawTextCenteredColor(disp, layout.HeaderY, s.Hostname, ColorGreen); err != nil {
+		if err := DrawTextCenteredColorScaled(disp, layout.HeaderY, s.Hostname, ColorGreen, layout.TextScale); err != nil {
 			return err
 		}
 	}
@@ -76,8 +77,42 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 		}
 	}
 
-	// Render content based on display size and metric type
-	if layout.Height <= 32 && p.metricType == SystemMetricAll {
+	// Render content based on display size, metric type, and text scale.
+	if layout.TextScale > 0 && layout.TextScale < 1 {
+		// Scaled mode (128x32 acting as 128x64): text-only compact rows, no icons.
+		type scaledLine struct {
+			text string
+			c    color.NRGBA
+		}
+		slines := []scaledLine{
+			{
+				TruncateTextSmall(fmt.Sprintf("D:%.0f%% %.1f/%.1fG",
+					s.DiskPercent(), s.DiskUsedGB(), s.DiskTotalGB()), maxWidth),
+				MetricColor(s.DiskPercent()),
+			},
+			{
+				TruncateTextSmall(fmt.Sprintf("R:%.0f%% %.1f/%.1fG",
+					s.MemoryPercent(), s.MemoryUsedGB(), s.MemoryTotalGB()), maxWidth),
+				MetricColor(s.MemoryPercent()),
+			},
+		}
+		if s.CPUTemp > 0 {
+			slines = append(slines, scaledLine{
+				TruncateTextSmall(fmt.Sprintf("C:%.1fC", s.CPUTemp), maxWidth),
+				TempColor(s.CPUTemp),
+			})
+		} else {
+			slines = append(slines, scaledLine{"C:N/A", ColorGreen})
+		}
+		for i, sl := range slines {
+			if i >= len(layout.ContentLines) {
+				break
+			}
+			if err := DrawTextColorScaled(disp, MarginLeft, layout.ContentLines[i], sl.text, sl.c, layout.TextScale); err != nil {
+				return err
+			}
+		}
+	} else if layout.Height <= 32 && p.metricType == SystemMetricAll {
 		// Compact all-in-one view: each segment in its own colour
 		if len(layout.ContentLines) > 0 {
 			y := layout.ContentLines[0]

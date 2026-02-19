@@ -32,6 +32,7 @@ type DisplayConfig struct {
 	Width      int    `json:"width"`
 	Height     int    `json:"height"`
 	Rotation   int    `json:"rotation"`
+	Lines      int    `json:"lines"` // Content lines on small displays: 0=auto, 2=header+1 line (default), 4=compact 4-line no header
 }
 
 // IsI2C returns true if this display connects via I2C
@@ -311,6 +312,10 @@ func (c *Config) validateDisplay() error {
 
 	if c.Display.Rotation < 0 || c.Display.Rotation > 3 {
 		return fmt.Errorf("display.rotation must be 0-3, got %d", c.Display.Rotation)
+	}
+
+	if c.Display.Lines != 0 && c.Display.Lines != 2 && c.Display.Lines != 4 {
+		return fmt.Errorf("display.lines must be 0 (auto), 2, or 4, got %d", c.Display.Lines)
 	}
 
 	return nil

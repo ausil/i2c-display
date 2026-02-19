@@ -17,12 +17,14 @@ type LoadGraphPage struct {
 	head    int       // next write position
 	count   int       // number of valid entries
 	numCPU  int       // cached CPU count for scaling
+	lines   int       // configured line count (0=auto, 2=default, 4=compact)
 }
 
 // NewLoadGraphPage creates a new load graph page
-func NewLoadGraphPage() *LoadGraphPage {
+func NewLoadGraphPage(lines int) *LoadGraphPage {
 	return &LoadGraphPage{
 		history: make([]float64, loadHistorySize),
+		lines:   lines,
 	}
 }
 
@@ -53,11 +55,11 @@ func (p *LoadGraphPage) Render(disp display.Display, s *stats.SystemStats) error
 	}
 
 	bounds := disp.GetBounds()
-	layout := NewLayout(bounds)
+	layout := NewLayout(bounds, p.lines)
 
 	// Header
 	if layout.ShowHeader {
-		if err := DrawTextCenteredColor(disp, layout.HeaderY, s.Hostname, ColorGreen); err != nil {
+		if err := DrawTextCenteredColorScaled(disp, layout.HeaderY, s.Hostname, ColorGreen, layout.TextScale); err != nil {
 			return err
 		}
 	}
@@ -85,10 +87,14 @@ func (p *LoadGraphPage) renderSmall(disp display.Display, s *stats.SystemStats, 
 
 	text := fmt.Sprintf("L:%.2f %.2f %.2f", s.LoadAvg1, s.LoadAvg5, s.LoadAvg15)
 	maxWidth := layout.Width - 2*MarginLeft
-	text = TruncateText(text, maxWidth)
+	if layout.TextScale > 0 && layout.TextScale < 1 {
+		text = TruncateTextSmall(text, maxWidth)
+	} else {
+		text = TruncateText(text, maxWidth)
+	}
 	c := LoadColor(s.LoadAvg1, p.numCPU)
 
-	if err := DrawTextColor(disp, MarginLeft, layout.ContentLines[0], text, c); err != nil {
+	if err := DrawTextColorScaled(disp, MarginLeft, layout.ContentLines[0], text, c, layout.TextScale); err != nil {
 		return err
 	}
 
@@ -107,13 +113,12 @@ func (p *LoadGraphPage) renderGraph(disp display.Display, s *stats.SystemStats, 
 	label = TruncateText(label, maxWidth)
 	c := LoadColor(s.LoadAvg1, p.numCPU)
 
-	if err := DrawTextColor(disp, MarginLeft, layout.ContentLines[0], label, c); err != nil {
+	if err := DrawTextColorScaled(disp, MarginLeft, layout.ContentLines[0], label, c, layout.TextScale); err != nil {
 		return err
 	}
 
-	// Graph area: below the text label
-	// basicfont.Face7x13 has height 13
-	const textHeight = 13
+	// Graph area: below the text label (account for scaled text height)
+	textHeight := ScaledTextHeight(layout.TextScale)
 	graphY := layout.ContentLines[0] + textHeight + 2
 	graphX := MarginLeft
 	graphWidth := bounds.Dx() - 2*MarginLeft

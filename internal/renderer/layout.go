@@ -28,17 +28,19 @@ const (
 type Layout struct {
 	Width           int
 	Height          int
-	HeaderY         int   // Hostname position
-	SeparatorY      int   // Separator line position
-	ContentLines    []int // Y positions for content lines
-	FooterY         int   // Footer/status line position
-	ShowHeader      bool  // Whether to show hostname header
-	ShowSeparator   bool  // Whether to show separator line
-	MaxContentLines int   // Maximum content lines available
+	HeaderY         int     // Hostname position
+	SeparatorY      int     // Separator line position
+	ContentLines    []int   // Y positions for content lines
+	FooterY         int     // Footer/status line position
+	ShowHeader      bool    // Whether to show hostname header
+	ShowSeparator   bool    // Whether to show separator line
+	MaxContentLines int     // Maximum content lines available
+	TextScale       float64 // 0 or 1 = full-size font; 0.5 = half-height (128x32 acting as 128x64)
 }
 
-// NewLayout creates an adaptive layout based on display bounds
-func NewLayout(bounds image.Rectangle) *Layout {
+// NewLayout creates an adaptive layout based on display bounds and the
+// configured line count (0=auto/default, 2=header+1 line, 4=compact no header).
+func NewLayout(bounds image.Rectangle, lines int) *Layout {
 	width := bounds.Dx()
 	height := bounds.Dy()
 
@@ -50,16 +52,29 @@ func NewLayout(bounds image.Rectangle) *Layout {
 	// Adapt layout based on display height
 	switch {
 	case height <= 32:
-		// Small display (128x32 or 96x16)
-		// Only 32 pixels tall - compact layout
-		// Font is 13px tall, so header (0-11) + separator (12) + one content line (14-25) fits cleanly
-		layout.ShowHeader = true    // Always show hostname
-		layout.ShowSeparator = true // Show separator line after header
-		layout.HeaderY = 0
-		layout.SeparatorY = 12
-		layout.ContentLines = []int{14} // Single content line with proper spacing
-		layout.FooterY = -1             // No footer
-		layout.MaxContentLines = 1
+		// Small display (128x32 or 96x16).
+		if lines == 4 {
+			// 4-line scaled mode: mirror the 128x64 layout but render text at
+			// half height (~7 px) so the same page structure fits in 32 pixels.
+			//   header (0-6) | separator (7) | content rows (8, 16, 24) = 31 px
+			layout.ShowHeader = true
+			layout.ShowSeparator = true
+			layout.HeaderY = 0
+			layout.SeparatorY = 7
+			layout.ContentLines = []int{8, 16, 24}
+			layout.FooterY = -1 // no room for footer at half scale
+			layout.MaxContentLines = 3
+			layout.TextScale = 0.5
+		} else {
+			// Default 2-line mode: hostname header + separator + one content line.
+			layout.ShowHeader = true
+			layout.ShowSeparator = true
+			layout.HeaderY = 0
+			layout.SeparatorY = 12
+			layout.ContentLines = []int{14} // Single content line with proper spacing
+			layout.FooterY = -1             // No footer
+			layout.MaxContentLines = 1
+		}
 
 	case height <= 64:
 		// Standard display (128x64)

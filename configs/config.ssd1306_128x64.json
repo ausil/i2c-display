@@ -1,14 +1,13 @@
 {
-  "_comment": "Configuration optimized for 128x32 displays. Default layout (lines=2): hostname header + separator + one metric per rotating page. Set lines=4 for compact mode: no header, all metrics shown together on 4 tight rows (disk, RAM, CPU temp, load avg).",
+  "_comment": "Configuration for 128x64 SSD1306 OLED displays (the most common variant, e.g. 0.96\" modules). Layout shows hostname header with separator line, then disk, memory, and CPU temperature on a single system page. Network interfaces shown on a separate page.",
   "display": {
-    "type": "ssd1306_128x32",
+    "type": "ssd1306_128x64",
     "i2c_bus": "/dev/i2c-1",
     "i2c_address": "0x3C",
-    "rotation": 0,
-    "lines": 2
+    "rotation": 0
   },
   "pages": {
-    "rotation_interval": "2s",
+    "rotation_interval": "5s",
     "refresh_interval": "1s"
   },
   "system_info": {
@@ -25,7 +24,7 @@
     },
     "show_ipv4": true,
     "show_ipv6": false,
-    "max_interfaces_per_page": 1
+    "max_interfaces_per_page": 3
   },
   "logging": {
     "level": "info",

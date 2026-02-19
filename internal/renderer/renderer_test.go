@@ -14,7 +14,7 @@ func TestSystemPage(t *testing.T) {
 		t.Fatalf("failed to init display: %v", err)
 	}
 
-	page := NewSystemPage()
+	page := NewSystemPage(0)
 
 	testStats := &stats.SystemStats{
 		Hostname:    "testhost",
@@ -54,7 +54,7 @@ func TestNetworkPage(t *testing.T) {
 		t.Fatalf("failed to init display: %v", err)
 	}
 
-	page := NewNetworkPage(1, 3, 5)
+	page := NewNetworkPage(1, 3, 5, 0)
 
 	testStats := &stats.SystemStats{
 		Hostname: "testhost",
@@ -93,7 +93,7 @@ func TestNetworkPageMultiplePages(t *testing.T) {
 	}
 
 	// Test page 1
-	page1 := NewNetworkPage(1, 3, 6)
+	page1 := NewNetworkPage(1, 3, 6, 0)
 	if page1.totalPages != 2 {
 		t.Errorf("expected 2 total pages, got %d", page1.totalPages)
 	}
@@ -106,7 +106,7 @@ func TestNetworkPageMultiplePages(t *testing.T) {
 	}
 
 	// Test page 2
-	page2 := NewNetworkPage(2, 3, 6)
+	page2 := NewNetworkPage(2, 3, 6, 0)
 	if page2.interfaceStartIdx != 3 || page2.interfaceEndIdx != 6 {
 		t.Errorf("page 2 should show interfaces 3-6, got %d-%d", page2.interfaceStartIdx, page2.interfaceEndIdx)
 	}
@@ -242,7 +242,7 @@ func TestNewLayout(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			bounds := display.NewMockDisplay(tt.width, tt.height).GetBounds()
-			layout := NewLayout(bounds)
+			layout := NewLayout(bounds, 0)
 
 			if layout.ShowHeader != tt.wantHeader {
 				t.Errorf("ShowHeader = %v, want %v", layout.ShowHeader, tt.wantHeader)
@@ -296,7 +296,7 @@ func TestCenterText(t *testing.T) {
 
 func TestPageTitles(t *testing.T) {
 	t.Run("network page title", func(t *testing.T) {
-		page := NewNetworkPage(1, 3, 9)
+		page := NewNetworkPage(1, 3, 9, 0)
 		title := page.Title()
 		if title == "" {
 			t.Error("expected non-empty title")
@@ -308,7 +308,7 @@ func TestPageTitles(t *testing.T) {
 	})
 
 	t.Run("system page title", func(t *testing.T) {
-		page := NewSystemPage()
+		page := NewSystemPage(0)
 		title := page.Title()
 		if title == "" {
 			t.Error("expected non-empty title")
@@ -330,7 +330,7 @@ func TestPageTitles(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			page := NewSystemPageForMetric(tt.metric)
+			page := NewSystemPageForMetric(tt.metric, 0)
 			title := page.Title()
 			if title != tt.want {
 				t.Errorf("metric %d: expected title %q, got %q", tt.metric, tt.want, title)
@@ -385,7 +385,7 @@ func TestSystemPageMetricTypes(t *testing.T) {
 
 	for _, metric := range metrics {
 		t.Run(string(rune(metric)), func(t *testing.T) {
-			page := NewSystemPageForMetric(metric)
+			page := NewSystemPageForMetric(metric, 0)
 			if err := page.Render(disp, testStats); err != nil {
 				t.Errorf("Render failed for metric %d: %v", metric, err)
 			}
@@ -405,7 +405,7 @@ func TestSystemPageZeroCPUTemp(t *testing.T) {
 		DiskTotal:   100 * 1024 * 1024 * 1024,
 	}
 
-	page := NewSystemPage()
+	page := NewSystemPage(0)
 	if err := page.Render(disp, testStats); err != nil {
 		t.Errorf("Render with zero CPU temp failed: %v", err)
 	}
@@ -430,7 +430,7 @@ func TestNetworkPageIPv6(t *testing.T) {
 		},
 	}
 
-	page := NewNetworkPage(1, 3, 2)
+	page := NewNetworkPage(1, 3, 2, 0)
 	if err := page.Render(disp, testStats); err != nil {
 		t.Errorf("Render with IPv6 failed: %v", err)
 	}
@@ -450,7 +450,7 @@ func TestNetworkPageNoAddress(t *testing.T) {
 		},
 	}
 
-	page := NewNetworkPage(1, 3, 1)
+	page := NewNetworkPage(1, 3, 1, 0)
 	if err := page.Render(disp, testStats); err != nil {
 		t.Errorf("Render with no address failed: %v", err)
 	}

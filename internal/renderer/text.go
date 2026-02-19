@@ -132,6 +132,91 @@ func DrawLine(disp display.Display, y int) error {
 	return disp.DrawLine(MarginLeft, y, bounds.Dx()-MarginLeft-MarginRight)
 }
 
+// ScaledTextHeight returns the rendered pixel height of the font used for the
+// given scale factor. A scale of 0 or 1 uses the full-size basicfont (13 px);
+// any other value in (0,1) uses Face5x7 (7 px).
+func ScaledTextHeight(scale float64) int {
+	if scale > 0 && scale < 1 {
+		return font5x7GlyphHeight // 7 px — matches Face5x7
+	}
+	return 13 // basicfont.Face7x13
+}
+
+// DrawTextColorScaled renders text in colour using the appropriate font for the
+// given scale factor. scale=0 or scale=1 uses the standard 7×13 basicfont;
+// any value in (0,1) uses the compact 5×7 font (Face5x7) directly, which is
+// far more legible than downsampling the larger font.
+func DrawTextColorScaled(disp display.Display, x, y int, text string, c color.Color, scale float64) error {
+	var face font.Face
+	if scale > 0 && scale < 1 {
+		face = Face5x7
+	} else {
+		face = basicfont.Face7x13
+	}
+	width := font.MeasureString(face, text).Ceil()
+	height := int(face.Metrics().Ascent.Ceil()) + int(face.Metrics().Descent.Ceil())
+
+	textImg := image.NewNRGBA(image.Rect(0, 0, width, height))
+	drawer := &font.Drawer{
+		Dst:  textImg,
+		Src:  &image.Uniform{c},
+		Face: face,
+		Dot:  fixed.P(0, int(face.Metrics().Ascent.Ceil())),
+	}
+	drawer.DrawString(text)
+	return disp.DrawImage(x, y, textImg)
+}
+
+// DrawTextCenteredColorScaled draws centred coloured text using the font
+// appropriate for the given scale factor (see DrawTextColorScaled).
+func DrawTextCenteredColorScaled(disp display.Display, y int, text string, c color.Color, scale float64) error {
+	bounds := disp.GetBounds()
+	var face font.Face
+	if scale > 0 && scale < 1 {
+		face = Face5x7
+	} else {
+		face = basicfont.Face7x13
+	}
+	width := font.MeasureString(face, text).Ceil()
+	x := (bounds.Dx() - width) / 2
+	return DrawTextColorScaled(disp, x, y, text, c, scale)
+}
+
+// MeasureTextSmall returns the pixel width of text rendered with Face5x7.
+func MeasureTextSmall(text string) int {
+	return font.MeasureString(Face5x7, text).Ceil()
+}
+
+// TruncateTextSmall truncates text to fit within maxWidth pixels as measured
+// by Face5x7, appending "..." when truncation occurs.
+func TruncateTextSmall(text string, maxWidth int) string {
+	if MeasureTextSmall(text) <= maxWidth {
+		return text
+	}
+
+	ellipsis := "..."
+	ellipsisWidth := MeasureTextSmall(ellipsis)
+	availableWidth := maxWidth - ellipsisWidth
+
+	left, right := 0, len(text)
+	result := text
+
+	for left < right {
+		mid := (left + right + 1) / 2
+		if MeasureTextSmall(text[:mid]) <= availableWidth {
+			result = text[:mid]
+			left = mid
+		} else {
+			right = mid - 1
+		}
+	}
+
+	if len(result) < len(text) {
+		return result + ellipsis
+	}
+	return text
+}
+
 // MeasureText returns the width of text in pixels
 func MeasureText(text string) int {
 	face := basicfont.Face7x13

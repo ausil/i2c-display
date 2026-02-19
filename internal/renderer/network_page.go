@@ -9,15 +9,16 @@ import (
 
 // NetworkPage displays network interface information
 type NetworkPage struct {
-	pageNum            int
-	maxPerPage         int
-	totalPages         int
-	interfaceStartIdx  int
-	interfaceEndIdx    int
+	pageNum           int
+	maxPerPage        int
+	totalPages        int
+	interfaceStartIdx int
+	interfaceEndIdx   int
+	lines             int // configured line count (0=auto, 2=default, 4=compact)
 }
 
 // NewNetworkPage creates a new network page
-func NewNetworkPage(pageNum, maxPerPage, totalInterfaces int) *NetworkPage {
+func NewNetworkPage(pageNum, maxPerPage, totalInterfaces, lines int) *NetworkPage {
 	startIdx := (pageNum - 1) * maxPerPage
 	endIdx := startIdx + maxPerPage
 	if endIdx > totalInterfaces {
@@ -32,6 +33,7 @@ func NewNetworkPage(pageNum, maxPerPage, totalInterfaces int) *NetworkPage {
 		totalPages:        totalPages,
 		interfaceStartIdx: startIdx,
 		interfaceEndIdx:   endIdx,
+		lines:             lines,
 	}
 }
 
@@ -50,12 +52,12 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 
 	// Create adaptive layout
 	bounds := disp.GetBounds()
-	layout := NewLayout(bounds)
+	layout := NewLayout(bounds, p.lines)
 	maxWidth := bounds.Dx() - 2*MarginLeft
 
 	// Optional: Hostname header (green on colour displays)
 	if layout.ShowHeader {
-		if err := DrawTextCenteredColor(disp, layout.HeaderY, s.Hostname, ColorGreen); err != nil {
+		if err := DrawTextCenteredColorScaled(disp, layout.HeaderY, s.Hostname, ColorGreen, layout.TextScale); err != nil {
 			return err
 		}
 	}
@@ -99,8 +101,12 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 			text = fmt.Sprintf("%s: %s", iface.Name, addr)
 		}
 
-		text = TruncateText(text, maxWidth)
-		if err := DrawText(disp, MarginLeft, y, text); err != nil {
+		if layout.TextScale > 0 && layout.TextScale < 1 {
+			text = TruncateTextSmall(text, maxWidth)
+		} else {
+			text = TruncateText(text, maxWidth)
+		}
+		if err := DrawTextColorScaled(disp, MarginLeft, y, text, ColorGreen, layout.TextScale); err != nil {
 			return err
 		}
 
@@ -112,7 +118,7 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 		pageIndicator := fmt.Sprintf("Page %d/%d", p.pageNum, p.totalPages)
 		indicatorWidth := MeasureText(pageIndicator)
 		x := bounds.Dx() - indicatorWidth - MarginRight
-		if err := DrawText(disp, x, layout.FooterY, pageIndicator); err != nil {
+		if err := DrawTextColorScaled(disp, x, layout.FooterY, pageIndicator, ColorGreen, layout.TextScale); err != nil {
 			return err
 		}
 	}
