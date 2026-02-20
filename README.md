@@ -390,6 +390,11 @@ See `configs/config.example.json` for a complete example:
   - `2` - Rotated 180° (upside down)
   - `3` - Rotated 270° clockwise (90° counter-clockwise)
 
+- **`lines`**: Content line mode for 128×32 displays (default: `0` / auto)
+  - `0` or `2` — standard mode: hostname header + separator + one metric per rotating page
+  - `4` — compact mode: mirrors the 128×64 layout (header + separator + 3 content lines + load graph) using a 5×7 font so all information fits in the 32 pixel height
+  - Ignored on displays taller than 32 pixels
+
 - **`width`** / **`height`**: Display dimensions in pixels (optional)
   - **Automatically set** based on display type - no need to specify
   - Only needed for custom/unsupported displays
@@ -618,7 +623,8 @@ When enabled, metrics are available at `http://address/metrics`
     "type": "ssd1306_128x32",
     "i2c_bus": "/dev/i2c-0",
     "i2c_address": "0x3C",
-    "rotation": 0
+    "rotation": 0,
+    "lines": 2
   },
   "pages": {
     "rotation_interval": "10s",
@@ -630,6 +636,8 @@ When enabled, metrics are available at `http://address/metrics`
   }
 }
 ```
+
+Use `"lines": 4` to mirror the 128×64 layout with all metrics on one pass using a compact 5×7 font.
 </details>
 
 <details>
@@ -814,7 +822,8 @@ i2c-display/
 │   │   ├── network_page.go # Network interfaces page
 │   │   ├── load_graph_page.go # Rolling load average graph page
 │   │   ├── icons.go        # Bitmap icons for metrics
-│   │   └── text.go         # Text drawing helpers
+│   │   ├── text.go         # Text drawing helpers and color functions
+│   │   └── smallfont.go    # Compact 5×7 bitmap font for 128×32 lines=4 mode
 │   ├── stats/              # System statistics collectors
 │   ├── rotation/           # Page rotation manager
 │   ├── screensaver/        # Screen saver (dim/blank on idle)
@@ -871,7 +880,31 @@ All pages show the hostname centered at the top, separated from content by a hor
 └──────────────────────────┘
 ```
 
-On small displays (128x32) the layout compacts to fit — metrics appear on one line and the load graph falls back to text only.
+### Small Displays (128×32)
+
+128×32 displays have two layout modes controlled by `display.lines`:
+
+**`lines=2` (default)** — one metric per rotating page, full 32 px text:
+```
+┌──────────────────────────┐
+│        hostname          │
+├──────────────────────────┤
+│ [disk] 45.2% (12.5/27.6GB) │
+└──────────────────────────┘
+```
+*(separate pages for disk, RAM, CPU temp, load avg, network)*
+
+**`lines=4`** — mirrors the 128×64 layout using a compact 5×7 font:
+```
+┌──────────────────────────┐
+│       hostname           │  ← 7 px header
+├──────────────────────────┤  ← separator at row 7
+│ D:45% 12.5/27.6G         │  ← row 8
+│ R:63% 2.5/4.0G           │  ← row 16
+│ C:45.2C                  │  ← row 24
+└──────────────────────────┘
+```
+*(same page rotation as 128×64: system → load graph → network)*
 
 ## Troubleshooting
 
@@ -1015,7 +1048,8 @@ Contributions are welcome! Please:
 ## Acknowledgments
 
 - Built with [periph.io](https://periph.io/) for hardware abstraction
-- Uses [basicfont](https://pkg.go.dev/golang.org/x/image/font/basicfont) for text rendering
+- Uses [basicfont](https://pkg.go.dev/golang.org/x/image/font/basicfont) for standard text rendering
+- Compact 5×7 bitmap font derived from the [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library) classic glyph table
 
 ## Support
 

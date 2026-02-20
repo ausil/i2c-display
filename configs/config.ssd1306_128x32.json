@@ -1,5 +1,5 @@
 {
-  "_comment": "Configuration optimized for 128x32 displays. Default layout (lines=2): hostname header + separator + one metric per rotating page. Set lines=4 for compact mode: no header, all metrics shown together on 4 tight rows (disk, RAM, CPU temp, load avg).",
+  "_comment": "Configuration for 128x32 SSD1306 OLED displays. lines=2 (default): one rotating metric page per item using the full 32px height. lines=4: mirrors the 128x64 layout (header + separator + 3 content lines + load graph) using a compact 5x7 font so all info fits in 32 pixels.",
   "display": {
     "type": "ssd1306_128x32",
     "i2c_bus": "/dev/i2c-1",
