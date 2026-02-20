@@ -1,5 +1,5 @@
 Name:           i2c-display
-Version:        0.4.0
+Version:        0.5.0
 Release:        1%{?dist}
 Summary:        I2C OLED display controller for single board computers
 
@@ -115,6 +115,11 @@ install -m 0644 man/i2c-displayd.1 %{buildroot}%{_mandir}/man1/i2c-displayd.1
 %{_unitdir}/i2c-display.service
 
 %changelog
+* Thu Feb 19 2026 Dennis Gilmore <dennis@ausil.us> - 0.5.0-1
+- Add lines=4 compact mode for 128x32 displays mirroring 128x64 layout
+- Add 5x7 bitmap font (Face5x7) for compact mode — replaces unreadable downscaled text
+- Use accurate font metrics for text measurement and truncation in compact mode
+
 * Mon Feb 17 2025 Dennis Gilmore <dennis@ausil.us> - 0.4.0-1
 - Add rolling load average graph page with color-coded bars
 - Read /proc/loadavg for 1m, 5m, 15m load averages

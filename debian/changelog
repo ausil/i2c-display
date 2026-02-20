@@ -1,3 +1,11 @@
+i2c-display (0.5.0-1) unstable; urgency=medium
+
+  * Add lines=4 compact mode for 128x32 displays mirroring 128x64 layout
+  * Add 5x7 bitmap font (Face5x7) for compact mode — replaces unreadable downscaled text
+  * Use accurate font metrics for text measurement and truncation in compact mode
+
+ -- Dennis Gilmore <dennis@ausil.us>  Thu, 19 Feb 2026 00:00:00 -0500
+
 i2c-display (0.4.0-1) unstable; urgency=medium
 
   * Add rolling load average graph page with color-coded bars

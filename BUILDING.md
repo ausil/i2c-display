@@ -4,7 +4,7 @@ This document describes how to build release packages for the I2C Display Contro
 
 ## Version
 
-Current version: **0.4.0**
+Current version: **0.5.0**
 
 Version is managed in the `VERSION` file at the root of the repository.
 
@@ -28,7 +28,7 @@ Create a source tarball suitable for distribution:
 make dist
 ```
 
-This creates `dist/i2c-display-0.4.0.tar.gz` containing all source files.
+This creates `dist/i2c-display-0.5.0.tar.gz` containing all source files.
 
 ## Building RPM Packages
 
@@ -38,8 +38,8 @@ make rpm
 ```
 
 This creates:
-- `rpm-build/RPMS/*/i2c-display-0.4.0-1.*.rpm` (binary RPM)
-- `rpm-build/SRPMS/i2c-display-0.4.0-1.src.rpm` (source RPM)
+- `rpm-build/RPMS/*/i2c-display-0.5.0-1.*.rpm` (binary RPM)
+- `rpm-build/SRPMS/i2c-display-0.5.0-1.src.rpm` (source RPM)
 
 ### Build only source RPM:
 ```bash
@@ -60,7 +60,7 @@ sudo rpm -Uvh rpm-build/RPMS/*/i2c-display-*.rpm
 make deb
 ```
 
-This creates `../i2c-display_0.4.0-1_*.deb`
+This creates `../i2c-display_0.5.0-1_*.deb`
 
 ### Build source package:
 ```bash
@@ -68,8 +68,8 @@ make deb-src
 ```
 
 This creates:
-- `../i2c-display_0.4.0-1.dsc`
-- `../i2c-display_0.4.0-1.tar.xz`
+- `../i2c-display_0.5.0-1.dsc`
+- `../i2c-display_0.5.0-1.tar.xz`
 
 ### Install the DEB:
 ```bash
