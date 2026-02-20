@@ -265,7 +265,7 @@ func (m *MockDisplay) setPixel(x, y int, on bool) {
 	}
 
 	byteIdx := x + (y/8)*m.width
-	bitIdx := uint(y % 8)
+	bitIdx := uint(y % 8) /* #nosec G115 -- modulo 8 is always 0–7 */
 
 	if byteIdx >= len(m.buffer) {
 		return
@@ -285,7 +285,7 @@ func (m *MockDisplay) getPixel(x, y int) bool {
 	}
 
 	byteIdx := x + (y/8)*m.width
-	bitIdx := uint(y % 8)
+	bitIdx := uint(y % 8) /* #nosec G115 -- modulo 8 is always 0–7 */
 
 	if byteIdx >= len(m.buffer) {
 		return false

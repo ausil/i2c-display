@@ -3,6 +3,7 @@ linters-settings:
     enable-all: true
     disable:
       - shadow
+      - fieldalignment
   gocyclo:
     min-complexity: 15
   dupl:
@@ -12,6 +13,13 @@ linters-settings:
     min-occurrences: 3
   misspell:
     locale: US
+    ignore-words:
+      - colour
+      - colours
+      - coloured
+      - centre
+      - centred
+      - behaviour
   lll:
     line-length: 140
   goimports:
@@ -72,6 +80,8 @@ issues:
         - dupl
         - gosec
         - funlen
+        - goconst
+        - dogsled
     - path: internal/display/mock\.go
       linters:
         - unused

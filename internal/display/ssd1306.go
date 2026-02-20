@@ -120,6 +120,7 @@ func (d *SSD1306Display) DrawPixel(x, y int, on bool) error {
 }
 
 // DrawRect draws a rectangle
+//
 //nolint:gocyclo // drawing logic naturally has many conditional branches
 func (d *SSD1306Display) DrawRect(x, y, width, height int, fill bool) error {
 	if fill {
@@ -157,22 +158,23 @@ func (d *SSD1306Display) DrawImage(x, y int, img image.Image) error {
 	bounds := img.Bounds()
 	for dy := 0; dy < bounds.Dy() && y+dy < d.height; dy++ {
 		for dx := 0; dx < bounds.Dx() && x+dx < d.width; dx++ {
-			if x+dx >= 0 && y+dy >= 0 {
-				r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
-				// Use max channel so saturated colours (e.g. pure green)
-				// render as white on the monochrome display.
-				brightness := r
-				if g > brightness {
-					brightness = g
-				}
-				if b > brightness {
-					brightness = b
-				}
-				if brightness > 32768 && a > 32768 {
-					d.img.SetGray(x+dx, y+dy, color.Gray{Y: 255})
-				} else {
-					d.img.SetGray(x+dx, y+dy, color.Gray{Y: 0})
-				}
+			if x+dx < 0 || y+dy < 0 {
+				continue
+			}
+			r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
+			// Use max channel so saturated colours (e.g. pure green)
+			// render as white on the monochrome display.
+			brightness := r
+			if g > brightness {
+				brightness = g
+			}
+			if b > brightness {
+				brightness = b
+			}
+			if brightness > 32768 && a > 32768 {
+				d.img.SetGray(x+dx, y+dy, color.Gray{Y: 255})
+			} else {
+				d.img.SetGray(x+dx, y+dy, color.Gray{Y: 0})
 			}
 		}
 	}
@@ -207,7 +209,7 @@ func (d *SSD1306Display) GetBuffer() []byte {
 		for x := 0; x < d.width; x++ {
 			if d.img.GrayAt(x, y).Y > 128 {
 				byteIdx := x + (y/8)*d.width
-				bitIdx := uint(y % 8)
+				bitIdx := uint(y % 8) /* #nosec G115 -- modulo 8 is always 0–7 */
 				buf[byteIdx] |= 1 << bitIdx
 			}
 		}

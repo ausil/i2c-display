@@ -69,7 +69,7 @@ func DrawText(disp display.Display, x, y int, text string) error {
 
 	// Measure text to create appropriately sized image
 	width := font.MeasureString(face, text).Ceil()
-	height := int(face.Metrics().Ascent.Ceil()) + int(face.Metrics().Descent.Ceil())
+	height := face.Metrics().Ascent.Ceil() + face.Metrics().Descent.Ceil()
 
 	// Create an image just large enough for the text
 	textImg := image.NewGray(image.Rect(0, 0, width, height))
@@ -79,7 +79,7 @@ func DrawText(disp display.Display, x, y int, text string) error {
 		Dst:  textImg,
 		Src:  image.White,
 		Face: face,
-		Dot:  fixed.P(0, int(face.Metrics().Ascent.Ceil())),
+		Dot:  fixed.P(0, face.Metrics().Ascent.Ceil()),
 	}
 
 	// Draw the text
@@ -104,14 +104,14 @@ func DrawTextCentered(disp display.Display, y int, text string) error {
 func DrawTextColor(disp display.Display, x, y int, text string, c color.Color) error {
 	face := basicfont.Face7x13
 	width := font.MeasureString(face, text).Ceil()
-	height := int(face.Metrics().Ascent.Ceil()) + int(face.Metrics().Descent.Ceil())
+	height := face.Metrics().Ascent.Ceil() + face.Metrics().Descent.Ceil()
 
 	textImg := image.NewNRGBA(image.Rect(0, 0, width, height))
 	drawer := &font.Drawer{
 		Dst:  textImg,
 		Src:  &image.Uniform{c},
 		Face: face,
-		Dot:  fixed.P(0, int(face.Metrics().Ascent.Ceil())),
+		Dot:  fixed.P(0, face.Metrics().Ascent.Ceil()),
 	}
 	drawer.DrawString(text)
 	return disp.DrawImage(x, y, textImg)
@@ -154,14 +154,14 @@ func DrawTextColorScaled(disp display.Display, x, y int, text string, c color.Co
 		face = basicfont.Face7x13
 	}
 	width := font.MeasureString(face, text).Ceil()
-	height := int(face.Metrics().Ascent.Ceil()) + int(face.Metrics().Descent.Ceil())
+	height := face.Metrics().Ascent.Ceil() + face.Metrics().Descent.Ceil()
 
 	textImg := image.NewNRGBA(image.Rect(0, 0, width, height))
 	drawer := &font.Drawer{
 		Dst:  textImg,
 		Src:  &image.Uniform{c},
 		Face: face,
-		Dot:  fixed.P(0, int(face.Metrics().Ascent.Ceil())),
+		Dot:  fixed.P(0, face.Metrics().Ascent.Ceil()),
 	}
 	drawer.DrawString(text)
 	return disp.DrawImage(x, y, textImg)

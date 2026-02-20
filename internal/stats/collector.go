@@ -3,11 +3,11 @@ package stats
 // SystemStats contains all collected system information
 type SystemStats struct {
 	Hostname    string
-	CPUTemp     float64  // in degrees Celsius
-	MemoryUsed  uint64   // in bytes
-	MemoryTotal uint64   // in bytes
-	DiskUsed    uint64   // in bytes
-	DiskTotal   uint64   // in bytes
+	CPUTemp     float64 // in degrees Celsius
+	MemoryUsed  uint64  // in bytes
+	MemoryTotal uint64  // in bytes
+	DiskUsed    uint64  // in bytes
+	DiskTotal   uint64  // in bytes
 	Interfaces  []NetInterface
 	LoadAvg1    float64 // 1-minute load average
 	LoadAvg5    float64 // 5-minute load average

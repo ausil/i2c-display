@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ausil/i2c-display/internal/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/ausil/i2c-display/internal/logger"
 )
 
 // Collector holds all Prometheus metrics for the application
@@ -22,14 +23,14 @@ type Collector struct {
 	I2CErrorsTotal *prometheus.CounterVec
 
 	// System metrics
-	CPUTemperature     prometheus.Gauge
-	MemoryUsedPercent  prometheus.Gauge
-	DiskUsedPercent    prometheus.Gauge
-	NetworkInterfaces  prometheus.Gauge
+	CPUTemperature    prometheus.Gauge
+	MemoryUsedPercent prometheus.Gauge
+	DiskUsedPercent   prometheus.Gauge
+	NetworkInterfaces prometheus.Gauge
 
 	// Page metrics
-	CurrentPage        prometheus.Gauge
-	PageRotationTotal  prometheus.Counter
+	CurrentPage       prometheus.Gauge
+	PageRotationTotal prometheus.Counter
 
 	registry *prometheus.Registry
 	log      *logger.Logger

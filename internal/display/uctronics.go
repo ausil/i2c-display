@@ -60,7 +60,7 @@ func NewUCTRONICSDisplay(i2cBus, i2cAddr string, width, height int) (*UCTRONICSD
 
 	addr, err := parseI2CAddr(i2cAddr)
 	if err != nil {
-		bus.Close() //nolint:errcheck
+		bus.Close() // #nosec G104 -- best-effort cleanup on error path
 		return nil, err
 	}
 	if addr == 0 {
@@ -78,10 +78,7 @@ func NewUCTRONICSDisplay(i2cBus, i2cAddr string, width, height int) (*UCTRONICSD
 
 // parseI2CAddr converts a hex string like "0x18" to a uint16 address.
 func parseI2CAddr(s string) (uint16, error) {
-	s = strings.TrimSpace(strings.ToLower(s))
-	if strings.HasPrefix(s, "0x") {
-		s = s[2:]
-	}
+	s = strings.TrimPrefix(strings.TrimSpace(strings.ToLower(s)), "0x")
 	v, err := strconv.ParseUint(s, 16, 16)
 	if err != nil {
 		return 0, fmt.Errorf("invalid I2C address: %w", err)
@@ -141,7 +138,9 @@ func (d *UCTRONICSDisplay) burstTransfer(data []byte) error {
 
 // Init initializes the display (MCU handles ST7735 init; we just clear).
 func (d *UCTRONICSDisplay) Init() error {
-	d.Clear()
+	if err := d.Clear(); err != nil {
+		return err
+	}
 	return d.Show()
 }
 
@@ -195,65 +194,20 @@ func (d *UCTRONICSDisplay) DrawText(x, y int, text string, size int) error {
 }
 
 // DrawRect draws a rectangle outline or filled rectangle.
-//
-//nolint:gocyclo // drawing logic naturally has many conditional branches
 func (d *UCTRONICSDisplay) DrawRect(x, y, width, height int, fill bool) error {
-	white := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
-	if fill {
-		for dy := 0; dy < height && y+dy < d.height; dy++ {
-			for dx := 0; dx < width && x+dx < d.width; dx++ {
-				if x+dx >= 0 && y+dy >= 0 {
-					d.img.SetNRGBA(x+dx, y+dy, white)
-				}
-			}
-		}
-	} else {
-		for i := 0; i < width && x+i < d.width; i++ {
-			if x+i >= 0 && y >= 0 {
-				d.img.SetNRGBA(x+i, y, white)
-			}
-			if x+i >= 0 && y+height-1 >= 0 && y+height-1 < d.height {
-				d.img.SetNRGBA(x+i, y+height-1, white)
-			}
-		}
-		for i := 0; i < height && y+i < d.height; i++ {
-			if x >= 0 && y+i >= 0 {
-				d.img.SetNRGBA(x, y+i, white)
-			}
-			if x+width-1 >= 0 && x+width-1 < d.width && y+i >= 0 {
-				d.img.SetNRGBA(x+width-1, y+i, white)
-			}
-		}
-	}
+	drawRectNRGBA(d.img, x, y, width, height, d.width, d.height, fill)
 	return nil
 }
 
 // DrawImage draws an image at the specified position, preserving source colours.
 func (d *UCTRONICSDisplay) DrawImage(x, y int, img image.Image) error {
-	bounds := img.Bounds()
-	for dy := 0; dy < bounds.Dy() && y+dy < d.height; dy++ {
-		for dx := 0; dx < bounds.Dx() && x+dx < d.width; dx++ {
-			if x+dx >= 0 && y+dy >= 0 {
-				r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
-				if a > 32768 {
-					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{
-						R: uint8(r >> 8),
-						G: uint8(g >> 8),
-						B: uint8(b >> 8),
-						A: 255,
-					})
-				} else {
-					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{A: 255})
-				}
-			}
-		}
-	}
+	drawImageNRGBA(d.img, x, y, d.width, d.height, img)
 	return nil
 }
 
 // Show flushes the NRGBA buffer to the display as RGB565 via I2C burst transfer.
 func (d *UCTRONICSDisplay) Show() error {
-	if err := d.setAddressWindow(0, 0, byte(d.width-1), byte(d.height-1)); err != nil {
+	if err := d.setAddressWindow(0, 0, byte(d.width-1), byte(d.height-1)); err != nil { // #nosec G115 -- display dimensions bounded by ≤255
 		return err
 	}
 
@@ -263,8 +217,8 @@ func (d *UCTRONICSDisplay) Show() error {
 		for x := 0; x < d.width; x++ {
 			c := d.img.NRGBAAt(x, y)
 			rgb565 := nrgbaToRGB565(c)
-			buf[idx] = byte(rgb565 >> 8)
-			buf[idx+1] = byte(rgb565)
+			buf[idx] = byte(rgb565 >> 8) // #nosec G115 -- uint16 to byte truncation is intentional
+			buf[idx+1] = byte(rgb565)    // #nosec G115 -- uint16 to byte truncation is intentional
 			idx += 2
 		}
 	}
@@ -290,8 +244,8 @@ func (d *UCTRONICSDisplay) GetBuffer() []byte {
 		for x := 0; x < d.width; x++ {
 			c := d.img.NRGBAAt(x, y)
 			rgb565 := nrgbaToRGB565(c)
-			buf[idx] = byte(rgb565 >> 8)
-			buf[idx+1] = byte(rgb565)
+			buf[idx] = byte(rgb565 >> 8) // #nosec G115 -- uint16 to byte truncation is intentional
+			buf[idx+1] = byte(rgb565)    // #nosec G115 -- uint16 to byte truncation is intentional
 			idx += 2
 		}
 	}

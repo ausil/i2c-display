@@ -247,7 +247,11 @@ func TestServerStartStop(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Test health endpoint
-	resp, err := http.Get("http://localhost:19091/health")
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://localhost:19091/health", http.NoBody)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to GET /health: %v", err)
 	}
@@ -307,7 +311,11 @@ func TestMetricsEndpoint(t *testing.T) {
 	collector.RecordPageRotation(1)
 
 	// Test metrics endpoint
-	resp, err := http.Get("http://localhost:19092/metrics")
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://localhost:19092/metrics", http.NoBody)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to GET /metrics: %v", err)
 	}

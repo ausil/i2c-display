@@ -139,6 +139,8 @@ func (p *LoadGraphPage) renderGraph(disp display.Display, s *stats.SystemStats, 
 }
 
 // buildGraphImage creates an NRGBA image of the load graph
+//
+//nolint:gocyclo,funlen // graph rendering has inherent branching for scaling and coloring
 func (p *LoadGraphPage) buildGraphImage(width, height int) *image.NRGBA {
 	img := image.NewNRGBA(image.Rect(0, 0, width, height))
 

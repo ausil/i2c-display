@@ -136,8 +136,8 @@ func TestApplyDisplayDefaults(t *testing.T) {
 			name: "override dimensions to match type",
 			config: DisplayConfig{
 				Type:   "ssd1306",
-				Width:  96,  // Wrong dimensions
-				Height: 16,  // Will be overridden
+				Width:  96, // Wrong dimensions
+				Height: 16, // Will be overridden
 			},
 			want: DisplayConfig{
 				Type:   "ssd1306",

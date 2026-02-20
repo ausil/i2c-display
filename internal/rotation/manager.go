@@ -15,19 +15,19 @@ import (
 
 // Manager handles page rotation and refresh
 type Manager struct {
-	config               *config.Config
-	collector            *stats.SystemCollector
-	renderer             *renderer.Renderer
-	log                  *logger.Logger
-	metricsCollector     *metrics.Collector // optional, nil if metrics disabled
-	currentPage          int
-	lastInterfaceCount   int
-	mu                   sync.Mutex // Protects currentPage and lastInterfaceCount
-	stopOnce             sync.Once
-	rotationTicker       *time.Ticker
-	refreshTicker        *time.Ticker
-	stopChan             chan struct{}
-	stoppedChan          chan struct{}
+	config             *config.Config
+	collector          *stats.SystemCollector
+	renderer           *renderer.Renderer
+	log                *logger.Logger
+	metricsCollector   *metrics.Collector // optional, nil if metrics disabled
+	currentPage        int
+	lastInterfaceCount int
+	mu                 sync.Mutex // Protects currentPage and lastInterfaceCount
+	stopOnce           sync.Once
+	rotationTicker     *time.Ticker
+	refreshTicker      *time.Ticker
+	stopChan           chan struct{}
+	stoppedChan        chan struct{}
 }
 
 // SetMetrics attaches a metrics collector to the manager.

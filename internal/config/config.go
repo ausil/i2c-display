@@ -23,7 +23,7 @@ type Config struct {
 
 // DisplayConfig holds display-related settings
 type DisplayConfig struct {
-	Type       string `json:"type"`        // Display type: "ssd1306", "ssd1306_128x32", "st7735", etc.
+	Type       string `json:"type"` // Display type: "ssd1306", "ssd1306_128x32", "st7735", etc.
 	I2CBus     string `json:"i2c_bus"`
 	I2CAddress string `json:"i2c_address"`
 	SPIBus     string `json:"spi_bus"`
@@ -66,11 +66,11 @@ type SystemInfoConfig struct {
 
 // NetworkConfig holds network interface settings
 type NetworkConfig struct {
-	AutoDetect            bool            `json:"auto_detect"`
-	InterfaceFilter       InterfaceFilter `json:"interface_filter"`
-	ShowIPv4              bool            `json:"show_ipv4"`
-	ShowIPv6              bool            `json:"show_ipv6"`
-	MaxInterfacesPerPage  int             `json:"max_interfaces_per_page"`
+	AutoDetect           bool            `json:"auto_detect"`
+	InterfaceFilter      InterfaceFilter `json:"interface_filter"`
+	ShowIPv4             bool            `json:"show_ipv4"`
+	ShowIPv6             bool            `json:"show_ipv6"`
+	MaxInterfacesPerPage int             `json:"max_interfaces_per_page"`
 }
 
 // InterfaceFilter defines include/exclude patterns for network interfaces
@@ -168,7 +168,7 @@ func Default() *Config {
 
 // Load loads configuration from a file path
 func Load(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304,G703 -- config path is from trusted sources (CLI flag, env var, well-known paths)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -220,7 +220,7 @@ func LoadWithPriority(explicitPath string) (*Config, error) {
 
 	var lastErr error
 	for _, path := range paths {
-		if _, err := os.Stat(path); err == nil {
+		if _, err := os.Stat(path); err == nil { // #nosec G703 -- config paths are from trusted sources
 			cfg, err := Load(path)
 			if err != nil {
 				lastErr = fmt.Errorf("%s: %w", path, err)
@@ -260,6 +260,7 @@ func (c *Config) Validate() error {
 	return c.validateMetrics()
 }
 
+//nolint:gocyclo // linear validation sequence
 func (c *Config) validateDisplay() error {
 	if c.Display.Type == "" {
 		c.Display.Type = "ssd1306" // Default to SSD1306

@@ -18,23 +18,23 @@ func GetDisplaySpec(displayType string) (DisplaySpec, bool) {
 		"ssd1306_96x16":  {Width: 96, Height: 16},
 
 		// SH1106 family (via third-party driver)
-		"sh1106":         {Width: 128, Height: 64},
-		"sh1106_128x64":  {Width: 128, Height: 64},
+		"sh1106":        {Width: 128, Height: 64},
+		"sh1106_128x64": {Width: 128, Height: 64},
 
 		// SSD1327 (grayscale) - Driver needed
-		"ssd1327":        {Width: 128, Height: 128},
+		"ssd1327":         {Width: 128, Height: 128},
 		"ssd1327_128x128": {Width: 128, Height: 128},
-		"ssd1327_96x96":  {Width: 96, Height: 96},
+		"ssd1327_96x96":   {Width: 96, Height: 96},
 
 		// SSD1331 (color OLED) - Driver needed
-		"ssd1331":        {Width: 96, Height: 64},
-		"ssd1331_96x64":  {Width: 96, Height: 64},
+		"ssd1331":       {Width: 96, Height: 64},
+		"ssd1331_96x64": {Width: 96, Height: 64},
 
 		// ST7735 (color TFT via SPI)
-		"st7735":                    {Width: 128, Height: 160},
-		"st7735_128x160":            {Width: 128, Height: 160},
-		"st7735_128x128":            {Width: 128, Height: 128},
-		"st7735_160x80":             {Width: 160, Height: 80},
+		"st7735":         {Width: 128, Height: 160},
+		"st7735_128x160": {Width: 128, Height: 160},
+		"st7735_128x128": {Width: 128, Height: 128},
+		"st7735_160x80":  {Width: 160, Height: 80},
 
 		// UCTRONICS (I2C-bridged ST7735 via onboard MCU)
 		"uctronics_colour": {Width: 160, Height: 80},

@@ -33,8 +33,8 @@ var Face5x7 font.Face = &smallFace{}
 
 type smallFace struct{}
 
-func (f *smallFace) Close() error                          { return nil }
-func (f *smallFace) Kern(r0, r1 rune) fixed.Int26_6        { return 0 }
+func (f *smallFace) Close() error                   { return nil }
+func (f *smallFace) Kern(r0, r1 rune) fixed.Int26_6 { return 0 }
 func (f *smallFace) GlyphAdvance(r rune) (fixed.Int26_6, bool) {
 	if r < 0x20 || r > 0x7E {
 		return 0, false
@@ -77,7 +77,8 @@ func (f *smallFace) Glyph(dot fixed.Point26_6, r rune) (image.Rectangle, image.I
 	for col := 0; col < 5; col++ {
 		colByte := font5x7Data[idx+col]
 		for row := 0; row < font5x7GlyphHeight; row++ {
-			if colByte&(1<<uint(row)) != 0 {
+			bit := uint(row) // #nosec G115 -- loop variable 0–6
+			if colByte&(1<<bit) != 0 {
 				img.SetAlpha(col, row, color.Alpha{A: 255})
 			}
 		}

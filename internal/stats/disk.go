@@ -27,10 +27,10 @@ func (d *DiskCollector) GetDisk() (used, total uint64, err error) {
 	}
 
 	// Total size = blocks * block size
-	total = stat.Blocks * uint64(stat.Bsize)
+	total = stat.Blocks * uint64(stat.Bsize) /* #nosec G115 -- block size is always positive */
 
 	// Available space = available blocks * block size
-	available := stat.Bavail * uint64(stat.Bsize)
+	available := stat.Bavail * uint64(stat.Bsize) /* #nosec G115 -- block size is always positive */
 
 	// Used space = total - available
 	used = total - available

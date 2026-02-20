@@ -19,7 +19,7 @@ func TestLoadGraphPageRender(t *testing.T) {
 	page := NewLoadGraphPage(0)
 
 	testStats := &stats.SystemStats{
-		Hostname: "testhost",
+		Hostname:  "testhost",
 		LoadAvg1:  0.50,
 		LoadAvg5:  0.40,
 		LoadAvg15: 0.35,
@@ -48,7 +48,7 @@ func TestLoadGraphPageRenderSmall(t *testing.T) {
 	page := NewLoadGraphPage(0)
 
 	testStats := &stats.SystemStats{
-		Hostname: "testhost",
+		Hostname:  "testhost",
 		LoadAvg1:  0.25,
 		LoadAvg5:  0.21,
 		LoadAvg15: 0.27,
@@ -79,7 +79,7 @@ func TestLoadGraphPageHistory(t *testing.T) {
 	// Render multiple times to accumulate history
 	for i := 0; i < 10; i++ {
 		testStats := &stats.SystemStats{
-			Hostname: "testhost",
+			Hostname:  "testhost",
 			LoadAvg1:  float64(i) * 0.1,
 			LoadAvg5:  0.20,
 			LoadAvg15: 0.30,
@@ -97,7 +97,7 @@ func TestLoadGraphPageHistory(t *testing.T) {
 	// Verify ring buffer wrapping: fill beyond capacity
 	for i := 0; i < loadHistorySize+5; i++ {
 		testStats := &stats.SystemStats{
-			Hostname: "testhost",
+			Hostname:  "testhost",
 			LoadAvg1:  1.0,
 			LoadAvg5:  0.50,
 			LoadAvg15: 0.40,
@@ -119,7 +119,7 @@ func TestLoadGraphPageZeroLoad(t *testing.T) {
 	page := NewLoadGraphPage(0)
 
 	testStats := &stats.SystemStats{
-		Hostname: "testhost",
+		Hostname:  "testhost",
 		LoadAvg1:  0,
 		LoadAvg5:  0,
 		LoadAvg15: 0,

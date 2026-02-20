@@ -19,7 +19,7 @@ import (
 	"github.com/ausil/i2c-display/internal/stats"
 )
 
-//nolint:funlen // main function naturally has many statements for initialization
+//nolint:funlen,gocyclo // main function naturally has many statements for initialization
 func main() {
 	// Parse command-line flags
 	configPath := flag.String("config", "", "Path to configuration file")
@@ -230,6 +230,8 @@ shutdown:
 // Each step pauses so the result can be inspected visually.
 //
 // Pass: solid white fill → border rectangle → cross-hairs → text → clear.
+//
+//nolint:gocyclo // test sequence naturally has many steps
 func runDisplayTest(disp display.Display, log *logger.Logger) error {
 	bounds := disp.GetBounds()
 	w := bounds.Dx()
@@ -345,4 +347,3 @@ func newScreenSaver(cfg *config.Config, disp display.Display, log *logger.Logger
 	}
 	return screensaver.New(ssCfg, disp, log), nil
 }
-

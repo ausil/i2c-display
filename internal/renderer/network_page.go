@@ -43,6 +43,7 @@ func (p *NetworkPage) Title() string {
 }
 
 // Render draws the network page
+//
 //nolint:gocyclo // rendering logic naturally has many conditional branches for different display sizes
 func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 	// Clear display

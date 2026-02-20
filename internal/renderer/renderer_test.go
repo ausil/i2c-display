@@ -198,44 +198,44 @@ func TestTextHelpers(t *testing.T) {
 
 func TestNewLayout(t *testing.T) {
 	tests := []struct {
-		name        string
-		width       int
-		height      int
-		wantHeader  bool
-		wantSep     bool
-		minLines    int
+		name       string
+		width      int
+		height     int
+		wantHeader bool
+		wantSep    bool
+		minLines   int
 	}{
 		{
-			name:        "small 128x32",
-			width:       128,
-			height:      32,
-			wantHeader:  true,
-			wantSep:     true,
-			minLines:    1,
+			name:       "small 128x32",
+			width:      128,
+			height:     32,
+			wantHeader: true,
+			wantSep:    true,
+			minLines:   1,
 		},
 		{
-			name:        "medium 128x64",
-			width:       128,
-			height:      64,
-			wantHeader:  true,
-			wantSep:     true,
-			minLines:    3,
+			name:       "medium 128x64",
+			width:      128,
+			height:     64,
+			wantHeader: true,
+			wantSep:    true,
+			minLines:   3,
 		},
 		{
-			name:        "large 256x128",
-			width:       256,
-			height:      128,
-			wantHeader:  true,
-			wantSep:     true,
-			minLines:    6,
+			name:       "large 256x128",
+			width:      256,
+			height:     128,
+			wantHeader: true,
+			wantSep:    true,
+			minLines:   6,
 		},
 		{
-			name:        "tiny 96x16",
-			width:       96,
-			height:      16,
-			wantHeader:  true,
-			wantSep:     true,
-			minLines:    1,
+			name:       "tiny 96x16",
+			width:      96,
+			height:     16,
+			wantHeader: true,
+			wantSep:    true,
+			minLines:   1,
 		},
 	}
 
@@ -418,14 +418,14 @@ func TestNetworkPageIPv6(t *testing.T) {
 		Hostname: "testhost",
 		Interfaces: []stats.NetInterface{
 			{
-				Name:       "eth0",
-				IPv4Addrs:  []string{},
-				IPv6Addrs:  []string{"fe80::1234:5678:90ab:cdef"},
+				Name:      "eth0",
+				IPv4Addrs: []string{},
+				IPv6Addrs: []string{"fe80::1234:5678:90ab:cdef"},
 			},
 			{
-				Name:       "eth1",
-				IPv4Addrs:  []string{"192.168.1.100"},
-				IPv6Addrs:  []string{"fe80::abcd:ef12:3456:7890"},
+				Name:      "eth1",
+				IPv4Addrs: []string{"192.168.1.100"},
+				IPv6Addrs: []string{"fe80::abcd:ef12:3456:7890"},
 			},
 		},
 	}
@@ -443,9 +443,9 @@ func TestNetworkPageNoAddress(t *testing.T) {
 		Hostname: "testhost",
 		Interfaces: []stats.NetInterface{
 			{
-				Name:       "eth0",
-				IPv4Addrs:  []string{},
-				IPv6Addrs:  []string{},
+				Name:      "eth0",
+				IPv4Addrs: []string{},
+				IPv6Addrs: []string{},
 			},
 		},
 	}

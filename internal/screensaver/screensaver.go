@@ -24,11 +24,11 @@ const (
 
 // Config holds screen saver configuration
 type Config struct {
-	Enabled         bool          `json:"enabled"`
-	Mode            Mode          `json:"mode"`             // "off", "dim", or "blank"
-	IdleTimeout     time.Duration `json:"idle_timeout"`     // Time before activation
-	DimBrightness   uint8         `json:"dim_brightness"`   // Brightness when dimmed (0-255)
-	NormalBrightness uint8        `json:"normal_brightness"` // Normal operating brightness
+	Enabled          bool          `json:"enabled"`
+	Mode             Mode          `json:"mode"`              // "off", "dim", or "blank"
+	IdleTimeout      time.Duration `json:"idle_timeout"`      // Time before activation
+	DimBrightness    uint8         `json:"dim_brightness"`    // Brightness when dimmed (0-255)
+	NormalBrightness uint8         `json:"normal_brightness"` // Normal operating brightness
 }
 
 // ScreenSaver manages display power saving

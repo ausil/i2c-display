@@ -8,9 +8,9 @@ import (
 
 func TestSystemStats(t *testing.T) {
 	stats := &SystemStats{
-		MemoryUsed:  2 * 1024 * 1024 * 1024, // 2 GB
-		MemoryTotal: 4 * 1024 * 1024 * 1024, // 4 GB
-		DiskUsed:    50 * 1024 * 1024 * 1024, // 50 GB
+		MemoryUsed:  2 * 1024 * 1024 * 1024,   // 2 GB
+		MemoryTotal: 4 * 1024 * 1024 * 1024,   // 4 GB
+		DiskUsed:    50 * 1024 * 1024 * 1024,  // 50 GB
 		DiskTotal:   100 * 1024 * 1024 * 1024, // 100 GB
 	}
 
@@ -233,7 +233,7 @@ func TestNetworkCollectorFiltering(t *testing.T) {
 		{
 			name: "auto detect with no filters",
 			config: config.NetworkConfig{
-				AutoDetect: true,
+				AutoDetect:      true,
 				InterfaceFilter: config.InterfaceFilter{},
 			},
 			ifaceName:     "eth0",

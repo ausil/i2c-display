@@ -45,17 +45,17 @@ func TestLoadColor(t *testing.T) {
 		numCPU int
 		want   string
 	}{
-		{"low load 4 cores", 1.0, 4, "green"},           // 0.25 per core
-		{"zero load", 0, 4, "green"},                     // 0.0 per core
-		{"yellow boundary 4 cores", 2.8, 4, "yellow"},    // 0.7 per core
-		{"mid warning 4 cores", 3.0, 4, "yellow"},        // 0.75 per core
-		{"at red boundary 4 cores", 4.0, 4, "yellow"},    // 1.0 per core
-		{"above red 4 cores", 4.1, 4, "red"},             // 1.025 per core
-		{"high load 4 cores", 5.0, 4, "red"},             // 1.25 per core
-		{"single core green", 0.5, 1, "green"},           // 0.5 per core
-		{"single core yellow", 0.7, 1, "yellow"},         // 0.7 per core
-		{"single core red", 1.1, 1, "red"},               // 1.1 per core
-		{"zero numCPU defaults to 1", 0.5, 0, "green"},   // treated as 1 core
+		{"low load 4 cores", 1.0, 4, "green"},          // 0.25 per core
+		{"zero load", 0, 4, "green"},                   // 0.0 per core
+		{"yellow boundary 4 cores", 2.8, 4, "yellow"},  // 0.7 per core
+		{"mid warning 4 cores", 3.0, 4, "yellow"},      // 0.75 per core
+		{"at red boundary 4 cores", 4.0, 4, "yellow"},  // 1.0 per core
+		{"above red 4 cores", 4.1, 4, "red"},           // 1.025 per core
+		{"high load 4 cores", 5.0, 4, "red"},           // 1.25 per core
+		{"single core green", 0.5, 1, "green"},         // 0.5 per core
+		{"single core yellow", 0.7, 1, "yellow"},       // 0.7 per core
+		{"single core red", 1.1, 1, "red"},             // 1.1 per core
+		{"zero numCPU defaults to 1", 0.5, 0, "green"}, // treated as 1 core
 	}
 
 	for _, tt := range tests {

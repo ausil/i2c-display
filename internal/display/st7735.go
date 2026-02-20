@@ -66,6 +66,8 @@ type ST7735Display struct {
 }
 
 // NewST7735Display creates a new ST7735 display driver
+//
+//nolint:gocyclo // initialization naturally has many sequential error-checked steps
 func NewST7735Display(spiBus, dcPin, rstPin string, width, height, rotation int, displayType string) (*ST7735Display, error) {
 	if _, err := host.Init(); err != nil {
 		return nil, fmt.Errorf("failed to initialize periph: %w", err)
@@ -140,7 +142,6 @@ func NewST7735Display(spiBus, dcPin, rstPin string, width, height, rotation int,
 	return d, nil
 }
 
-
 func (d *ST7735Display) hardwareReset() error {
 	if d.rst == nil {
 		return nil
@@ -160,7 +161,6 @@ func (d *ST7735Display) hardwareReset() error {
 	return nil
 }
 
-//nolint:gocyclo // init sequence naturally has many steps
 func (d *ST7735Display) initSequence() error {
 	seq := []func() error{
 		func() error { return d.sendCmd(st7735SWRESET) },
@@ -303,10 +303,10 @@ func (d *ST7735Display) sendCmdData(cmd byte, data ...byte) error {
 
 // setWindow sets the address window for subsequent RAMWR pixel data.
 func (d *ST7735Display) setWindow(x0, y0, x1, y1 int) error {
-	cx0 := uint8(x0) + d.colOffset
-	cx1 := uint8(x1) + d.colOffset
-	ry0 := uint8(y0) + d.rowOffset
-	ry1 := uint8(y1) + d.rowOffset
+	cx0 := uint8(x0) + d.colOffset /* #nosec G115 -- display coordinates bounded by ≤255 dimensions */
+	cx1 := uint8(x1) + d.colOffset /* #nosec G115 -- display coordinates bounded by ≤255 dimensions */
+	ry0 := uint8(y0) + d.rowOffset /* #nosec G115 -- display coordinates bounded by ≤255 dimensions */
+	ry1 := uint8(y1) + d.rowOffset /* #nosec G115 -- display coordinates bounded by ≤255 dimensions */
 
 	if err := d.sendCmdData(st7735CASET, 0x00, cx0, 0x00, cx1); err != nil {
 		return err
@@ -319,7 +319,9 @@ func (d *ST7735Display) setWindow(x0, y0, x1, y1 int) error {
 
 // Init initializes the display (already done in constructor; clears screen).
 func (d *ST7735Display) Init() error {
-	d.Clear()
+	if err := d.Clear(); err != nil {
+		return err
+	}
 	return d.Show()
 }
 
@@ -373,59 +375,14 @@ func (d *ST7735Display) DrawText(x, y int, text string, size int) error {
 }
 
 // DrawRect draws a rectangle outline or filled rectangle.
-//
-//nolint:gocyclo // drawing logic naturally has many conditional branches
 func (d *ST7735Display) DrawRect(x, y, width, height int, fill bool) error {
-	white := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
-	if fill {
-		for dy := 0; dy < height && y+dy < d.height; dy++ {
-			for dx := 0; dx < width && x+dx < d.width; dx++ {
-				if x+dx >= 0 && y+dy >= 0 {
-					d.img.SetNRGBA(x+dx, y+dy, white)
-				}
-			}
-		}
-	} else {
-		for i := 0; i < width && x+i < d.width; i++ {
-			if x+i >= 0 && y >= 0 {
-				d.img.SetNRGBA(x+i, y, white)
-			}
-			if x+i >= 0 && y+height-1 >= 0 && y+height-1 < d.height {
-				d.img.SetNRGBA(x+i, y+height-1, white)
-			}
-		}
-		for i := 0; i < height && y+i < d.height; i++ {
-			if x >= 0 && y+i >= 0 {
-				d.img.SetNRGBA(x, y+i, white)
-			}
-			if x+width-1 >= 0 && x+width-1 < d.width && y+i >= 0 {
-				d.img.SetNRGBA(x+width-1, y+i, white)
-			}
-		}
-	}
+	drawRectNRGBA(d.img, x, y, width, height, d.width, d.height, fill)
 	return nil
 }
 
 // DrawImage draws an image at the specified position, preserving source colours.
 func (d *ST7735Display) DrawImage(x, y int, img image.Image) error {
-	bounds := img.Bounds()
-	for dy := 0; dy < bounds.Dy() && y+dy < d.height; dy++ {
-		for dx := 0; dx < bounds.Dx() && x+dx < d.width; dx++ {
-			if x+dx >= 0 && y+dy >= 0 {
-				r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
-				if a > 32768 {
-					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{
-						R: uint8(r >> 8),
-						G: uint8(g >> 8),
-						B: uint8(b >> 8),
-						A: 255,
-					})
-				} else {
-					d.img.SetNRGBA(x+dx, y+dy, color.NRGBA{A: 255})
-				}
-			}
-		}
-	}
+	drawImageNRGBA(d.img, x, y, d.width, d.height, img)
 	return nil
 }
 
@@ -441,8 +398,8 @@ func (d *ST7735Display) Show() error {
 		for x := 0; x < d.width; x++ {
 			c := d.img.NRGBAAt(x, y)
 			rgb565 := nrgbaToRGB565(c)
-			buf[idx] = byte(rgb565 >> 8)
-			buf[idx+1] = byte(rgb565)
+			buf[idx] = byte(rgb565 >> 8) // #nosec G115 -- uint16 to byte truncation is intentional
+			buf[idx+1] = byte(rgb565)    // #nosec G115 -- uint16 to byte truncation is intentional
 			idx += 2
 		}
 	}
@@ -476,8 +433,8 @@ func (d *ST7735Display) GetBuffer() []byte {
 		for x := 0; x < d.width; x++ {
 			c := d.img.NRGBAAt(x, y)
 			rgb565 := nrgbaToRGB565(c)
-			buf[idx] = byte(rgb565 >> 8)
-			buf[idx+1] = byte(rgb565)
+			buf[idx] = byte(rgb565 >> 8) // #nosec G115 -- uint16 to byte truncation is intentional
+			buf[idx+1] = byte(rgb565)    // #nosec G115 -- uint16 to byte truncation is intentional
 			idx += 2
 		}
 	}

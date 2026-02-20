@@ -107,8 +107,8 @@ func TestScreenSaverDeactivation(t *testing.T) {
 
 func TestScreenSaverModes(t *testing.T) {
 	modes := []struct {
-		name            string
-		mode            Mode
+		name                     string
+		mode                     Mode
 		expectedActiveBrightness uint8
 	}{
 		{"dim", ModeDim, 50},
@@ -116,7 +116,7 @@ func TestScreenSaverModes(t *testing.T) {
 	}
 
 	for _, tc := range modes {
-		t.Run(string(tc.name), func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			cfg := Config{
 				Enabled:          true,
 				Mode:             tc.mode,
