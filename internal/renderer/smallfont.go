@@ -1,3 +1,14 @@
+// Font data in this file is derived from the Adafruit GFX Library's classic
+// 5×7 bitmap font (glcdfont.c), available at:
+//
+//   https://github.com/adafruit/Adafruit-GFX-Library/blob/master/glcdfont.c
+//
+// The Adafruit GFX Library is licensed under the BSD License.
+// The glyph data was manually transcribed from glcdfont.c into Go byte
+// literals. To verify or update, compare font5x7Data against the first
+// 95 glyphs (ASCII 0x20–0x7E) in that file. Each glyph is 5 bytes,
+// one per column, with bit 0 (LSB) as the top row.
+
 package renderer
 
 import (
