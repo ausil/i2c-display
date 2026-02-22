@@ -1,47 +1,6 @@
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - shadow
-      - fieldalignment
-  gocyclo:
-    min-complexity: 15
-  dupl:
-    threshold: 100
-  goconst:
-    min-len: 2
-    min-occurrences: 3
-  misspell:
-    locale: US
-    ignore-words:
-      - colour
-      - colours
-      - coloured
-      - centre
-      - centred
-      - behaviour
-  lll:
-    line-length: 140
-  goimports:
-    local-prefixes: github.com/ausil/i2c-display
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport
-      - ifElseChain
-      - octalLiteral
-      - whyNoLint
-  funlen:
-    lines: 100
-    statements: 50
-
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
     - dogsled
@@ -52,11 +11,8 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - lll
@@ -65,36 +21,97 @@ linters:
     - noctx
     - nolintlint
     - staticcheck
-    - stylecheck
     - unconvert
     - unparam
     - unused
     - whitespace
-
+  settings:
+    dupl:
+      threshold: 100
+    funlen:
+      lines: 100
+      statements: 50
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    gocritic:
+      disabled-checks:
+        - dupImport
+        - hugeParam
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+    gocyclo:
+      min-complexity: 15
+    govet:
+      disable:
+        - shadow
+        - fieldalignment
+      enable-all: true
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+      ignore-rules:
+        - colour
+        - colours
+        - coloured
+        - centre
+        - centred
+        - behaviour
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dogsled
+          - dupl
+          - errcheck
+          - funlen
+          - goconst
+          - gocyclo
+          - gosec
+        path: _test\.go
+      - linters:
+          - unused
+        path: internal/display/mock\.go
+      - linters:
+          - lll
+        source: '^//go:generate '
+    paths:
+      - .*\.pb\.go$
+      - vendor
+      - testdata
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-        - funlen
-        - goconst
-        - dogsled
-    - path: internal/display/mock\.go
-      linters:
-        - unused
-    - linters:
-        - lll
-      source: "^//go:generate "
-  exclude-files:
-    - ".*\\.pb\\.go$"
-  exclude-dirs:
-    - vendor
-    - testdata
   max-issues-per-linter: 0
   max-same-issues: 0
-
-run:
-  timeout: 5m
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/ausil/i2c-display
+  exclusions:
+    generated: lax
+    paths:
+      - .*\.pb\.go$
+      - vendor
+      - testdata
+      - third_party$
+      - builtin$
+      - examples$

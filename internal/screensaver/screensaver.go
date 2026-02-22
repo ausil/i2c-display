@@ -172,7 +172,7 @@ func (s *ScreenSaver) inActiveHours(t time.Time) bool {
 
 // parseHHMM parses "HH:MM" into hour and minute.
 // Input is assumed valid (validated at config load time).
-func parseHHMM(s string) (int, int) {
+func parseHHMM(s string) (hour, minute int) {
 	var h, m int
 	fmt.Sscanf(s, "%d:%d", &h, &m) //nolint:errcheck
 	return h, m
