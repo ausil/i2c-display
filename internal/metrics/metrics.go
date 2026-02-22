@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -173,27 +174,50 @@ func (c *Collector) RecordPageRotation(pageNum int) {
 type Server struct {
 	httpServer *http.Server
 	log        *logger.Logger
+	mu         sync.Mutex
+	wakeFunc   func()
+}
+
+// SetWakeHandler registers a function to call when POST /wake is received.
+func (s *Server) SetWakeHandler(fn func()) {
+	s.mu.Lock()
+	s.wakeFunc = fn
+	s.mu.Unlock()
 }
 
 // NewServer creates a new metrics HTTP server
 func NewServer(cfg Config, collector *Collector, log *logger.Logger) *Server {
+	s := &Server{log: log}
+
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.HandlerFor(collector.registry, promhttp.HandlerOpts{}))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK\n"))
 	})
+	mux.HandleFunc("/wake", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		s.mu.Lock()
+		fn := s.wakeFunc
+		s.mu.Unlock()
+		if fn != nil {
+			fn()
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK\n"))
+	})
 
-	return &Server{
-		httpServer: &http.Server{
-			Addr:         cfg.Address,
-			Handler:      mux,
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  60 * time.Second,
-		},
-		log: log,
+	s.httpServer = &http.Server{
+		Addr:         cfg.Address,
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
+	return s
 }
 
 // Start starts the metrics server

@@ -170,6 +170,50 @@ func TestUpdateConfig(t *testing.T) {
 	// For now, just verify no crash
 }
 
+func TestWakeSuppressesScreensaver(t *testing.T) {
+	cfg := Config{
+		Enabled:          true,
+		Mode:             ModeDim,
+		IdleTimeout:      50 * time.Millisecond,
+		DimBrightness:    50,
+		NormalBrightness: 255,
+		WakeDuration:     5 * time.Second,
+	}
+
+	disp := display.NewMockDisplay(128, 64)
+	log := logger.NewDefault()
+	ss := New(cfg, disp, log)
+
+	// Activate the screensaver first
+	time.Sleep(100 * time.Millisecond)
+	ss.check()
+	if !ss.IsActive() {
+		t.Fatal("screensaver should be active before wake")
+	}
+
+	// Wake should deactivate immediately
+	ss.Wake()
+	if ss.IsActive() {
+		t.Error("screensaver should be deactivated after Wake()")
+	}
+
+	// check() during the wake window should not re-activate
+	ss.check()
+	if ss.IsActive() {
+		t.Error("screensaver should remain off during wake window")
+	}
+}
+
+func TestWakeDisabledIsNoop(t *testing.T) {
+	cfg := Config{Enabled: false}
+	disp := display.NewMockDisplay(128, 64)
+	log := logger.NewDefault()
+	ss := New(cfg, disp, log)
+
+	// Should not panic
+	ss.Wake()
+}
+
 func TestInActiveHours(t *testing.T) {
 	makeTime := func(h, m int) time.Time {
 		return time.Date(2024, 1, 1, h, m, 0, 0, time.Local)

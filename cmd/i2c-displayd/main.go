@@ -150,6 +150,11 @@ func main() {
 	}
 	defer ss.Stop()
 
+	// Register wake handler with metrics server so POST /wake reaches the screensaver
+	if metricsServer != nil {
+		metricsServer.SetWakeHandler(ss.Wake)
+	}
+
 	// Start rotation manager
 	if err := mgr.Start(ctx); err != nil {
 		log.FatalWithErr(err, "Failed to start rotation manager")
@@ -159,7 +164,7 @@ func main() {
 
 	// Wait for interrupt signal or SIGHUP for reload
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGUSR1)
 
 	for {
 		sig := <-sigChan
@@ -198,6 +203,11 @@ func main() {
 			}
 			cfg = newCfg
 			log.Info("Configuration reloaded successfully")
+			continue
+
+		case syscall.SIGUSR1:
+			log.Info("Received SIGUSR1, waking display...")
+			ss.Wake()
 			continue
 
 		case syscall.SIGINT, syscall.SIGTERM:
@@ -338,12 +348,17 @@ func newScreenSaver(cfg *config.Config, disp display.Display, log *logger.Logger
 	if err != nil {
 		return nil, fmt.Errorf("invalid screensaver.idle_timeout: %w", err)
 	}
+	wakeDuration, err := time.ParseDuration(cfg.ScreenSaver.WakeDuration)
+	if err != nil || wakeDuration <= 0 {
+		wakeDuration = 30 * time.Second
+	}
 	ssCfg := screensaver.Config{
 		Enabled:          cfg.ScreenSaver.Enabled,
 		Mode:             screensaver.Mode(cfg.ScreenSaver.Mode),
 		IdleTimeout:      idleTimeout,
 		DimBrightness:    cfg.ScreenSaver.DimBrightness,
 		NormalBrightness: cfg.ScreenSaver.NormalBrightness,
+		WakeDuration:     wakeDuration,
 		ActiveHours: screensaver.ActiveHours{
 			Enabled: cfg.ScreenSaver.ActiveHours.Enabled,
 			Start:   cfg.ScreenSaver.ActiveHours.Start,

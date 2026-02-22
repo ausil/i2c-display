@@ -425,6 +425,60 @@ func TestServerTimeouts(t *testing.T) {
 	}
 }
 
+func TestWakeEndpoint(t *testing.T) {
+	log := logger.NewDefault()
+	collector := New(log)
+
+	cfg := Config{
+		Enabled: true,
+		Address: ":19096",
+	}
+
+	server := NewServer(cfg, collector, log)
+
+	woken := false
+	server.SetWakeHandler(func() { woken = true })
+
+	if err := server.Start(); err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = server.Stop(ctx)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	// GET should be rejected
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://localhost:19096/wake", http.NoBody)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed GET /wake: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("Expected 405 for GET /wake, got %d", resp.StatusCode)
+	}
+	if woken {
+		t.Error("wake handler should not be called on GET")
+	}
+
+	// POST should trigger wake
+	req, _ = http.NewRequestWithContext(context.Background(), http.MethodPost, "http://localhost:19096/wake", http.NoBody)
+	resp, err = http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed POST /wake: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected 200 for POST /wake, got %d", resp.StatusCode)
+	}
+	if !woken {
+		t.Error("wake handler should have been called on POST")
+	}
+}
+
 func TestMultipleMetricRecords(t *testing.T) {
 	log := logger.NewDefault()
 	collector := New(log)

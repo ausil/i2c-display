@@ -38,6 +38,7 @@ type Config struct {
 	DimBrightness    uint8         `json:"dim_brightness"`    // Brightness when dimmed (0-255)
 	NormalBrightness uint8         `json:"normal_brightness"` // Normal operating brightness
 	ActiveHours      ActiveHours   // If enabled, suppresses screensaver during the configured window
+	WakeDuration     time.Duration // How long a manual Wake() keeps the display on
 }
 
 // ScreenSaver manages display power saving
@@ -47,7 +48,8 @@ type ScreenSaver struct {
 	log        *logger.Logger
 	mu         sync.RWMutex
 	lastActive time.Time
-	isActive   bool // true if screen saver is currently active
+	isActive   bool      // true if screen saver is currently active
+	wakedUntil time.Time // non-zero while a manual wake is in effect
 	ticker     *time.Ticker
 	stopChan   chan struct{}
 }
@@ -125,7 +127,11 @@ func (s *ScreenSaver) check() {
 
 	s.mu.Lock()
 	var shouldActivate, shouldDeactivate bool
-	if s.cfg.ActiveHours.Enabled {
+
+	// A manual wake overrides all other logic until it expires
+	if now.Before(s.wakedUntil) {
+		shouldDeactivate = s.isActive
+	} else if s.cfg.ActiveHours.Enabled {
 		inActive := s.inActiveHours(now)
 		shouldActivate = !inActive && !s.isActive
 		shouldDeactivate = inActive && s.isActive
@@ -227,6 +233,31 @@ func (s *ScreenSaver) ResetActivity() {
 	if wasActive {
 		s.deactivate()
 	}
+}
+
+// Wake temporarily suppresses the screensaver for the configured WakeDuration.
+// If the screensaver is currently active it is deactivated immediately.
+// This is a no-op when the screensaver is disabled.
+func (s *ScreenSaver) Wake() {
+	if !s.cfg.Enabled {
+		return
+	}
+
+	duration := s.cfg.WakeDuration
+	if duration <= 0 {
+		duration = 30 * time.Second
+	}
+
+	s.mu.Lock()
+	s.wakedUntil = time.Now().Add(duration)
+	wasActive := s.isActive
+	s.mu.Unlock()
+
+	if wasActive {
+		s.deactivate()
+	}
+
+	s.log.With().Str("duration", duration.String()).Logger().Info("Display woken manually")
 }
 
 // IsActive returns whether the screen saver is currently active

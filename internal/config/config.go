@@ -108,6 +108,7 @@ type ScreenSaverConfig struct {
 	DimBrightness    uint8             `json:"dim_brightness"`    // 0-255
 	NormalBrightness uint8             `json:"normal_brightness"` // 0-255
 	ActiveHours      ActiveHoursConfig `json:"active_hours,omitempty"`
+	WakeDuration     string            `json:"wake_duration"` // how long a manual wake keeps the display on, e.g. "30s"
 }
 
 // GetRotationInterval returns the parsed rotation interval duration
@@ -166,6 +167,7 @@ func Default() *Config {
 			IdleTimeout:      "5m",
 			DimBrightness:    50,
 			NormalBrightness: 255,
+			WakeDuration:     "30s",
 		},
 	}
 
@@ -414,6 +416,16 @@ func (c *Config) validateScreenSaver() error {
 		}
 		if err := validateHHMM("screensaver.active_hours.end", c.ScreenSaver.ActiveHours.End); err != nil {
 			return err
+		}
+	}
+
+	if c.ScreenSaver.WakeDuration != "" {
+		d, err := time.ParseDuration(c.ScreenSaver.WakeDuration)
+		if err != nil {
+			return fmt.Errorf("screensaver.wake_duration is not a valid duration: %w", err)
+		}
+		if d <= 0 {
+			return fmt.Errorf("screensaver.wake_duration must be positive, got %s", c.ScreenSaver.WakeDuration)
 		}
 	}
 
