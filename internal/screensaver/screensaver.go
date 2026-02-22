@@ -10,6 +10,14 @@ import (
 	"github.com/ausil/i2c-display/internal/logger"
 )
 
+// ActiveHours defines the time window during which the display is kept on.
+// Outside this window the screensaver activates regardless of idle timeout.
+type ActiveHours struct {
+	Enabled bool
+	Start   string // "HH:MM" (24-hour)
+	End     string // "HH:MM" (24-hour); may be earlier than Start for overnight ranges
+}
+
 // Mode represents the screen saver mode
 type Mode string
 
@@ -26,9 +34,10 @@ const (
 type Config struct {
 	Enabled          bool          `json:"enabled"`
 	Mode             Mode          `json:"mode"`              // "off", "dim", or "blank"
-	IdleTimeout      time.Duration `json:"idle_timeout"`      // Time before activation
+	IdleTimeout      time.Duration `json:"idle_timeout"`      // Time before activation (unused when ActiveHours.Enabled)
 	DimBrightness    uint8         `json:"dim_brightness"`    // Brightness when dimmed (0-255)
 	NormalBrightness uint8         `json:"normal_brightness"` // Normal operating brightness
+	ActiveHours      ActiveHours   // If enabled, suppresses screensaver during the configured window
 }
 
 // ScreenSaver manages display power saving
@@ -112,18 +121,55 @@ func (s *ScreenSaver) Stop() {
 
 // check checks if screen saver should activate or deactivate
 func (s *ScreenSaver) check() {
+	now := time.Now()
+
 	s.mu.Lock()
-	idle := time.Since(s.lastActive)
-	shouldActivate := idle >= s.cfg.IdleTimeout && !s.isActive
-	shouldDeactivate := idle < s.cfg.IdleTimeout && s.isActive
+	var shouldActivate, shouldDeactivate bool
+	if s.cfg.ActiveHours.Enabled {
+		inActive := s.inActiveHours(now)
+		shouldActivate = !inActive && !s.isActive
+		shouldDeactivate = inActive && s.isActive
+	} else {
+		idle := now.Sub(s.lastActive)
+		shouldActivate = idle >= s.cfg.IdleTimeout && !s.isActive
+		shouldDeactivate = idle < s.cfg.IdleTimeout && s.isActive
+	}
 	s.mu.Unlock()
 
-	// Call activate/deactivate without holding the lock
 	if shouldActivate {
 		s.activate()
 	} else if shouldDeactivate {
 		s.deactivate()
 	}
+}
+
+// inActiveHours reports whether t falls within the configured active window.
+// Must be called with s.mu held.
+func (s *ScreenSaver) inActiveHours(t time.Time) bool {
+	startH, startM := parseHHMM(s.cfg.ActiveHours.Start)
+	endH, endM := parseHHMM(s.cfg.ActiveHours.End)
+
+	startMins := startH*60 + startM
+	endMins := endH*60 + endM
+	nowMins := t.Hour()*60 + t.Minute()
+
+	if startMins == endMins {
+		return true // equal bounds = always active
+	}
+	if startMins < endMins {
+		// Same-day range e.g. 08:00-22:00
+		return nowMins >= startMins && nowMins < endMins
+	}
+	// Overnight range e.g. 22:00-06:00
+	return nowMins >= startMins || nowMins < endMins
+}
+
+// parseHHMM parses "HH:MM" into hour and minute.
+// Input is assumed valid (validated at config load time).
+func parseHHMM(s string) (int, int) {
+	var h, m int
+	fmt.Sscanf(s, "%d:%d", &h, &m) //nolint:errcheck
+	return h, m
 }
 
 // activate activates the screen saver

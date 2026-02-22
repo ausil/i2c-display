@@ -344,6 +344,11 @@ func newScreenSaver(cfg *config.Config, disp display.Display, log *logger.Logger
 		IdleTimeout:      idleTimeout,
 		DimBrightness:    cfg.ScreenSaver.DimBrightness,
 		NormalBrightness: cfg.ScreenSaver.NormalBrightness,
+		ActiveHours: screensaver.ActiveHours{
+			Enabled: cfg.ScreenSaver.ActiveHours.Enabled,
+			Start:   cfg.ScreenSaver.ActiveHours.Start,
+			End:     cfg.ScreenSaver.ActiveHours.End,
+		},
 	}
 	return screensaver.New(ssCfg, disp, log), nil
 }

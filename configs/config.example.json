@@ -40,6 +40,11 @@
     "mode": "dim",
     "idle_timeout": "5m",
     "dim_brightness": 50,
-    "normal_brightness": 255
+    "normal_brightness": 255,
+    "active_hours": {
+      "enabled": false,
+      "start": "08:00",
+      "end": "22:00"
+    }
   }
 }

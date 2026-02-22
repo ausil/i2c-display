@@ -92,13 +92,22 @@ type MetricsConfig struct {
 	Address string `json:"address"` // e.g., "127.0.0.1:9090"
 }
 
+// ActiveHoursConfig defines the time window during which the display is kept on.
+// Outside this window the screensaver activates regardless of idle timeout.
+type ActiveHoursConfig struct {
+	Enabled bool   `json:"enabled"`
+	Start   string `json:"start"` // "HH:MM" (24-hour)
+	End     string `json:"end"`   // "HH:MM" (24-hour); may be earlier than Start for overnight ranges
+}
+
 // ScreenSaverConfig holds screen saver settings
 type ScreenSaverConfig struct {
-	Enabled          bool   `json:"enabled"`
-	Mode             string `json:"mode"`              // "off", "dim", or "blank"
-	IdleTimeout      string `json:"idle_timeout"`      // e.g., "5m"
-	DimBrightness    uint8  `json:"dim_brightness"`    // 0-255
-	NormalBrightness uint8  `json:"normal_brightness"` // 0-255
+	Enabled          bool              `json:"enabled"`
+	Mode             string            `json:"mode"`              // "off", "dim", or "blank"
+	IdleTimeout      string            `json:"idle_timeout"`      // e.g., "5m"
+	DimBrightness    uint8             `json:"dim_brightness"`    // 0-255
+	NormalBrightness uint8             `json:"normal_brightness"` // 0-255
+	ActiveHours      ActiveHoursConfig `json:"active_hours,omitempty"`
 }
 
 // GetRotationInterval returns the parsed rotation interval duration
@@ -383,12 +392,15 @@ func (c *Config) validateScreenSaver() error {
 		return fmt.Errorf("screensaver.mode must be one of [off, dim, blank], got %s", c.ScreenSaver.Mode)
 	}
 
-	d, err := time.ParseDuration(c.ScreenSaver.IdleTimeout)
-	if err != nil {
-		return fmt.Errorf("screensaver.idle_timeout is not a valid duration: %w", err)
-	}
-	if d <= 0 {
-		return fmt.Errorf("screensaver.idle_timeout must be positive, got %s", c.ScreenSaver.IdleTimeout)
+	// idle_timeout is only required when active_hours is not driving activation
+	if !c.ScreenSaver.ActiveHours.Enabled {
+		d, err := time.ParseDuration(c.ScreenSaver.IdleTimeout)
+		if err != nil {
+			return fmt.Errorf("screensaver.idle_timeout is not a valid duration: %w", err)
+		}
+		if d <= 0 {
+			return fmt.Errorf("screensaver.idle_timeout must be positive, got %s", c.ScreenSaver.IdleTimeout)
+		}
 	}
 
 	if c.ScreenSaver.Mode == "dim" && c.ScreenSaver.DimBrightness >= c.ScreenSaver.NormalBrightness {
@@ -396,6 +408,29 @@ func (c *Config) validateScreenSaver() error {
 			c.ScreenSaver.DimBrightness, c.ScreenSaver.NormalBrightness)
 	}
 
+	if c.ScreenSaver.ActiveHours.Enabled {
+		if err := validateHHMM("screensaver.active_hours.start", c.ScreenSaver.ActiveHours.Start); err != nil {
+			return err
+		}
+		if err := validateHHMM("screensaver.active_hours.end", c.ScreenSaver.ActiveHours.End); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateHHMM(field, s string) error {
+	var h, m int
+	if n, err := fmt.Sscanf(s, "%d:%d", &h, &m); err != nil || n != 2 {
+		return fmt.Errorf("%s: invalid time %q, expected HH:MM", field, s)
+	}
+	if h < 0 || h > 23 {
+		return fmt.Errorf("%s: hour %d out of range (0-23)", field, h)
+	}
+	if m < 0 || m > 59 {
+		return fmt.Errorf("%s: minute %d out of range (0-59)", field, m)
+	}
 	return nil
 }
 

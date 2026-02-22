@@ -170,6 +170,114 @@ func TestUpdateConfig(t *testing.T) {
 	// For now, just verify no crash
 }
 
+func TestInActiveHours(t *testing.T) {
+	makeTime := func(h, m int) time.Time {
+		return time.Date(2024, 1, 1, h, m, 0, 0, time.Local)
+	}
+
+	tests := []struct {
+		name     string
+		start    string
+		end      string
+		t        time.Time
+		expected bool
+	}{
+		// Same-day range 08:00-22:00
+		{"same-day: before start", "08:00", "22:00", makeTime(7, 59), false},
+		{"same-day: at start", "08:00", "22:00", makeTime(8, 0), true},
+		{"same-day: midday", "08:00", "22:00", makeTime(14, 0), true},
+		{"same-day: at end", "08:00", "22:00", makeTime(22, 0), false},
+		{"same-day: after end", "08:00", "22:00", makeTime(23, 0), false},
+		// Overnight range 22:00-06:00
+		{"overnight: before start", "22:00", "06:00", makeTime(21, 59), false},
+		{"overnight: at start", "22:00", "06:00", makeTime(22, 0), true},
+		{"overnight: midnight", "22:00", "06:00", makeTime(0, 0), true},
+		{"overnight: before end", "22:00", "06:00", makeTime(5, 59), true},
+		{"overnight: at end", "22:00", "06:00", makeTime(6, 0), false},
+		{"overnight: midday", "22:00", "06:00", makeTime(12, 0), false},
+		// Equal bounds = always active
+		{"equal: always active", "12:00", "12:00", makeTime(8, 0), true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ss := &ScreenSaver{
+				cfg: Config{
+					ActiveHours: ActiveHours{
+						Enabled: true,
+						Start:   tc.start,
+						End:     tc.end,
+					},
+				},
+			}
+			got := ss.inActiveHours(tc.t)
+			if got != tc.expected {
+				t.Errorf("inActiveHours(%s) with start=%s end=%s: got %v, want %v",
+					tc.t.Format("15:04"), tc.start, tc.end, got, tc.expected)
+			}
+		})
+	}
+}
+
+func TestActiveHoursSuppressesScreensaver(t *testing.T) {
+	cfg := Config{
+		Enabled:          true,
+		Mode:             ModeDim,
+		IdleTimeout:      50 * time.Millisecond,
+		DimBrightness:    50,
+		NormalBrightness: 255,
+		ActiveHours: ActiveHours{
+			Enabled: true,
+			Start:   "00:00",
+			End:     "23:59",
+		},
+	}
+
+	disp := display.NewMockDisplay(128, 64)
+	log := logger.NewDefault()
+	ss := New(cfg, disp, log)
+
+	// Even after idle timeout would have fired, screensaver should stay off
+	time.Sleep(100 * time.Millisecond)
+	ss.check()
+
+	if ss.IsActive() {
+		t.Error("screensaver should be suppressed during active hours")
+	}
+}
+
+func TestActiveHoursActivatesOutsideWindow(t *testing.T) {
+	// Use a window that is definitely not now: 00:01-00:02
+	// (almost certainly not the current time during a test run)
+	cfg := Config{
+		Enabled:          true,
+		Mode:             ModeDim,
+		DimBrightness:    50,
+		NormalBrightness: 255,
+		ActiveHours: ActiveHours{
+			Enabled: true,
+			Start:   "00:01",
+			End:     "00:02",
+		},
+	}
+
+	disp := display.NewMockDisplay(128, 64)
+	log := logger.NewDefault()
+	ss := New(cfg, disp, log)
+
+	now := time.Now()
+	// Skip if we happen to be running at 00:01
+	if now.Hour() == 0 && now.Minute() == 1 {
+		t.Skip("skipping: test running exactly during the 1-minute active window")
+	}
+
+	ss.check()
+
+	if !ss.IsActive() {
+		t.Error("screensaver should be active outside active hours window")
+	}
+}
+
 func TestStartStop(t *testing.T) {
 	cfg := Config{
 		Enabled:          true,
