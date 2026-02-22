@@ -1,3 +1,12 @@
+i2c-display (0.5.3-1) unstable; urgency=medium
+
+  * Add platform configs for Orange Pi 3B v2.1 and Radxa ROCK 5A
+  * Fix metrics server bind: errors now surface immediately
+  * Fix POST /wake to return 503 when screensaver is disabled
+  * Fix refresh latency histogram page_type label
+
+ -- Dennis Gilmore <dennis@ausil.us>  Sun, 22 Feb 2026 00:00:00 -0500
+
 i2c-display (0.5.2-1) unstable; urgency=medium
 
   * Add screensaver active hours scheduling and manual wake (POST /wake, SIGUSR1)

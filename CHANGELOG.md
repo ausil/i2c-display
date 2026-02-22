@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-02-22
+
+### Added
+
+- Platform configs for Orange Pi 3B v2.1 and Radxa ROCK 5A
+
+### Fixed
+
+- Metrics server now binds synchronously so port/address errors surface immediately instead of being silently swallowed
+- `POST /wake` returns 503 when screensaver is disabled rather than silent 200
+- Refresh latency histogram now records the actual page title (`System`, `Network`, `Load`) instead of always `system`
+
 ## [0.5.2] - 2026-02-22
 
 ### Added
@@ -161,6 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of SSD1306 display controller
 
+[0.5.3]: https://github.com/ausil/i2c-display/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/ausil/i2c-display/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/ausil/i2c-display/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/ausil/i2c-display/compare/v0.4.0...v0.5.0
