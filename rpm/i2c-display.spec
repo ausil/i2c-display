@@ -88,7 +88,7 @@ install -m 0644 man/i2c-displayd.1 %{buildroot}%{_mandir}/man1/i2c-displayd.1
 %endif
 
 %files -f %{go_vendor_license_filelist}
-%doc BUILDING.md CONTRIBUTING.md DISPLAY_TYPES.md README.md SECURITY.md
+%doc BUILDING.md CHANGELOG.md CONTRIBUTING.md DISPLAY_TYPES.md LICENSES.md README.md SECURITY.md
 %doc %{_docdir}/i2c-display/configs/
 %{_bindir}/i2c-displayd
 %{_mandir}/man1/i2c-displayd.1*
