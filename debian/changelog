@@ -1,3 +1,12 @@
+i2c-display (0.5.2-1) unstable; urgency=medium
+
+  * Add screensaver active hours scheduling and manual wake (POST /wake, SIGUSR1)
+  * Add RISC-V 64-bit cross-compilation target
+  * Migrate golangci-lint config to v2 format; bump CI to golangci-lint-action@v7
+  * Fix gosec G104 finding in parseHHMM
+
+ -- Dennis Gilmore <dennis@ausil.us>  Sat, 22 Feb 2026 00:00:00 -0500
+
 i2c-display (0.5.1-1) unstable; urgency=medium
 
   * Refactor RPM packaging to use go2rpm/go-vendor-tools conventions

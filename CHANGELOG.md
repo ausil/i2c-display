@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-02-22
+
 ### Added
 
 - Active hours scheduling for screen saver: configure a time window during which the display is always on; outside the window the screensaver activates regardless of idle timeout
@@ -18,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Migrate golangci-lint config to v2 format; bump CI linter to v2.10.1
+- Upgrade CI to `golangci-lint-action@v7` required for golangci-lint v2
+
+### Fixed
+
+- Gosec G104 false positive in `parseHHMM`: explicitly discard `fmt.Sscanf` return values
 
 ## [0.5.1] - 2026-02-21
 
@@ -154,6 +161,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of SSD1306 display controller
 
+[0.5.2]: https://github.com/ausil/i2c-display/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/ausil/i2c-display/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/ausil/i2c-display/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ausil/i2c-display/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/ausil/i2c-display/compare/v0.3.0...v0.3.1

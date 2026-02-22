@@ -4,7 +4,7 @@ This document describes how to build release packages for the I2C Display Contro
 
 ## Version
 
-Current version: **0.5.1**
+Current version: **0.5.2**
 
 Version is managed in the `VERSION` file at the root of the repository.
 
@@ -26,15 +26,15 @@ sudo apt-get install build-essential debhelper dh-golang golang-go
 ```bash
 make dist
 ```
-Creates `dist/i2c-display-0.5.1.tar.gz` with vendor directory bundled.
+Creates `dist/i2c-display-0.5.2.tar.gz` with vendor directory bundled.
 
 ### For RPM packaging (go2rpm/go-vendor-tools style):
 ```bash
 make dist-rpm
 ```
 Creates two files required by the RPM spec:
-- `dist/i2c-display-0.5.1.tar.gz` — upstream source tarball (no vendor, GitHub-compatible)
-- `dist/i2c-display-0.5.1-vendor.tar.bz2` — vendored dependencies (separate archive)
+- `dist/i2c-display-0.5.2.tar.gz` — upstream source tarball (no vendor, GitHub-compatible)
+- `dist/i2c-display-0.5.2-vendor.tar.bz2` — vendored dependencies (separate archive)
 
 The `srpm` and `rpm` targets call `dist-rpm` automatically.
 
@@ -48,8 +48,8 @@ make rpm
 ```
 
 This creates:
-- `rpm-build/RPMS/*/i2c-display-0.5.1-1.*.rpm` (binary RPM)
-- `rpm-build/SRPMS/i2c-display-0.5.1-1.src.rpm` (source RPM)
+- `rpm-build/RPMS/*/i2c-display-0.5.2-1.*.rpm` (binary RPM)
+- `rpm-build/SRPMS/i2c-display-0.5.2-1.src.rpm` (source RPM)
 
 ### Build only source RPM:
 ```bash
@@ -70,7 +70,7 @@ sudo rpm -Uvh rpm-build/RPMS/*/i2c-display-*.rpm
 make deb
 ```
 
-This creates `../i2c-display_0.5.0-1_*.deb`
+This creates `../i2c-display_0.5.2-1_*.deb`
 
 ### Build source package:
 ```bash
@@ -78,8 +78,8 @@ make deb-src
 ```
 
 This creates:
-- `../i2c-display_0.5.0-1.dsc`
-- `../i2c-display_0.5.0-1.tar.xz`
+- `../i2c-display_0.5.2-1.dsc`
+- `../i2c-display_0.5.2-1.tar.xz`
 
 ### Install the DEB:
 ```bash
@@ -161,19 +161,19 @@ sudo apt-get remove i2c-display
 
 1. Update the `VERSION` file:
    ```bash
-   echo "0.5.0" > VERSION
+   echo "0.5.2" > VERSION
    ```
 
 2. Update changelogs:
    - `CHANGELOG.md` — add a new version section
-   - `debian/changelog` — use `dch -v 0.5.1-1` or edit manually
+   - `debian/changelog` — use `dch -v 0.5.2-1` or edit manually
    - The RPM spec uses `%autochangelog`; no manual spec entry needed
 
 3. Commit the version bump:
    ```bash
    git add VERSION rpm/i2c-display.spec debian/changelog
-   git commit -m "Bump version to 0.5.0"
-   git tag -a v0.5.0 -m "Release v0.5.0"
+   git commit -m "Bump version to 0.5.2"
+   git tag -a v0.5.2 -m "Release v0.5.2"
    ```
 
 4. Build packages:
@@ -188,7 +188,7 @@ sudo apt-get remove i2c-display
 6. Push to repository:
    ```bash
    git push origin main
-   git push origin v0.5.0
+   git push origin v0.5.2
    ```
 
 ## Cleaning Build Artifacts
