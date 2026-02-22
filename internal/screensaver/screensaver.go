@@ -174,7 +174,7 @@ func (s *ScreenSaver) inActiveHours(t time.Time) bool {
 // Input is assumed valid (validated at config load time).
 func parseHHMM(s string) (hour, minute int) {
 	var h, m int
-	fmt.Sscanf(s, "%d:%d", &h, &m) //nolint:errcheck
+	_, _ = fmt.Sscanf(s, "%d:%d", &h, &m)
 	return h, m
 }
 
