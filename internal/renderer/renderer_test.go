@@ -344,11 +344,11 @@ func TestPageTitle(t *testing.T) {
 	cfg := config.Default()
 	r := NewRenderer(disp, cfg)
 
-	// Before BuildPages: out-of-range returns "unknown"
-	if got := r.PageTitle(0); got != "unknown" {
+	// Before BuildPages: out-of-range returns unknownPageTitle
+	if got := r.PageTitle(0); got != unknownPageTitle {
 		t.Errorf("empty renderer: expected 'unknown', got %q", got)
 	}
-	if got := r.PageTitle(-1); got != "unknown" {
+	if got := r.PageTitle(-1); got != unknownPageTitle {
 		t.Errorf("negative index: expected 'unknown', got %q", got)
 	}
 
@@ -363,13 +363,13 @@ func TestPageTitle(t *testing.T) {
 
 	for i := 0; i < r.PageCount(); i++ {
 		title := r.PageTitle(i)
-		if title == "" || title == "unknown" {
+		if title == "" || title == unknownPageTitle {
 			t.Errorf("page %d: unexpected title %q", i, title)
 		}
 	}
 
 	// Out-of-range after build
-	if got := r.PageTitle(r.PageCount()); got != "unknown" {
+	if got := r.PageTitle(r.PageCount()); got != unknownPageTitle {
 		t.Errorf("out-of-range: expected 'unknown', got %q", got)
 	}
 }

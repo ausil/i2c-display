@@ -98,12 +98,15 @@ func (r *Renderer) PageCount() int {
 	return len(r.pages)
 }
 
+// unknownPageTitle is returned by PageTitle when the index is out of range.
+const unknownPageTitle = "unknown"
+
 // PageTitle returns the title of the page at the given index, or "unknown" if out of range.
 func (r *Renderer) PageTitle(idx int) string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	if idx < 0 || idx >= len(r.pages) {
-		return "unknown"
+		return unknownPageTitle
 	}
 	return r.pages[idx].Title()
 }

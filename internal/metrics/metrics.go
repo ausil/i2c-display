@@ -227,7 +227,7 @@ func NewServer(cfg Config, collector *Collector, log *logger.Logger) *Server {
 // so that any address/port errors are returned immediately rather than being
 // silently swallowed inside a goroutine.
 func (s *Server) Start() error {
-	ln, err := net.Listen("tcp", s.httpServer.Addr)
+	ln, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", s.httpServer.Addr)
 	if err != nil {
 		return fmt.Errorf("metrics server failed to bind %s: %w", s.httpServer.Addr, err)
 	}
