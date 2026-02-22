@@ -43,6 +43,19 @@ This directory contains tested configuration files for specific single board com
   - I2C bus is `/dev/i2c-2` on the 3B v2.1 (verify with `i2cdetect -l`)
   - Metrics disabled by default; enable if you need the `/metrics` and `/wake` endpoints
 
+### Marvell EspressoBIN
+
+#### EspressoBIN v5 / v7
+- **Config**: `espressobin.json`
+- **I2C Bus**: `/dev/i2c-0`
+- **Display**: SSD1306 128×32 (`ssd1306_128x32`) with `lines=4` compact layout
+- **Notes**:
+  - Temperature sensor is at `/sys/class/hwmon/hwmon0/temp1_input` (not `thermal_zone`)
+  - Network interfaces use router-style names: `lan0`/`lan1`/`lan2` and `wan`; filter uses `lan*` and `wan`
+  - `max_interfaces_per_page: 1` keeps each interface on its own page for readability
+  - 2s rotation interval cycles through the multiple network pages at a reasonable pace
+  - I2C bus 0 is the standard user I2C port on the EspressoBIN header
+
 ### Radxa Rock Series
 
 #### Rock 3C
@@ -102,6 +115,11 @@ This directory contains tested configuration files for specific single board com
 - **Enable I2C**: Use `raspi-config` → Interface Options → I2C
 - **User Permissions**: Add user to `i2c` group: `sudo usermod -a -G i2c $USER`
 - **I2C Bus**: Always `/dev/i2c-1` on modern Pi models
+
+### EspressoBIN
+- **I2C Bus**: `/dev/i2c-0`
+- **Temperature**: Uses hwmon path `/sys/class/hwmon/hwmon0/temp1_input` rather than `thermal_zone`
+- **Interface Names**: `lan0`, `lan1`, `lan2`, `wan` — use `lan*` and `wan` in the include filter
 
 ### Rock 3C / 5A / 5B
 - **I2C Bus**: May vary by model; Rock 3C uses bus 3, Rock 5A uses bus 8 — verify with `i2cdetect -l`
@@ -171,6 +189,7 @@ Include:
 | Raspberry Pi Zero W | ✅ | Yes | Works well, limited resources |
 | Raspberry Pi 3B+ | ✅ | Yes | Excellent |
 | Raspberry Pi 4 | ✅ | Yes | Excellent, all features |
+| EspressoBIN v5/v7 | ✅ | Yes | 128×32 display, lines=4, hwmon temp, lan*/wan interfaces |
 | Rock 3C | ✅ | Yes | Great performance |
 | Rock 5A | ✅ | Yes | 128×32 display, I2C bus 8 |
 | Rock 5B | ⚠️ | Use Rock 3C config | Verify I2C bus |
