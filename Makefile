@@ -116,7 +116,7 @@ run-mock: build
 	@echo "Running with mock display..."
 	$(BUILD_DIR)/$(BINARY_NAME) -mock -config configs/config.example.json
 
-# Create release tarball
+# Create release tarball (with vendored deps, used by Debian packaging)
 dist:
 	@echo "Creating release tarball v$(VERSION)..."
 	@mkdir -p $(DIST_DIR)
@@ -131,31 +131,41 @@ dist:
 	@echo "Release tarball created: $(DIST_DIR)/$(TARBALL)"
 	@ls -lh $(DIST_DIR)/$(TARBALL)
 
+# Create RPM source tarball (GitHub-compatible, no vendor) and vendor tarball
+dist-rpm:
+	@echo "Creating RPM source tarball v$(VERSION)..."
+	@mkdir -p $(DIST_DIR)
+	@git archive --format=tar.gz --prefix=$(PROJECT_NAME)-$(VERSION)/ \
+		-o $(DIST_DIR)/$(TARBALL) HEAD
+	@echo "RPM source tarball created: $(DIST_DIR)/$(TARBALL)"
+	@echo "Creating vendor tarball..."
+	@cd $(DIST_DIR) && go_vendor_archive create -O $(PROJECT_NAME)-$(VERSION)-vendor.tar.bz2 \
+		--config ../rpm/go-vendor-tools.toml $(TARBALL)
+	@echo "Vendor tarball created: $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)-vendor.tar.bz2"
+
 # Build source RPM
-srpm: dist
+srpm: dist-rpm
 	@echo "Building source RPM..."
-	@mkdir -p $(RPM_TOPDIR)/BUILD
-	@mkdir -p $(RPM_TOPDIR)/RPMS
-	@mkdir -p $(RPM_TOPDIR)/SOURCES
-	@mkdir -p $(RPM_TOPDIR)/SPECS
-	@mkdir -p $(RPM_TOPDIR)/SRPMS
+	@mkdir -p $(RPM_TOPDIR)/BUILD $(RPM_TOPDIR)/RPMS $(RPM_TOPDIR)/SOURCES \
+		$(RPM_TOPDIR)/SPECS $(RPM_TOPDIR)/SRPMS
 	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
+	@cp $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)-vendor.tar.bz2 $(RPM_TOPDIR)/SOURCES/
+	@cp rpm/go-vendor-tools.toml $(RPM_TOPDIR)/SOURCES/
 	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
-	@rpmbuild --define "_topdir $(RPM_TOPDIR)" --define "_unitdir /usr/lib/systemd/system" --nodeps -bs $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
+	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -bs $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
 	@echo "Source RPM created:"
 	@ls -lh $(RPM_TOPDIR)/SRPMS/*.src.rpm
 
 # Build binary RPM
-rpm: dist
+rpm: dist-rpm
 	@echo "Building binary RPM..."
-	@mkdir -p $(RPM_TOPDIR)/BUILD
-	@mkdir -p $(RPM_TOPDIR)/RPMS
-	@mkdir -p $(RPM_TOPDIR)/SOURCES
-	@mkdir -p $(RPM_TOPDIR)/SPECS
-	@mkdir -p $(RPM_TOPDIR)/SRPMS
+	@mkdir -p $(RPM_TOPDIR)/BUILD $(RPM_TOPDIR)/RPMS $(RPM_TOPDIR)/SOURCES \
+		$(RPM_TOPDIR)/SPECS $(RPM_TOPDIR)/SRPMS
 	@cp $(DIST_DIR)/$(TARBALL) $(RPM_TOPDIR)/SOURCES/
+	@cp $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)-vendor.tar.bz2 $(RPM_TOPDIR)/SOURCES/
+	@cp rpm/go-vendor-tools.toml $(RPM_TOPDIR)/SOURCES/
 	@cp rpm/$(PROJECT_NAME).spec $(RPM_TOPDIR)/SPECS/
-	@rpmbuild --define "_topdir $(RPM_TOPDIR)" --define "_unitdir /usr/lib/systemd/system" --nodeps -ba $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
+	@rpmbuild --define "_topdir $(RPM_TOPDIR)" -ba $(RPM_TOPDIR)/SPECS/$(PROJECT_NAME).spec
 	@echo "RPM packages created:"
 	@ls -lh $(RPM_TOPDIR)/RPMS/*/*.rpm
 	@ls -lh $(RPM_TOPDIR)/SRPMS/*.src.rpm
@@ -211,7 +221,8 @@ help:
 	@echo "  fmt           - Format code with gofmt and goimports"
 	@echo ""
 	@echo "Release targets:"
-	@echo "  dist          - Create release tarball"
+	@echo "  dist          - Create release tarball (with vendor, for Debian)"
+	@echo "  dist-rpm      - Create RPM source + vendor tarballs (go2rpm style)"
 	@echo "  srpm          - Build source RPM"
 	@echo "  rpm           - Build binary and source RPM"
 	@echo "  deb-src       - Build Debian source package"
