@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-02-21
+
+### Changed
+
+- Refactor RPM spec to use go2rpm/go-vendor-tools conventions (`%gobuild`, `%gotest`, `%autorelease`, `%autochangelog`)
+- Replace manual `bundled()` Provides and `%license` list with automated `go-vendor-tools` license detection
+- Add `dist-rpm` Makefile target producing a GitHub-compatible source tarball plus a separate vendor tarball
+
 ## [0.5.0] - 2026-02-19
 
 ### Added
