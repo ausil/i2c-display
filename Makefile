@@ -108,8 +108,17 @@ build-arm64:
 	GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME)-arm64 ./cmd/i2c-displayd/
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)-arm64"
 
+# Cross-compile for RISC-V 64-bit
+# Note: -buildmode=pie requires CGO for riscv64 cross-compilation, so we use
+# plain 'go build' here instead of $(GOBUILD).
+build-riscv64:
+	@echo "Building for RISC-V 64-bit..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=linux GOARCH=riscv64 $(GOCMD) build -o $(BUILD_DIR)/$(BINARY_NAME)-riscv64 ./cmd/i2c-displayd/
+	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)-riscv64"
+
 # Build all architectures
-build-all: build build-arm7 build-arm64
+build-all: build build-arm7 build-arm64 build-riscv64
 
 # Run with mock display (for testing without hardware)
 run-mock: build
@@ -211,6 +220,7 @@ help:
 	@echo "  build         - Build the binary for current architecture"
 	@echo "  build-arm7    - Cross-compile for Raspberry Pi (32-bit ARM)"
 	@echo "  build-arm64   - Cross-compile for ARM64 (Pi 4, Rock 3C)"
+	@echo "  build-riscv64 - Cross-compile for RISC-V 64-bit"
 	@echo "  build-all     - Build for all architectures"
 	@echo ""
 	@echo "Test targets:"
