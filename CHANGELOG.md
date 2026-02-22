@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Active hours scheduling for screen saver: configure a time window during which the display is always on; outside the window the screensaver activates regardless of idle timeout
+- Overnight active hour ranges supported (e.g. `22:00`–`06:00`)
+- Manual display wake via `POST /wake` HTTP endpoint (requires metrics server) and `SIGUSR1` signal
+- `wake_duration` config option controls how long a manual wake keeps the display on (default `30s`)
+- RISC-V 64-bit cross-compilation target (`make build-riscv64`; `build-all` now includes riscv64)
+
+### Changed
+
+- Migrate golangci-lint config to v2 format; bump CI linter to v2.10.1
+
 ## [0.5.1] - 2026-02-21
 
 ### Changed

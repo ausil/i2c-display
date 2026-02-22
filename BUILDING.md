@@ -4,7 +4,7 @@ This document describes how to build release packages for the I2C Display Contro
 
 ## Version
 
-Current version: **0.5.0**
+Current version: **0.5.1**
 
 Version is managed in the `VERSION` file at the root of the repository.
 
@@ -12,7 +12,7 @@ Version is managed in the `VERSION` file at the root of the repository.
 
 ### For RPM packages (Fedora, RHEL, CentOS, etc.)
 ```bash
-sudo dnf install rpm-build rpmdevtools golang
+sudo dnf install rpm-build rpmdevtools golang go-vendor-tools
 ```
 
 ### For DEB packages (Debian, Ubuntu, Raspberry Pi OS, etc.)
@@ -20,17 +20,27 @@ sudo dnf install rpm-build rpmdevtools golang
 sudo apt-get install build-essential debhelper dh-golang golang-go
 ```
 
-## Building Release Tarball
+## Building Release Tarballs
 
-Create a source tarball suitable for distribution:
-
+### For Debian packaging (includes vendored dependencies):
 ```bash
 make dist
 ```
+Creates `dist/i2c-display-0.5.1.tar.gz` with vendor directory bundled.
 
-This creates `dist/i2c-display-0.5.0.tar.gz` containing all source files.
+### For RPM packaging (go2rpm/go-vendor-tools style):
+```bash
+make dist-rpm
+```
+Creates two files required by the RPM spec:
+- `dist/i2c-display-0.5.1.tar.gz` — upstream source tarball (no vendor, GitHub-compatible)
+- `dist/i2c-display-0.5.1-vendor.tar.bz2` — vendored dependencies (separate archive)
+
+The `srpm` and `rpm` targets call `dist-rpm` automatically.
 
 ## Building RPM Packages
+
+The RPM spec uses the Fedora [go2rpm](https://pagure.io/go2rpm) / [go-vendor-tools](https://pagure.io/go-vendor-tools) conventions. Three sources are required: the upstream source tarball, a separate vendor tarball, and `rpm/go-vendor-tools.toml`. The `make rpm` target creates all of these automatically.
 
 ### Build both source and binary RPMs:
 ```bash
@@ -38,8 +48,8 @@ make rpm
 ```
 
 This creates:
-- `rpm-build/RPMS/*/i2c-display-0.5.0-1.*.rpm` (binary RPM)
-- `rpm-build/SRPMS/i2c-display-0.5.0-1.src.rpm` (source RPM)
+- `rpm-build/RPMS/*/i2c-display-0.5.1-1.*.rpm` (binary RPM)
+- `rpm-build/SRPMS/i2c-display-0.5.1-1.src.rpm` (source RPM)
 
 ### Build only source RPM:
 ```bash
@@ -81,7 +91,7 @@ sudo apt-get install -f  # Install dependencies if needed
 
 ## Cross-Compilation
 
-Build binaries for different ARM architectures:
+Build binaries for different architectures:
 
 ```bash
 # For Raspberry Pi 2/3 (ARMv7)
@@ -89,6 +99,9 @@ make build-arm7
 
 # For Raspberry Pi 4, Rock 3C (ARM64)
 make build-arm64
+
+# For RISC-V 64-bit
+make build-riscv64
 
 # Build all architectures
 make build-all
@@ -98,6 +111,9 @@ Binaries will be in:
 - `bin/i2c-displayd` (native architecture)
 - `bin/i2c-displayd-arm7` (ARMv7 32-bit)
 - `bin/i2c-displayd-arm64` (ARM64)
+- `bin/i2c-displayd-riscv64` (RISC-V 64-bit)
+
+**Note:** ARMv7 and RISC-V builds use `go build` instead of `go build -buildmode=pie` because PIE requires CGO for cross-compilation on those architectures.
 
 ## Package Contents
 
@@ -149,8 +165,9 @@ sudo apt-get remove i2c-display
    ```
 
 2. Update changelogs:
-   - `rpm/i2c-display.spec` - Add entry in `%changelog` section
-   - `debian/changelog` - Use `dch -v 0.5.0-1` or edit manually
+   - `CHANGELOG.md` — add a new version section
+   - `debian/changelog` — use `dch -v 0.5.1-1` or edit manually
+   - The RPM spec uses `%autochangelog`; no manual spec entry needed
 
 3. Commit the version bump:
    ```bash
@@ -225,15 +242,16 @@ Common issues:
 
 ```
 .
-├── VERSION                 # Version file
+├── VERSION                      # Version file
 ├── rpm/
-│   └── i2c-display.spec   # RPM spec file
+│   ├── i2c-display.spec         # RPM spec file (go2rpm style)
+│   └── go-vendor-tools.toml     # License detection config for go-vendor-tools
 ├── debian/
-│   ├── control            # Package metadata
-│   ├── changelog          # Debian changelog
-│   ├── rules              # Build rules
-│   ├── copyright          # License info
-│   └── ...                # Other Debian files
-├── Makefile               # Build system
+│   ├── control                  # Package metadata
+│   ├── changelog                # Debian changelog
+│   ├── rules                    # Build rules
+│   ├── copyright                # License info
+│   └── ...                      # Other Debian files
+├── Makefile                     # Build system
 └── ...
 ```

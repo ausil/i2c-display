@@ -48,6 +48,7 @@ See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add
 - **Prometheus Metrics**: Optional metrics endpoint for monitoring
 - **Error Handling**: Automatic retry with exponential backoff for I2C errors
 - **Health Monitoring**: Component health tracking and status reporting
+- **Screen Saver**: Dim or blank display on idle, with active-hours scheduling and manual wake
 - **Config Validation**: Validate configuration without running the service
 
 ## Requirements
@@ -201,6 +202,11 @@ sudo mv i2c-displayd-linux-arm64 /usr/bin/i2c-displayd
 # wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-displayd-linux-armv7
 # chmod +x i2c-displayd-linux-armv7
 # sudo mv i2c-displayd-linux-armv7 /usr/bin/i2c-displayd
+
+# Download for RISC-V 64-bit
+# wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-displayd-linux-riscv64
+# chmod +x i2c-displayd-linux-riscv64
+# sudo mv i2c-displayd-linux-riscv64 /usr/bin/i2c-displayd
 
 # Create config directory and download config
 sudo mkdir -p /etc/i2c-display
@@ -489,7 +495,7 @@ done
 
 #### Screen Saver (Optional)
 
-Power saving feature to dim or blank the display after inactivity.
+Power saving feature to dim or blank the display after inactivity or outside configured hours.
 
 - **`enabled`**: Enable screen saver (default: `false`)
 
@@ -498,27 +504,65 @@ Power saving feature to dim or blank the display after inactivity.
   - `"blank"` - Turn off display completely
   - `"off"` - No screen saver
 
-- **`idle_timeout`**: Time before activating screen saver
+- **`idle_timeout`**: Time before activating screen saver (ignored when `active_hours.enabled` is `true`)
   - Format: Duration string (e.g., `"5m"`, `"30m"`, `"1h"`)
   - Default: `"5m"`
 
 - **`dim_brightness`**: Brightness level when dimmed (0-255)
-  - `0` - Completely off
-  - `50` - Half brightness
-  - `255` - Full brightness
   - Default: `50`
 
 - **`normal_brightness`**: Normal operating brightness (0-255)
   - Default: `255`
 
-**Example:**
+- **`wake_duration`**: How long a manual wake keeps the display on
+  - Format: Duration string (e.g., `"30s"`, `"2m"`)
+  - Default: `"30s"`
+
+- **`active_hours`**: Time window during which the display is always kept on
+  - **`enabled`**: Enable active hours (default: `false`)
+  - **`start`**: Start of active window in `HH:MM` 24-hour format (e.g., `"08:00"`)
+  - **`end`**: End of active window in `HH:MM` 24-hour format (e.g., `"22:00"`)
+  - Overnight ranges are supported (e.g., `"22:00"` to `"06:00"`)
+  - When active hours are enabled, `idle_timeout` is not required
+
+**Waking the display manually:**
+
+When the screensaver is active you can wake the display for `wake_duration` via:
+
+```bash
+# Via HTTP (requires metrics server enabled)
+curl -X POST http://localhost:9090/wake
+
+# Via signal
+systemctl kill -s SIGUSR1 i2c-display.service
+# or: kill -USR1 $(pidof i2c-displayd)
+```
+
+**Example — dim at night, always on during the day:**
 ```json
 "screensaver": {
   "enabled": true,
   "mode": "dim",
-  "idle_timeout": "10m",
   "dim_brightness": 30,
-  "normal_brightness": 255
+  "normal_brightness": 255,
+  "wake_duration": "30s",
+  "active_hours": {
+    "enabled": true,
+    "start": "08:00",
+    "end": "22:00"
+  }
+}
+```
+
+**Example — idle timeout with manual wake:**
+```json
+"screensaver": {
+  "enabled": true,
+  "mode": "blank",
+  "idle_timeout": "10m",
+  "dim_brightness": 0,
+  "normal_brightness": 255,
+  "wake_duration": "60s"
 }
 ```
 
@@ -769,6 +813,10 @@ sudo journalctl -u i2c-display.service -f
 # Reload configuration (send SIGHUP to running process)
 sudo systemctl reload i2c-display.service
 # Or: sudo kill -HUP $(pidof i2c-displayd)
+
+# Wake the display (if screensaver is active)
+sudo systemctl kill -s SIGUSR1 i2c-display.service
+# Or: sudo kill -USR1 $(pidof i2c-displayd)
 ```
 
 ## Development
@@ -785,7 +833,10 @@ make build-arm7
 # Build for Raspberry Pi 4 / Rock 3C (64-bit ARM)
 make build-arm64
 
-# Build all architectures
+# Build for RISC-V 64-bit
+make build-riscv64
+
+# Build all architectures (amd64, arm7, arm64, riscv64)
 make build-all
 ```
 
@@ -999,6 +1050,13 @@ Available metrics:
 - `i2c_display_page_rotation_total` - Total page rotations
 
 Access metrics: `curl http://127.0.0.1:9090/metrics`
+
+**Wake endpoint:**
+
+When the screensaver is enabled, a POST to `/wake` temporarily wakes the display:
+```bash
+curl -X POST http://127.0.0.1:9090/wake
+```
 
 ### Logging
 

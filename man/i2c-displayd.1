@@ -1,4 +1,4 @@
-.TH I2C-DISPLAYD 1 "February 2025" "i2c-display 0.3.1" "User Commands"
+.TH I2C-DISPLAYD 1 "February 2025" "i2c-display 0.5.1" "User Commands"
 .SH NAME
 i2c\-displayd \- I2C display controller for single board computers
 .SH SYNOPSIS
@@ -67,6 +67,19 @@ Validate configuration without starting the daemon:
 .nf
 i2c\-displayd \-config /etc/i2c\-display/config.json \-validate\-config
 .fi
+.SH SIGNALS
+.TP
+.B SIGHUP
+Reload configuration file without restarting the daemon.
+.TP
+.B SIGUSR1
+Wake the display immediately if the screen saver is active.
+The display remains on for the configured
+.I wake_duration
+(default 30 seconds) before returning to normal screen saver behaviour.
+Equivalent to
+.BR "curl -X POST http://localhost:9090/wake"
+when the metrics server is enabled.
 .SH SEE ALSO
 .BR systemctl (1)
 .SH BUGS
