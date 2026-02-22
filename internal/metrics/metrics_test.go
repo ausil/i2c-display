@@ -479,6 +479,40 @@ func TestWakeEndpoint(t *testing.T) {
 	}
 }
 
+func TestWakeEndpointNoHandler(t *testing.T) {
+	log := logger.NewDefault()
+	collector := New(log)
+
+	cfg := Config{
+		Enabled: true,
+		Address: ":19097",
+	}
+
+	// No SetWakeHandler called — simulates screensaver disabled
+	server := NewServer(cfg, collector, log)
+
+	if err := server.Start(); err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = server.Stop(ctx)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "http://localhost:19097/wake", http.NoBody)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Failed POST /wake: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("Expected 503 when no handler registered, got %d", resp.StatusCode)
+	}
+}
+
 func TestMultipleMetricRecords(t *testing.T) {
 	log := logger.NewDefault()
 	collector := New(log)

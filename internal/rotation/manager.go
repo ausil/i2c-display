@@ -134,10 +134,11 @@ func (m *Manager) refreshCurrentPage() error {
 	m.mu.Unlock()
 
 	// Render current page
+	pageTitle := m.renderer.PageTitle(pageIdx)
 	start := time.Now()
 	err = m.renderer.RenderPage(pageIdx, systemStats)
 	if m.metricsCollector != nil {
-		m.metricsCollector.RecordDisplayRefresh(err == nil, time.Since(start), "system")
+		m.metricsCollector.RecordDisplayRefresh(err == nil, time.Since(start), pageTitle)
 		m.metricsCollector.UpdateSystemMetrics(
 			systemStats.CPUTemp,
 			systemStats.MemoryPercent(),

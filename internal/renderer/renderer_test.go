@@ -339,6 +339,41 @@ func TestPageTitles(t *testing.T) {
 	})
 }
 
+func TestPageTitle(t *testing.T) {
+	disp := display.NewMockDisplay(128, 64)
+	cfg := config.Default()
+	r := NewRenderer(disp, cfg)
+
+	// Before BuildPages: out-of-range returns "unknown"
+	if got := r.PageTitle(0); got != "unknown" {
+		t.Errorf("empty renderer: expected 'unknown', got %q", got)
+	}
+	if got := r.PageTitle(-1); got != "unknown" {
+		t.Errorf("negative index: expected 'unknown', got %q", got)
+	}
+
+	s := &stats.SystemStats{
+		Hostname: "testhost",
+		Interfaces: []stats.NetInterface{
+			{Name: "eth0", IPv4Addrs: []string{"192.168.1.1"}},
+		},
+		LoadAvg1: 0.5,
+	}
+	r.BuildPages(s)
+
+	for i := 0; i < r.PageCount(); i++ {
+		title := r.PageTitle(i)
+		if title == "" || title == "unknown" {
+			t.Errorf("page %d: unexpected title %q", i, title)
+		}
+	}
+
+	// Out-of-range after build
+	if got := r.PageTitle(r.PageCount()); got != "unknown" {
+		t.Errorf("out-of-range: expected 'unknown', got %q", got)
+	}
+}
+
 func TestGetPages(t *testing.T) {
 	disp := display.NewMockDisplay(128, 64)
 	cfg := config.Default()

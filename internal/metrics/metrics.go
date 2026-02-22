@@ -203,9 +203,11 @@ func NewServer(cfg Config, collector *Collector, log *logger.Logger) *Server {
 		s.mu.Lock()
 		fn := s.wakeFunc
 		s.mu.Unlock()
-		if fn != nil {
-			fn()
+		if fn == nil {
+			http.Error(w, "screensaver not active", http.StatusServiceUnavailable)
+			return
 		}
+		fn()
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK\n"))
 	})
