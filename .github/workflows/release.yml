@@ -25,6 +25,9 @@ jobs:
             goarch: arm
             goarm: 7
             suffix: linux-armv7
+          - goos: linux
+            goarch: riscv64
+            suffix: linux-riscv64
     steps:
       - uses: actions/checkout@v6
         with:
@@ -41,7 +44,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: |
-          if [ "${{ matrix.goarch }}" = "arm" ]; then
+          if [ "${{ matrix.goarch }}" = "arm" ] || [ "${{ matrix.goarch }}" = "riscv64" ]; then
             make build GOBUILD="go build"
           else
             make build
@@ -95,12 +98,9 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-          # Extract changelog entries for this version from the RPM spec
-          CHANGELOG=$(sed -n "/^%changelog/,\$p" rpm/i2c-display.spec \
-            | sed '1d' \
-            | sed "/^$/q" \
-            | grep "^-" \
-            | sed 's/^/  /')
+          # Extract the changelog section for this version from CHANGELOG.md.
+          # Prints lines between "## [VERSION]" and the next "## [" heading.
+          CHANGELOG=$(awk "/^## \[$VERSION\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
 
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
@@ -120,9 +120,10 @@ jobs:
 
             ### Binary downloads
 
-            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4/5, Rock 3C/5B)
-            - `i2c-displayd-linux-armv7` - ARMv7 (Raspberry Pi 2/3)
+            - `i2c-displayd-linux-arm64` - ARM64 (Raspberry Pi 4/5, Rock 3C/5B, Rock 5A, Orange Pi 3B)
+            - `i2c-displayd-linux-armv7` - ARMv7 (Raspberry Pi 2/3/Zero 2W)
             - `i2c-displayd-linux-amd64` - x86_64
+            - `i2c-displayd-linux-riscv64` - RISC-V 64-bit
 
             ### Building packages locally
 
