@@ -31,6 +31,18 @@ This directory contains tested configuration files for specific single board com
   - Metrics enabled by default
   - All features work well
 
+### Orange Pi Series
+
+#### Orange Pi 3B v2.1
+- **Config**: `orangepi-3b.json`
+- **I2C Bus**: `/dev/i2c-2`
+- **Display**: SSD1306 128×32 (`ssd1306_128x32`) with `lines=4` compact layout
+- **Notes**:
+  - Display dimensions are set automatically from the type; no need to specify width/height
+  - Ethernet interface uses predictable name `end0`
+  - I2C bus is `/dev/i2c-2` on the 3B v2.1 (verify with `i2cdetect -l`)
+  - Metrics disabled by default; enable if you need the `/metrics` and `/wake` endpoints
+
 ### Radxa Rock Series
 
 #### Rock 3C
@@ -85,6 +97,11 @@ This directory contains tested configuration files for specific single board com
 - **I2C Bus**: May vary, check with `i2cdetect -l`
 - **Interface Names**: May use `end0` instead of `eth0`
 - **Temperature**: Path may be `/sys/devices/virtual/thermal/thermal_zone0/temp`
+
+### Orange Pi 3B v2.1
+- **I2C Bus**: `/dev/i2c-2` (enable via Orange Pi OS settings or `orangepi-config`)
+- **Interface Names**: Ethernet is `end0`
+- **Display**: 128×32 SSD1306; use `"type": "ssd1306_128x32"` and `"lines": 4` for compact 4-line layout
 
 ## Troubleshooting
 
@@ -146,7 +163,7 @@ Include:
 | Raspberry Pi 4 | ✅ | Yes | Excellent, all features |
 | Rock 3C | ✅ | Yes | Great performance |
 | Rock 5B | ⚠️ | Use Rock 3C config | Verify I2C bus |
-| Orange Pi | ❌ | No | Contributions welcome |
+| Orange Pi 3B v2.1 | ✅ | Yes | 128×32 display, lines=4 mode, I2C bus 2 |
 | NanoPi | ❌ | No | Contributions welcome |
 
 Legend:

@@ -1,0 +1,51 @@
+{
+  "display": {
+    "type": "ssd1306_128x32",
+    "i2c_bus": "/dev/i2c-2",
+    "i2c_address": "0x3C",
+    "lines": 4,
+    "rotation": 0
+  },
+  "pages": {
+    "rotation_interval": "5s",
+    "refresh_interval": "1s"
+  },
+  "system_info": {
+    "hostname_display": "short",
+    "disk_path": "/",
+    "temperature_source": "/sys/class/thermal/thermal_zone0/temp",
+    "temperature_unit": "celsius"
+  },
+  "network": {
+    "auto_detect": true,
+    "interface_filter": {
+      "include": ["end0"],
+      "exclude": ["lo", "docker*", "veth*"]
+    },
+    "show_ipv4": true,
+    "show_ipv6": false,
+    "max_interfaces_per_page": 3
+  },
+  "logging": {
+    "level": "info",
+    "output": "stdout",
+    "json": false
+  },
+  "metrics": {
+    "enabled": false,
+    "address": "127.0.0.1:9090"
+  },
+  "screensaver": {
+    "enabled": false,
+    "mode": "dim",
+    "idle_timeout": "5m",
+    "dim_brightness": 50,
+    "normal_brightness": 255,
+    "wake_duration": "30s",
+    "active_hours": {
+      "enabled": false,
+      "start": "08:00",
+      "end": "22:00"
+    }
+  }
+}
