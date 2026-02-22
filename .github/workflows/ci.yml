@@ -71,6 +71,8 @@ jobs:
           - goos: linux
             goarch: arm
             goarm: 7
+          - goos: linux
+            goarch: riscv64
     steps:
       - uses: actions/checkout@v6
 
@@ -85,7 +87,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: |
-          if [ "${{ matrix.goarch }}" = "arm" ]; then
+          if [ "${{ matrix.goarch }}" = "arm" ] || [ "${{ matrix.goarch }}" = "riscv64" ]; then
             make build GOBUILD="go build"
           else
             make build
