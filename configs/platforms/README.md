@@ -53,6 +53,16 @@ This directory contains tested configuration files for specific single board com
   - Interface naming may use `end0` instead of `eth0`
   - Good performance, metrics enabled
 
+#### Rock 5A
+- **Config**: `radxa-rock-5a.json`
+- **I2C Bus**: `/dev/i2c-8`
+- **Display**: SSD1306 128×32 (`ssd1306_128x32`)
+- **Notes**:
+  - I2C bus 8 is the user-facing I2C port on the 40-pin header
+  - Ethernet interface uses predictable name `end0`
+  - Only one interface per page (`max_interfaces_per_page: 1`)
+  - Metrics disabled by default; listen address is `:9090` (all interfaces) when enabled
+
 #### Rock 5B
 - **Config**: Use `rock-3c.json` and verify I2C bus number
 - **I2C Bus**: `/dev/i2c-X` (check your board)
@@ -93,8 +103,8 @@ This directory contains tested configuration files for specific single board com
 - **User Permissions**: Add user to `i2c` group: `sudo usermod -a -G i2c $USER`
 - **I2C Bus**: Always `/dev/i2c-1` on modern Pi models
 
-### Rock 3C / 5B
-- **I2C Bus**: May vary, check with `i2cdetect -l`
+### Rock 3C / 5A / 5B
+- **I2C Bus**: May vary by model; Rock 3C uses bus 3, Rock 5A uses bus 8 — verify with `i2cdetect -l`
 - **Interface Names**: May use `end0` instead of `eth0`
 - **Temperature**: Path may be `/sys/devices/virtual/thermal/thermal_zone0/temp`
 
@@ -162,6 +172,7 @@ Include:
 | Raspberry Pi 3B+ | ✅ | Yes | Excellent |
 | Raspberry Pi 4 | ✅ | Yes | Excellent, all features |
 | Rock 3C | ✅ | Yes | Great performance |
+| Rock 5A | ✅ | Yes | 128×32 display, I2C bus 8 |
 | Rock 5B | ⚠️ | Use Rock 3C config | Verify I2C bus |
 | Orange Pi 3B v2.1 | ✅ | Yes | 128×32 display, lines=4 mode, I2C bus 2 |
 | NanoPi | ❌ | No | Contributions welcome |
