@@ -51,6 +51,7 @@ done
 
 %install
 %go_vendor_license_install -c %{S:2}
+hardlink -cfv %{buildroot}/%{_licensedir}
 install -m 0755 -vd                     %{buildroot}%{_bindir}
 install -m 0755 -vp %{gobuilddir}/bin/* %{buildroot}%{_bindir}/
 
