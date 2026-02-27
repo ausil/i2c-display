@@ -134,7 +134,7 @@ dist:
 	@go mod vendor
 	@cp -r cmd internal configs systemd scripts testdata vendor rpm debian man $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
 	@cp go.mod go.sum Makefile VERSION LICENSE $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
-	@cp README.md BUILDING.md CONTRIBUTING.md DISPLAY_TYPES.md LICENSES.md SECURITY.md $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
+	@cp README.md BUILDING.md CHANGELOG.md CONTRIBUTING.md DISPLAY_TYPES.md LICENSES.md SECURITY.md $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
 	@tar -czf $(DIST_DIR)/$(TARBALL) -C $(DIST_DIR) $(PROJECT_NAME)-$(VERSION)
 	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
 	@echo "Release tarball created: $(DIST_DIR)/$(TARBALL)"
