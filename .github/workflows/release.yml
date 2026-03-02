@@ -52,7 +52,7 @@ jobs:
           mv bin/i2c-displayd bin/i2c-displayd-${{ matrix.suffix }}
 
       - name: Upload binary
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: i2c-displayd-${{ matrix.suffix }}
           path: bin/i2c-displayd-${{ matrix.suffix }}
@@ -74,7 +74,7 @@ jobs:
         run: make dist
 
       - name: Upload tarball
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-tarball
           path: dist/*.tar.gz
