@@ -28,7 +28,7 @@ This project follows the standard open source code of conduct. Be respectful, co
 
 ### Prerequisites
 
-- Go 1.21 or later
+- Go 1.24 or later
 - Make
 - golangci-lint (for linting)
 

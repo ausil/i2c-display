@@ -8,17 +8,41 @@ This project is licensed under the BSD 3-Clause License. All dependencies are co
 - **Packages**: `periph.io/x/conn/v3`, `periph.io/x/devices/v3`, `periph.io/x/host/v3`
 - **License**: Apache License 2.0
 - **Compatibility**: ✅ Compatible with BSD 3-Clause
-- **Notes**: Apache 2.0 is a permissive license fully compatible with BSD licenses
 
-### 2. golang.org/x/image
+### 2. github.com/prometheus/client_golang
+- **Package**: `github.com/prometheus/client_golang`
+- **License**: Apache License 2.0
+- **Compatibility**: ✅ Compatible with BSD 3-Clause
+
+### 3. github.com/rs/zerolog
+- **Package**: `github.com/rs/zerolog`
+- **License**: MIT License
+- **Compatibility**: ✅ Compatible with BSD 3-Clause
+
+### 4. golang.org/x/image
 - **Package**: `golang.org/x/image`
 - **License**: BSD 3-Clause
 - **Compatibility**: ✅ Compatible (same license)
-- **Notes**: Official Go extended library under BSD 3-Clause
 
-### 3. Go Standard Library
+### 5. Go Standard Library
 - **License**: BSD 3-Clause
 - **Compatibility**: ✅ Compatible (same license)
+
+## Indirect Dependencies
+
+| Package | License |
+|---------|---------|
+| `github.com/beorn7/perks` | MIT |
+| `github.com/cespare/xxhash/v2` | MIT |
+| `github.com/mattn/go-colorable` | MIT |
+| `github.com/mattn/go-isatty` | MIT |
+| `github.com/munnerz/goautoneg` | BSD 3-Clause |
+| `github.com/prometheus/client_model` | Apache 2.0 |
+| `github.com/prometheus/common` | Apache 2.0 |
+| `github.com/prometheus/procfs` | Apache 2.0 |
+| `go.yaml.in/yaml/v2` | Apache 2.0 |
+| `golang.org/x/sys` | BSD 3-Clause |
+| `google.golang.org/protobuf` | BSD 3-Clause |
 
 ## License Compatibility Overview
 
@@ -33,9 +57,7 @@ According to the [Apache Software Foundation](https://www.apache.org/legal/resol
 
 ## Dependency License Files
 
-License files for dependencies can be found in:
-- `$GOPATH/pkg/mod/periph.io/` - Apache 2.0 LICENSE files
-- `$GOPATH/pkg/mod/golang.org/` - BSD 3-Clause LICENSE files
+License files for all dependencies are included in the `vendor/` directory alongside the vendored source code.
 
 ## Compliance
 

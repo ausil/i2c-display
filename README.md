@@ -127,7 +127,20 @@ ls /dev/i2c-*
 
 ## Installation
 
-### For ARM/aarch64 Single Board Computers (Recommended)
+### Fedora (Recommended for Fedora users)
+
+i2c-display is available directly from the Fedora repositories:
+
+```bash
+sudo dnf install i2c-display
+
+# Enable and start
+sudo systemctl enable --now i2c-display.service
+```
+
+This installs everything you need — binary, config, and systemd service. No building required.
+
+### For ARM/aarch64 Single Board Computers
 
 **Build and install packages locally on your SBC** (Raspberry Pi, Radxa, Orange Pi, Pine64, etc.):
 
@@ -163,6 +176,8 @@ The package automatically:
 
 <details>
 <summary><strong>Fedora/RHEL on ARM (RPM Package)</strong></summary>
+
+On Fedora, the easiest option is `sudo dnf install i2c-display` (see above). To build from source instead:
 
 ```bash
 # Install build dependencies
@@ -226,44 +241,48 @@ sudo systemctl enable --now i2c-display.service
 
 ### For x86_64 Systems
 
-**Pre-built packages available** from [GitHub Releases](https://github.com/ausil/i2c-display/releases/latest):
+**Fedora users** can install directly from the repos: `sudo dnf install i2c-display`
+
+**Other distros** — build packages locally or use the pre-built binary from [GitHub Releases](https://github.com/ausil/i2c-display/releases/latest):
 
 <details>
-<summary><strong>RPM (Fedora, RHEL, Rocky Linux, AlmaLinux, CentOS)</strong></summary>
+<summary><strong>Build RPM locally (RHEL, Rocky Linux, AlmaLinux, CentOS)</strong></summary>
 
 ```bash
-# Download the RPM
-wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-display-*.x86_64.rpm
+# Install build dependencies
+sudo dnf install -y git golang rpm-build systemd-rpm-macros
 
-# Install using dnf (Fedora 22+, RHEL 8+)
-sudo dnf install ./i2c-display-*.x86_64.rpm
-sudo systemctl enable --now i2c-display.service
+# Clone and build
+git clone https://github.com/ausil/i2c-display.git
+cd i2c-display
+make rpm
 
-# Or using yum (older RHEL/CentOS)
-sudo yum localinstall i2c-display-*.x86_64.rpm
-sudo systemctl enable --now i2c-display.service
+# Install the package
+sudo dnf install rpm-build/RPMS/*/i2c-display-*.x86_64.rpm
 
-# Or using rpm directly
-sudo rpm -Uvh i2c-display-*.x86_64.rpm
+# Enable and start
 sudo systemctl enable --now i2c-display.service
 ```
 
 </details>
 
 <details>
-<summary><strong>DEB (Debian, Ubuntu, Linux Mint, Pop!_OS)</strong></summary>
+<summary><strong>Build DEB locally (Debian, Ubuntu, Linux Mint, Pop!_OS)</strong></summary>
 
 ```bash
-# Download the DEB
-wget https://github.com/ausil/i2c-display/releases/latest/download/i2c-display_*_amd64.deb
+# Install build dependencies
+sudo apt-get update
+sudo apt-get install -y git golang debhelper devscripts dh-golang
 
-# Install using apt (recommended)
-sudo apt install ./i2c-display_*_amd64.deb
-sudo systemctl enable --now i2c-display.service
+# Clone and build
+git clone https://github.com/ausil/i2c-display.git
+cd i2c-display
+make deb
 
-# Or using dpkg
-sudo dpkg -i i2c-display_*_amd64.deb
-sudo apt-get install -f  # Install any missing dependencies
+# Install the package
+sudo apt install ../i2c-display_*_amd64.deb
+
+# Enable and start
 sudo systemctl enable --now i2c-display.service
 ```
 
