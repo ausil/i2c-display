@@ -1,3 +1,13 @@
+i2c-display (0.5.4-1) unstable; urgency=medium
+
+  * Bump golang.org/x/image to 0.44.0, fixing CVE-2026-46604 (tiff decoder
+    panic on invalid images; not reachable in this package, which does not
+    use x/image/tiff)
+  * Bump github.com/prometheus/client_golang to 1.24.1, github.com/rs/zerolog
+    to 1.35.1, periph.io/x/conn/v3 to 3.7.3
+
+ -- Dennis Gilmore <dennis@ausil.us>  Wed, 12 Aug 2026 09:52:40 -0500
+
 i2c-display (0.5.3-1) unstable; urgency=medium
 
   * Add platform configs for Orange Pi 3B v2.1 and Radxa ROCK 5A

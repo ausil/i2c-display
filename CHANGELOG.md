@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-08-12
+
+### Security
+
+- Bump `golang.org/x/image` to 0.44.0, fixing CVE-2026-46604 (GO-2026-5066), a TIFF decoder panic on invalid images with an out-of-bounds strip offset. This package does not use `x/image/tiff`, so the code path was never reachable, but this closes out the report tracked at bugzilla.redhat.com/2513505.
+
+### Changed
+
+- Routine dependency updates: `github.com/prometheus/client_golang` to 1.24.1, `github.com/rs/zerolog` to 1.35.1, `periph.io/x/conn/v3` to 3.7.3
+
 ## [0.5.3] - 2026-02-22
 
 ### Added
@@ -173,6 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of SSD1306 display controller
 
+[0.5.4]: https://github.com/ausil/i2c-display/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/ausil/i2c-display/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/ausil/i2c-display/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/ausil/i2c-display/compare/v0.5.0...v0.5.1
