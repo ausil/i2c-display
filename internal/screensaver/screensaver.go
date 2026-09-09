@@ -277,18 +277,21 @@ func (s *ScreenSaver) Config() Config {
 // UpdateConfig updates the screen saver configuration
 func (s *ScreenSaver) UpdateConfig(cfg Config) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	oldEnabled := s.cfg.Enabled
 	s.cfg = cfg
 
 	// If enabling or disabling, handle accordingly
+	var needDeactivate bool
 	if !oldEnabled && cfg.Enabled {
 		s.lastActive = time.Now()
 		s.isActive = false
 	} else if oldEnabled && !cfg.Enabled {
-		if s.isActive {
-			s.deactivate()
-		}
+		needDeactivate = s.isActive
+	}
+	s.mu.Unlock()
+
+	// deactivate takes the lock itself, so it must run after unlocking
+	if needDeactivate {
+		s.deactivate()
 	}
 }
