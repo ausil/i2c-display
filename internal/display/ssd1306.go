@@ -15,6 +15,14 @@ import (
 // ssd1306DefaultAddr is the I2C address hardcoded by periph's ssd1306 driver.
 const ssd1306DefaultAddr uint16 = 0x3C
 
+// SSD1306 command bytes used for brightness control.
+const (
+	ssd1306CmdPrefix   byte = 0x00 // control byte: the following bytes are commands
+	ssd1306SetContrast byte = 0x81
+	ssd1306DisplayOff  byte = 0xAE
+	ssd1306DisplayOn   byte = 0xAF
+)
+
 // remappedI2CBus rewrites transactions addressed to `from` so they go to `to`.
 // It works around drivers that hardcode the device address.
 type remappedI2CBus struct {
@@ -32,6 +40,8 @@ func (b *remappedI2CBus) Tx(addr uint16, w, r []byte) error {
 // SSD1306Display implements Display interface for real SSD1306 hardware
 type SSD1306Display struct {
 	dev    *ssd1306.Dev
+	bus    i2c.Bus // raw bus, for commands periph's driver does not expose
+	addr   uint16  // effective device address
 	img    *image.Gray
 	width  int
 	height int
@@ -86,8 +96,15 @@ func NewSSD1306Display(i2cBus, i2cAddr string, width, height, rotation int) (*SS
 		return nil, fmt.Errorf("failed to create SSD1306 device: %w", err)
 	}
 
+	effectiveAddr := addr
+	if effectiveAddr == 0 {
+		effectiveAddr = ssd1306DefaultAddr
+	}
+
 	return &SSD1306Display{
 		dev:    dev,
+		bus:    bus,
+		addr:   effectiveAddr,
 		img:    image.NewGray(image.Rect(0, 0, width, height)),
 		width:  width,
 		height: height,
@@ -250,19 +267,21 @@ func (d *SSD1306Display) GetBuffer() []byte {
 	return buf
 }
 
-// SetBrightness sets the display contrast/brightness (0-255)
-// For SSD1306, this maps directly to the contrast control command
+// SetBrightness sets the display brightness (0-255). Level 0 turns the panel
+// off entirely (the screensaver's blank mode); any other level turns it back
+// on and sets the contrast. periph's driver does not expose these commands,
+// so they are sent as raw I2C writes. Each call is a single bus transaction
+// and neither command touches the driver's addressing state, so this is safe
+// alongside concurrent frame draws.
 func (d *SSD1306Display) SetBrightness(level uint8) error {
-	// SSD1306 contrast command: 0x81 followed by contrast value
-	// The periph.io driver exposes the underlying device
-	// We'll use the Halt/Init cycle approach for now as periph.io
-	// doesn't expose contrast control directly
-
-	// Note: A production implementation would send raw I2C commands
-	// For now, we'll accept the limitation that brightness control
-	// isn't fully supported in periph.io's high-level API
-
-	// This is a placeholder that returns success
-	// Full implementation would require direct I2C communication
+	var cmds []byte
+	if level == 0 {
+		cmds = []byte{ssd1306CmdPrefix, ssd1306DisplayOff}
+	} else {
+		cmds = []byte{ssd1306CmdPrefix, ssd1306DisplayOn, ssd1306SetContrast, level}
+	}
+	if err := d.bus.Tx(d.addr, cmds, nil); err != nil {
+		return fmt.Errorf("failed to set brightness: %w", err)
+	}
 	return nil
 }

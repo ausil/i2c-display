@@ -41,6 +41,10 @@ type Config struct {
 	WakeDuration     time.Duration // How long a manual Wake() keeps the display on
 }
 
+// checkInterval is how often the monitor loop evaluates screensaver state.
+// A variable so tests can shorten it.
+var checkInterval = 10 * time.Second
+
 // ScreenSaver manages display power saving
 type ScreenSaver struct {
 	cfg        Config
@@ -51,6 +55,7 @@ type ScreenSaver struct {
 	isActive   bool      // true if screen saver is currently active
 	wakedUntil time.Time // non-zero while a manual wake is in effect
 	ticker     *time.Ticker
+	stopOnce   sync.Once
 	stopChan   chan struct{}
 }
 
@@ -66,25 +71,28 @@ func New(cfg Config, disp display.Display, log *logger.Logger) *ScreenSaver {
 	}
 }
 
-// Start starts the screen saver monitor
+// Start starts the screen saver monitor. The monitor loop runs even when the
+// screensaver is disabled, so a config reload can enable it later.
 func (s *ScreenSaver) Start(ctx context.Context) error {
-	if !s.cfg.Enabled {
-		s.log.Debug("Screen saver disabled")
-		return nil
+	s.mu.RLock()
+	cfg := s.cfg
+	s.mu.RUnlock()
+
+	if cfg.Enabled {
+		s.log.With().
+			Str("mode", string(cfg.Mode)).
+			Str("timeout", cfg.IdleTimeout.String()).
+			Logger().Info("Starting screen saver")
+
+		// Set initial brightness
+		if err := s.disp.SetBrightness(cfg.NormalBrightness); err != nil {
+			s.log.ErrorWithErr(err, "Failed to set initial brightness")
+		}
+	} else {
+		s.log.Debug("Screen saver disabled; monitor idle until enabled via config reload")
 	}
 
-	s.log.With().
-		Str("mode", string(s.cfg.Mode)).
-		Str("timeout", s.cfg.IdleTimeout.String()).
-		Logger().Info("Starting screen saver")
-
-	// Set initial brightness
-	if err := s.disp.SetBrightness(s.cfg.NormalBrightness); err != nil {
-		s.log.ErrorWithErr(err, "Failed to set initial brightness")
-	}
-
-	// Check every 10 seconds
-	s.ticker = time.NewTicker(10 * time.Second)
+	s.ticker = time.NewTicker(checkInterval)
 
 	go func() {
 		defer func() {
@@ -111,13 +119,11 @@ func (s *ScreenSaver) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop stops the screen saver
+// Stop stops the screen saver monitor. Safe to call more than once.
 func (s *ScreenSaver) Stop() {
-	if !s.cfg.Enabled {
-		return
-	}
-
-	close(s.stopChan)
+	s.stopOnce.Do(func() {
+		close(s.stopChan)
+	})
 	s.log.Debug("Screen saver stopped")
 }
 
@@ -126,6 +132,10 @@ func (s *ScreenSaver) check() {
 	now := time.Now()
 
 	s.mu.Lock()
+	if !s.cfg.Enabled {
+		s.mu.Unlock()
+		return
+	}
 	var shouldActivate, shouldDeactivate bool
 
 	// A manual wake overrides all other logic until it expires
@@ -180,13 +190,18 @@ func parseHHMM(s string) (hour, minute int) {
 
 // activate activates the screen saver
 func (s *ScreenSaver) activate() {
-	s.log.With().Str("mode", string(s.cfg.Mode)).Logger().Info("Activating screen saver")
+	s.mu.RLock()
+	mode := s.cfg.Mode
+	dimBrightness := s.cfg.DimBrightness
+	s.mu.RUnlock()
+
+	s.log.With().Str("mode", string(mode)).Logger().Info("Activating screen saver")
 
 	// Perform display operations without holding the lock
 	var err error
-	switch s.cfg.Mode {
+	switch mode {
 	case ModeDim:
-		err = s.disp.SetBrightness(s.cfg.DimBrightness)
+		err = s.disp.SetBrightness(dimBrightness)
 	case ModeBlank:
 		err = s.disp.SetBrightness(0)
 	}
@@ -204,10 +219,14 @@ func (s *ScreenSaver) activate() {
 
 // deactivate deactivates the screen saver
 func (s *ScreenSaver) deactivate() {
+	s.mu.RLock()
+	normalBrightness := s.cfg.NormalBrightness
+	s.mu.RUnlock()
+
 	s.log.Debug("Deactivating screen saver")
 
 	// Perform display operation without holding the lock
-	if err := s.disp.SetBrightness(s.cfg.NormalBrightness); err != nil {
+	if err := s.disp.SetBrightness(normalBrightness); err != nil {
 		s.log.ErrorWithErr(err, "Failed to restore brightness")
 		return
 	}
@@ -220,11 +239,11 @@ func (s *ScreenSaver) deactivate() {
 
 // ResetActivity resets the idle timer (call when user activity detected)
 func (s *ScreenSaver) ResetActivity() {
+	s.mu.Lock()
 	if !s.cfg.Enabled {
+		s.mu.Unlock()
 		return
 	}
-
-	s.mu.Lock()
 	wasActive := s.isActive
 	s.lastActive = time.Now()
 	s.mu.Unlock()
@@ -239,7 +258,9 @@ func (s *ScreenSaver) ResetActivity() {
 // If the screensaver is currently active it is deactivated immediately.
 // This is a no-op when the screensaver is disabled.
 func (s *ScreenSaver) Wake() {
+	s.mu.Lock()
 	if !s.cfg.Enabled {
+		s.mu.Unlock()
 		return
 	}
 
@@ -248,7 +269,6 @@ func (s *ScreenSaver) Wake() {
 		duration = 30 * time.Second
 	}
 
-	s.mu.Lock()
 	s.wakedUntil = time.Now().Add(duration)
 	wasActive := s.isActive
 	s.mu.Unlock()

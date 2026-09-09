@@ -170,6 +170,41 @@ func TestUpdateConfig(t *testing.T) {
 	// For now, just verify no crash
 }
 
+func TestEnableViaUpdateConfigAfterStart(t *testing.T) {
+	oldInterval := checkInterval
+	checkInterval = 20 * time.Millisecond
+	defer func() { checkInterval = oldInterval }()
+
+	disp := display.NewMockDisplay(128, 64)
+	ss := New(Config{Enabled: false}, disp, logger.NewDefault())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := ss.Start(ctx); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	defer ss.Stop()
+
+	// Enable via config reload; the monitor loop (started while disabled)
+	// must pick it up and activate once the idle timeout passes.
+	ss.UpdateConfig(Config{
+		Enabled:          true,
+		Mode:             ModeDim,
+		IdleTimeout:      time.Millisecond,
+		DimBrightness:    50,
+		NormalBrightness: 255,
+	})
+
+	deadline := time.After(2 * time.Second)
+	for !ss.IsActive() {
+		select {
+		case <-deadline:
+			t.Fatal("screensaver never activated after being enabled via UpdateConfig")
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+}
+
 func TestUpdateConfigDisableWhileActive(t *testing.T) {
 	cfg := Config{
 		Enabled:          true,

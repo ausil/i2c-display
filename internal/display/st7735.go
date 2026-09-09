@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"sync"
 	"time"
 
 	"periph.io/x/conn/v3/gpio"
@@ -20,6 +21,7 @@ const (
 	st7735SWRESET = 0x01
 	st7735SLPOUT  = 0x11
 	st7735NORON   = 0x13
+	st7735DISPOFF = 0x28
 	st7735DISPON  = 0x29
 	st7735CASET   = 0x2A
 	st7735RASET   = 0x2B
@@ -51,6 +53,7 @@ const (
 
 // ST7735Display implements Display interface for ST7735 TFT displays via SPI
 type ST7735Display struct {
+	mu          sync.Mutex // serializes hardware transactions (DC pin + SPI)
 	port        spi.PortCloser
 	conn        spi.Conn
 	dc          gpio.PinOut
@@ -388,6 +391,9 @@ func (d *ST7735Display) DrawImage(x, y int, img image.Image) error {
 
 // Show flushes the NRGBA buffer to the display as RGB565.
 func (d *ST7735Display) Show() error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	if err := d.setWindow(0, 0, d.width-1, d.height-1); err != nil {
 		return err
 	}
@@ -441,7 +447,16 @@ func (d *ST7735Display) GetBuffer() []byte {
 	return buf
 }
 
-// SetBrightness is a no-op placeholder (backlight control not in scope).
-func (d *ST7735Display) SetBrightness(_ uint8) error {
-	return nil
+// SetBrightness turns the panel off when level is 0 and back on otherwise.
+// The ST7735 has no register-level dimming and the backlight is not wired to
+// a controllable pin on supported boards, so the screensaver's blank mode
+// works but dim mode has no visible effect on this display.
+func (d *ST7735Display) SetBrightness(level uint8) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if level == 0 {
+		return d.sendCmd(st7735DISPOFF)
+	}
+	return d.sendCmd(st7735DISPON)
 }
