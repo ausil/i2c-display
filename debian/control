@@ -2,7 +2,7 @@ Source: i2c-display
 Section: utils
 Priority: optional
 Maintainer: Dennis Korablev <dennis@example.com>
-Build-Depends: debhelper-compat (= 13), golang-go (>= 2:1.19~)
+Build-Depends: debhelper-compat (= 13), golang-go (>= 2:1.26~)
 Standards-Version: 4.6.0
 Homepage: https://github.com/ausil/i2c-display
 Vcs-Git: https://github.com/ausil/i2c-display.git

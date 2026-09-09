@@ -53,7 +53,7 @@ See [DISPLAY_TYPES.md](DISPLAY_TYPES.md) for detailed information and how to add
 
 ## Requirements
 
-- Go 1.24 or later (for building from source)
+- Go 1.26 or later (for building from source)
 - Supported display (see Supported Displays section)
 - Any Linux-based SBC with I2C or SPI support
 
