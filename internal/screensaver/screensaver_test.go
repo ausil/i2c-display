@@ -170,6 +170,44 @@ func TestUpdateConfig(t *testing.T) {
 	// For now, just verify no crash
 }
 
+func TestUpdateConfigDisableWhileActive(t *testing.T) {
+	cfg := Config{
+		Enabled:          true,
+		Mode:             ModeDim,
+		IdleTimeout:      30 * time.Second,
+		DimBrightness:    50,
+		NormalBrightness: 255,
+	}
+
+	disp := display.NewMockDisplay(128, 64)
+	ss := New(cfg, disp, logger.NewDefault())
+
+	ss.activate()
+	if !ss.IsActive() {
+		t.Fatal("expected screensaver to be active")
+	}
+
+	// Disabling while active used to deadlock: UpdateConfig held the lock
+	// while calling deactivate, which locks again.
+	done := make(chan struct{})
+	go func() {
+		newCfg := cfg
+		newCfg.Enabled = false
+		ss.UpdateConfig(newCfg)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("UpdateConfig deadlocked when disabling an active screensaver")
+	}
+
+	if ss.IsActive() {
+		t.Fatal("expected screensaver to be deactivated after disabling")
+	}
+}
+
 func TestWakeSuppressesScreensaver(t *testing.T) {
 	cfg := Config{
 		Enabled:          true,

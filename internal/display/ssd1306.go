@@ -6,10 +6,28 @@ import (
 	"image/color"
 	"image/draw"
 
+	"periph.io/x/conn/v3/i2c"
 	"periph.io/x/conn/v3/i2c/i2creg"
 	"periph.io/x/devices/v3/ssd1306"
 	"periph.io/x/host/v3"
 )
+
+// ssd1306DefaultAddr is the I2C address hardcoded by periph's ssd1306 driver.
+const ssd1306DefaultAddr uint16 = 0x3C
+
+// remappedI2CBus rewrites transactions addressed to `from` so they go to `to`.
+// It works around drivers that hardcode the device address.
+type remappedI2CBus struct {
+	i2c.Bus
+	from, to uint16
+}
+
+func (b *remappedI2CBus) Tx(addr uint16, w, r []byte) error {
+	if addr == b.from {
+		addr = b.to
+	}
+	return b.Bus.Tx(addr, w, r)
+}
 
 // SSD1306Display implements Display interface for real SSD1306 hardware
 type SSD1306Display struct {
@@ -35,7 +53,21 @@ func NewSSD1306Display(i2cBus, i2cAddr string, width, height, rotation int) (*SS
 	// SSD1306 only supports 0° (no rotation) and 180° (Rotated flag).
 	// Hardware-level 90°/270° rotation is not available on this chip.
 	if rotation != 0 && rotation != 2 {
+		bus.Close() // #nosec G104 -- best-effort cleanup on error path
 		return nil, fmt.Errorf("SSD1306 only supports rotation 0 (0°) and 2 (180°), got %d", rotation)
+	}
+
+	addr, err := parseI2CAddr(i2cAddr)
+	if err != nil {
+		bus.Close() // #nosec G104 -- best-effort cleanup on error path
+		return nil, err
+	}
+
+	// periph's ssd1306.NewI2C hardcodes address 0x3C; remap transactions
+	// when the display is strapped to a different address (commonly 0x3D).
+	var devBus i2c.Bus = bus
+	if addr != 0 && addr != ssd1306DefaultAddr {
+		devBus = &remappedI2CBus{Bus: bus, from: ssd1306DefaultAddr, to: addr}
 	}
 
 	// Determine display options
@@ -48,8 +80,9 @@ func NewSSD1306Display(i2cBus, i2cAddr string, width, height, rotation int) (*SS
 	}
 
 	// Create SSD1306 device
-	dev, err := ssd1306.NewI2C(bus, &opts)
+	dev, err := ssd1306.NewI2C(devBus, &opts)
 	if err != nil {
+		bus.Close() // #nosec G104 -- best-effort cleanup on error path
 		return nil, fmt.Errorf("failed to create SSD1306 device: %w", err)
 	}
 

@@ -344,9 +344,15 @@ func runDisplayTest(disp display.Display, log *logger.Logger) error {
 
 // newScreenSaver constructs a screensaver from application config.
 func newScreenSaver(cfg *config.Config, disp display.Display, log *logger.Logger) (*screensaver.ScreenSaver, error) {
+	// idle_timeout only drives activation when the screensaver is enabled and
+	// active_hours is not; elsewhere an unset/invalid value is not an error
+	// (matching config.Validate, so a validated config never fails here).
 	idleTimeout, err := time.ParseDuration(cfg.ScreenSaver.IdleTimeout)
 	if err != nil {
-		return nil, fmt.Errorf("invalid screensaver.idle_timeout: %w", err)
+		if cfg.ScreenSaver.Enabled && !cfg.ScreenSaver.ActiveHours.Enabled {
+			return nil, fmt.Errorf("invalid screensaver.idle_timeout: %w", err)
+		}
+		idleTimeout = 0
 	}
 	wakeDuration, err := time.ParseDuration(cfg.ScreenSaver.WakeDuration)
 	if err != nil || wakeDuration <= 0 {
