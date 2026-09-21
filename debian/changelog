@@ -1,3 +1,16 @@
+i2c-display (0.5.6-1) unstable; urgency=medium
+
+  * Make the screensaver work on real hardware: implement SetBrightness for
+    SSD1306 (blank and dim) and ST7735 (blank only), document UCTRONICS as
+    a no-op
+  * Fix enabling the screensaver via SIGHUP config reload (monitor loop now
+    always starts; Stop is idempotent)
+  * Fix data races on screensaver config during reload and serialize ST7735
+    hardware transactions
+  * Switch ST7735 sample configs to blank screensaver mode
+
+ -- Dennis Gilmore <dennis@ausil.us>  Mon, 21 Sep 2026 16:55:12 -0500
+
 i2c-display (0.5.5-1) unstable; urgency=medium
 
   * Fix screensaver deadlock when disabled while active (SIGHUP reload)

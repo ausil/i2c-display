@@ -252,7 +252,9 @@ func (d *UCTRONICSDisplay) GetBuffer() []byte {
 	return buf
 }
 
-// SetBrightness is a no-op (UCTRONICS MCU does not expose brightness control).
+// SetBrightness is a no-op: the UCTRONICS MCU bridge protocol only forwards
+// pixel-window registers and exposes no brightness or display on/off command,
+// so the screensaver's dim and blank modes have no effect on this display.
 func (d *UCTRONICSDisplay) SetBrightness(_ uint8) error {
 	return nil
 }
