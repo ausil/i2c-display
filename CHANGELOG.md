@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-09-21
+
+### Fixed
+
+- Screensaver now has a visible effect on real hardware. SSD1306 implements `SetBrightness` with raw I2C commands (level 0 turns the panel off for blank mode, other levels set contrast for dim mode). ST7735 implements it as display on/off, so blank mode works; dim mode has no visible effect on that panel because its backlight is not controllable. UCTRONICS remains a no-op because its MCU bridge protocol exposes no brightness or display-off command
+- Enabling the screensaver via a SIGHUP config reload now takes effect: the monitor loop starts even when the screensaver is disabled at startup, and `Stop` is idempotent
+- Fixed unlocked `cfg` reads in the screensaver's `activate`, `deactivate`, `ResetActivity` and `Wake` that raced with `UpdateConfig` during reloads
+- ST7735 hardware transactions are serialized with a mutex so a brightness command from the screensaver goroutine cannot interleave with a frame transfer
+
+### Changed
+
+- ST7735 sample configs now use `blank` screensaver mode, since `dim` cannot work on that panel
+
 ## [0.5.5] - 2026-09-21
 
 ### Fixed
@@ -197,6 +210,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of SSD1306 display controller
 
+[0.5.6]: https://github.com/ausil/i2c-display/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/ausil/i2c-display/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/ausil/i2c-display/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/ausil/i2c-display/compare/v0.5.2...v0.5.3
