@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-09-21
+
+### Fixed
+
+- Screensaver no longer deadlocks when it is disabled while active (e.g. via a SIGHUP config reload); `UpdateConfig` now calls `deactivate()` after releasing its lock
+- SSD1306 driver now honours the configured `i2c_address`; previously periph's hardcoded `0x3C` was always used, so displays strapped to `0x3D` were unreachable. The I2C bus is also closed on constructor error paths that previously leaked it
+- Daemon no longer exits at startup on a config that passes validation but has no parseable `idle_timeout` (screensaver disabled, or `active_hours` driving activation); `idle_timeout` is now only required when the idle path uses it
+
+### Changed
+
+- Minimum Go version raised from 1.25 to 1.26 (required by `golang.org/x/sys` 0.48.0); CI workflows, the Debian build dependency, and documentation updated to match
+- Routine dependency updates: `golang.org/x/image` to 0.46.0, `golang.org/x/sys` to 0.48.0, `github.com/prometheus/common` to 0.71.0, `github.com/prometheus/procfs` to 0.22.0, `google.golang.org/protobuf` to 1.36.12, and other indirect dependencies
+- CI: bump `securego/gosec` to 2.29.0
+
 ## [0.5.4] - 2026-08-12
 
 ### Security
@@ -183,6 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of SSD1306 display controller
 
+[0.5.5]: https://github.com/ausil/i2c-display/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/ausil/i2c-display/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/ausil/i2c-display/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/ausil/i2c-display/compare/v0.5.1...v0.5.2

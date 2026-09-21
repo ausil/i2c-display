@@ -3,7 +3,7 @@
 
 # https://github.com/ausil/i2c-display
 %global goipath         github.com/ausil/i2c-display
-Version:                0.5.4
+Version:                0.5.5
 
 %gometa -L -f
 

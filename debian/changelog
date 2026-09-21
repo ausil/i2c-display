@@ -1,3 +1,15 @@
+i2c-display (0.5.5-1) unstable; urgency=medium
+
+  * Fix screensaver deadlock when disabled while active (SIGHUP reload)
+  * Fix SSD1306 driver ignoring the configured i2c_address (was always 0x3C)
+    and leaking the I2C bus on constructor error paths
+  * Fix startup crash on configs with no parseable idle_timeout when the
+    idle path is unused (screensaver disabled or active_hours driven)
+  * Move to Go 1.26 (raise minimum build dependency) and update Go
+    dependencies, including golang.org/x/image to 0.46.0
+
+ -- Dennis Gilmore <dennis@ausil.us>  Mon, 21 Sep 2026 16:25:20 -0500
+
 i2c-display (0.5.4-1) unstable; urgency=medium
 
   * Bump golang.org/x/image to 0.44.0, fixing CVE-2026-46604 (tiff decoder
