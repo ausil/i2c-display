@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/prometheus/client_golang v1.25.0
 	github.com/rs/zerolog v1.35.1
-	golang.org/x/image v0.46.0
+	golang.org/x/image v0.47.0
 	periph.io/x/conn/v3 v3.7.3
 	periph.io/x/devices/v3 v3.7.4
 	periph.io/x/host/v3 v3.8.5
@@ -20,6 +20,6 @@ require (
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.72.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
