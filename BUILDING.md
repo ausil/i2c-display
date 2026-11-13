@@ -22,18 +22,22 @@ sudo apt-get install build-essential debhelper dh-golang golang-go
 
 ## Building Release Tarballs
 
-### For Debian packaging (includes vendored dependencies):
+### Source archives:
 ```bash
-make dist
+make dist-src   # upstream source only
+make dist       # the same source plus vendor/
 ```
-Creates `dist/i2c-display-0.6.0.tar.gz` with vendor directory bundled.
+- `dist/i2c-display-0.6.0.tar.gz` — upstream source with no vendored dependencies; byte-for-byte the archived tagged tree, same content as GitHub's own "Source code" archive and what the RPM spec downloads as `Source0`
+- `dist/i2c-display-0.6.0-vendored.tar.gz` — the identical source tree plus `vendor/`, for `-mod=vendor` builds (this is what Debian packaging uses)
+
+`make dist` builds `dist-src` first and then adds `vendor/`, so the two archives can never disagree. Both are named differently on purpose: previously `make dist` and `make dist-rpm` wrote the same filename with different contents and overwrote each other.
 
 ### For RPM packaging (go2rpm/go-vendor-tools style):
 ```bash
 make dist-rpm
 ```
-Creates two files required by the RPM spec:
-- `dist/i2c-display-0.6.0.tar.gz` — upstream source tarball (no vendor, GitHub-compatible)
+Creates the two files required by the RPM spec:
+- `dist/i2c-display-0.6.0.tar.gz` — upstream source tarball (no vendor; the same file `make dist-src` produces)
 - `dist/i2c-display-0.6.0-vendor.tar.bz2` — vendored dependencies (separate archive)
 
 The `srpm` and `rpm` targets call `dist-rpm` automatically.

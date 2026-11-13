@@ -1,4 +1,4 @@
-.PHONY: build test clean install uninstall test-hardware dist rpm srpm deb deb-src lint fmt
+.PHONY: build test clean install uninstall test-hardware dist dist-src rpm srpm deb deb-src lint fmt vendor
 
 # Version - prefer git tag if available (for releases), otherwise use VERSION file
 GIT_TAG_VERSION=$(shell git describe --tags --exact-match 2>/dev/null | sed 's/^v//')
@@ -16,6 +16,13 @@ SYSTEMD_DIR=/usr/lib/systemd/system
 # RPM configuration
 RPM_TOPDIR=$(shell pwd)/rpm-build
 TARBALL=$(PROJECT_NAME)-$(VERSION).tar.gz
+# The vendored bundle gets its own name: it must never collide with the plain
+# source tarball, whose name is also what GitHub's own "Source code" archive
+# uses and what the RPM spec's Source0 (%{gosource}) downloads.
+VENDORED_TARBALL=$(PROJECT_NAME)-$(VERSION)-vendored.tar.gz
+# Package the tagged tree when HEAD is exactly a release tag, so a stray commit
+# on main can never end up inside a release artifact.
+ARCHIVE_REF=$(if $(GIT_TAG_VERSION),v$(GIT_TAG_VERSION),HEAD)
 
 # Go parameters
 GOCMD=go
@@ -125,29 +132,39 @@ run-mock: build
 	@echo "Running with mock display..."
 	$(BUILD_DIR)/$(BINARY_NAME) -mock -config configs/config.example.json
 
-# Create release tarball (with vendored deps, used by Debian packaging)
-dist:
-	@echo "Creating release tarball v$(VERSION)..."
-	@mkdir -p $(DIST_DIR)
-	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
-	@mkdir -p $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
-	@go mod vendor
-	@cp -r cmd internal configs systemd scripts testdata vendor rpm debian man $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
-	@cp go.mod go.sum Makefile VERSION LICENSE $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
-	@cp README.md BUILDING.md CHANGELOG.md CONTRIBUTING.md DISPLAY_TYPES.md LICENSES.md SECURITY.md $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/
-	@tar -czf $(DIST_DIR)/$(TARBALL) -C $(DIST_DIR) $(PROJECT_NAME)-$(VERSION)
-	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
-	@echo "Release tarball created: $(DIST_DIR)/$(TARBALL)"
-	@ls -lh $(DIST_DIR)/$(TARBALL)
-
-# Create RPM source tarball (GitHub-compatible, no vendor) and vendor tarball
-dist-rpm:
-	@echo "Creating RPM source tarball v$(VERSION)..."
+# Create the canonical upstream source tarball: the archived tree exactly, with
+# no vendor directory. Matches `git archive` and GitHub's own tag archive.
+dist-src:
+	@echo "Creating source tarball v$(VERSION)..."
 	@mkdir -p $(DIST_DIR)
 	@git archive --format=tar.gz --prefix=$(PROJECT_NAME)-$(VERSION)/ \
-		-o $(DIST_DIR)/$(TARBALL) HEAD
-	@echo "RPM source tarball created: $(DIST_DIR)/$(TARBALL)"
-	@echo "Creating vendor tarball..."
+		-o $(DIST_DIR)/$(TARBALL) $(ARCHIVE_REF)
+	@echo "Source tarball created: $(DIST_DIR)/$(TARBALL)"
+	@ls -lh $(DIST_DIR)/$(TARBALL)
+
+# Create the vendored bundle for packaging that builds with -mod=vendor
+# (debian/rules does). Built from the same archived tree as dist-src plus
+# vendor/, so the two can never disagree on file contents.
+dist: dist-src
+	@echo "Creating vendored tarball v$(VERSION)..."
+	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
+	@mkdir -p $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)
+	@tar -xzf $(DIST_DIR)/$(TARBALL) -C $(DIST_DIR)
+	@$(MAKE) --no-print-directory vendor
+	@cp -r vendor $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)/vendor
+	@tar -czf $(DIST_DIR)/$(VENDORED_TARBALL) -C $(DIST_DIR) $(PROJECT_NAME)-$(VERSION)
+	@rm -rf $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION) vendor
+	@echo "Vendored tarball created: $(DIST_DIR)/$(VENDORED_TARBALL)"
+	@ls -lh $(DIST_DIR)/$(VENDORED_TARBALL)
+
+# Populate vendor/ in the working tree (gitignored); needed by the deb targets.
+vendor:
+	@echo "Vendoring dependencies..."
+	@go mod vendor
+
+# Create RPM source tarball (GitHub-compatible, no vendor) and vendor tarball
+dist-rpm: dist-src
+	@echo "Creating RPM vendor tarball..."
 	@cd $(DIST_DIR) && go_vendor_archive create -O $(PROJECT_NAME)-$(VERSION)-vendor.tar.bz2 \
 		--config ../rpm/go-vendor-tools.toml $(TARBALL)
 	@echo "Vendor tarball created: $(DIST_DIR)/$(PROJECT_NAME)-$(VERSION)-vendor.tar.bz2"
@@ -186,14 +203,14 @@ install-rpm:
 	rpm -Uvh $(RPM_TOPDIR)/RPMS/*/*.rpm
 
 # Build Debian source package
-deb-src:
+deb-src: vendor
 	@echo "Building Debian source package..."
 	@dpkg-buildpackage -d -S -us -uc
 	@echo "Debian source package created:"
 	@ls -lh ../$(PROJECT_NAME)_*.dsc
 
 # Build Debian binary package
-deb:
+deb: vendor
 	@echo "Building Debian binary package..."
 	@dpkg-buildpackage -d -b -us -uc
 	@echo "Debian package created:"
@@ -231,7 +248,8 @@ help:
 	@echo "  fmt           - Format code with gofmt and goimports"
 	@echo ""
 	@echo "Release targets:"
-	@echo "  dist          - Create release tarball (with vendor, for Debian)"
+	@echo "  dist-src      - Create source tarball (no vendor, matches git)"
+	@echo "  dist          - Create source tarball plus vendored bundle (for Debian)"
 	@echo "  dist-rpm      - Create RPM source + vendor tarballs (go2rpm style)"
 	@echo "  srpm          - Build source RPM"
 	@echo "  rpm           - Build binary and source RPM"

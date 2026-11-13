@@ -127,7 +127,7 @@ git push origin v0.5.2
 ### 11. Build release artifacts (optional, on target system)
 
 ```bash
-make dist       # Debian source tarball (with vendor)
+make dist       # upstream source tarball + vendored bundle (Debian packaging)
 make dist-rpm   # RPM source + vendor tarballs
 make rpm        # Binary and source RPMs
 make deb        # Debian binary package

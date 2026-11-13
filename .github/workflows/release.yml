@@ -125,6 +125,11 @@ jobs:
             - `i2c-displayd-linux-amd64` - x86_64
             - `i2c-displayd-linux-riscv64` - RISC-V 64-bit
 
+            ### Source archives
+
+            - `i2c-display-${{ steps.changelog.outputs.version }}.tar.gz` - upstream source, no vendored dependencies (same content as the auto-generated "Source code" archive below)
+            - `i2c-display-${{ steps.changelog.outputs.version }}-vendored.tar.gz` - the same source with `vendor/` included, for offline or `-mod=vendor` builds
+
             ### Building packages locally
 
             ```bash
