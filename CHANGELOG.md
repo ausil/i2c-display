@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `MockDisplay.DrawImage` averaged the colour channels before thresholding, so the renderer's saturated colours (pure green, red and yellow) drew nothing on the mock while lighting up on real panels — every mock-based rendering test was effectively asserting against a blank screen. It now uses the same brightest-channel rule as the SSD1306 and SH1106 drivers
+
 ### Changed
 
 - Packaging: `make dist` now writes the vendored bundle to `i2c-display-<version>-vendored.tar.gz` instead of reusing the plain source tarball name, which `make dist-rpm` also wrote with completely different contents (they silently overwrote each other in `dist/`, and the 2.5 MB vendored file was what the GitHub Release published as "the source tarball"). Both archives are now built from one `git archive` of the tagged tree via the new `make dist-src`, so the vendored bundle carries everything the repository has (`.github/`, `.golangci.yml` and `RELEASING.md` were missing from it before) and matches the plain source byte for byte. `make dist` no longer leaves a `vendor/` directory in the source tree, `dist-rpm` archives the tag rather than `HEAD`, and `make deb`/`deb-src` vendor automatically, which they need for their `-mod=vendor` builds

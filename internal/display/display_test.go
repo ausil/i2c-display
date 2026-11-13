@@ -577,3 +577,39 @@ func TestMockDisplayCallTracking(t *testing.T) {
 		t.Errorf("expected 0 calls after ClearCalls, got %d", len(calls))
 	}
 }
+
+func TestMockDisplayDrawImageDrawsSaturatedColors(t *testing.T) {
+	// The renderer draws green, yellow and red text. Averaging the channels
+	// before thresholding made pure green invisible on the mock even though it
+	// lights up on the real monochrome panels, so mock-based rendering tests
+	// could not see any text at all.
+	colors := []color.NRGBA{
+		{R: 0, G: 255, B: 0, A: 255},
+		{R: 255, G: 255, B: 0, A: 255},
+		{R: 255, G: 0, B: 0, A: 255},
+		{R: 255, G: 255, B: 255, A: 255},
+	}
+
+	for _, c := range colors {
+		m := NewMockDisplay(16, 16)
+		if err := m.DrawImage(2, 3, image.NewUniform(c)); err != nil {
+			t.Fatalf("DrawImage(%v) failed: %v", c, err)
+		}
+		for y := 3; y < 16; y++ {
+			for x := 2; x < 16; x++ {
+				if !m.GetPixel(x, y) {
+					t.Fatalf("colour %v left pixel (%d,%d) unlit", c, x, y)
+				}
+			}
+		}
+	}
+
+	m := NewMockDisplay(8, 8)
+	transparent := image.NewUniform(color.NRGBA{R: 255, G: 255, B: 255, A: 0})
+	if err := m.DrawImage(0, 0, transparent); err != nil {
+		t.Fatalf("DrawImage failed: %v", err)
+	}
+	if m.GetPixel(4, 4) {
+		t.Error("fully transparent pixel should stay unlit")
+	}
+}

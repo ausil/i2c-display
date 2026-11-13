@@ -203,9 +203,19 @@ func (m *MockDisplay) DrawImage(x, y int, img image.Image) error {
 	for dy := 0; dy < bounds.Dy() && y+dy < m.height; dy++ {
 		for dx := 0; dx < bounds.Dx() && x+dx < m.width; dx++ {
 			r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
-			// Simple threshold: if pixel is bright enough and not transparent, turn on
-			brightness := (r + g + b) / 3
-			on := brightness > 32768 && a > 32768
+			// Match the real monochrome panels: the brightest channel decides
+			// whether a pixel lights up. Averaging the channels instead made the
+			// renderer's saturated colours (pure green, pure red) render as blank
+			// here while they light up on hardware, so text bugs were invisible
+			// to every mock-based test.
+			brightness := r
+			if g > brightness {
+				brightness = g
+			}
+			if b > brightness {
+				brightness = b
+			}
+			on := brightness > luminanceThreshold && a > luminanceThreshold
 			m.setPixel(x+dx, y+dy, on)
 		}
 	}
