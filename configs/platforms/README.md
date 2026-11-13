@@ -83,6 +83,17 @@ This directory contains tested configuration files for specific single board com
   - Very powerful, all features work excellently
   - May need to adjust I2C bus in config
 
+#### Rock 5C
+- **Config**: `radxa-rock-5c.json`
+- **I2C Bus**: `/dev/i2c-8`
+- **Display**: SH1106 128×64 (`sh1106`)
+- **Notes**:
+  - The user I2C on the 40-pin header is on **pin 3 (SDA)** and **pin 5 (SCL)**, wired to `/dev/i2c-8`; verify with `i2cdetect -l` and `sudo i2cdetect -y 8`
+  - The 1.3" 128×64 modules are SH1106, not SSD1306: use `"type": "sh1106"`. With `ssd1306` the panel stays dark (different charge-pump/DC-DC command) or shows the frame shifted two pixels
+  - Ethernet may be named `end0` or `eth0` depending on the image — check with `ip link show`
+  - Metrics disabled by default; listen address is `:9090` (all interfaces) when enabled
+  - Screensaver `dim` and `blank` both work on SH1106 (contrast and display-off are implemented)
+
 ## How to Use
 
 1. **Copy the appropriate config**:
@@ -121,8 +132,8 @@ This directory contains tested configuration files for specific single board com
 - **Temperature**: Uses hwmon path `/sys/class/hwmon/hwmon0/temp1_input` rather than `thermal_zone`
 - **Interface Names**: `lan0`, `lan1`, `lan2`, `wan` — use `lan*` and `wan` in the include filter
 
-### Rock 3C / 5A / 5B
-- **I2C Bus**: May vary by model; Rock 3C uses bus 3, Rock 5A uses bus 8 — verify with `i2cdetect -l`
+### Rock 3C / 5A / 5B / 5C
+- **I2C Bus**: Varies by model; Rock 3C uses bus 3, Rock 5A and Rock 5C use bus 8 — verify with `i2cdetect -l`
 - **Interface Names**: May use `end0` instead of `eth0`
 - **Temperature**: Path may be `/sys/devices/virtual/thermal/thermal_zone0/temp`
 
@@ -193,6 +204,7 @@ Include:
 | Rock 3C | ✅ | Yes | Great performance |
 | Rock 5A | ✅ | Yes | 128×32 display, I2C bus 8 |
 | Rock 5B | ⚠️ | Use Rock 3C config | Verify I2C bus |
+| Rock 5C | ✅ | Yes | SH1106 128×64, I2C bus 8 (header pins 3/5) |
 | Orange Pi 3B v2.1 | ✅ | Yes | 128×32 display, lines=4 mode, I2C bus 2 |
 | NanoPi | ❌ | No | Contributions welcome |
 
