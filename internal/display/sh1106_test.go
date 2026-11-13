@@ -13,9 +13,10 @@ func txs(bus *recordingBus) (cmds, data [][]byte) {
 		if len(w) == 0 {
 			continue
 		}
-		if w[0] == monoCmdPrefix {
+		switch w[0] {
+		case monoCmdPrefix:
 			cmds = append(cmds, w[1:])
-		} else if w[0] == monoDataPrefix {
+		case monoDataPrefix:
 			data = append(data, w[1:])
 		}
 	}
@@ -176,7 +177,7 @@ func TestSH1106ShowPages(t *testing.T) {
 	}
 	// Everything else stays dark.
 	if data[0][1] != 0x00 || data[7][126] != 0x00 {
-		t.Error("neighbouring columns should stay unlit")
+		t.Error("neighboring columns should stay unlit")
 	}
 }
 
