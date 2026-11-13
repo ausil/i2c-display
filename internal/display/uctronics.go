@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"periph.io/x/conn/v3/i2c"
-	"periph.io/x/conn/v3/i2c/i2creg"
-	"periph.io/x/host/v3"
 )
 
 // UCTRONICS MCU I2C bridge protocol constants.
@@ -49,22 +47,9 @@ type UCTRONICSDisplay struct {
 
 // NewUCTRONICSDisplay creates a new UCTRONICS display driver.
 func NewUCTRONICSDisplay(i2cBus, i2cAddr string, width, height int) (*UCTRONICSDisplay, error) {
-	if _, err := host.Init(); err != nil {
-		return nil, fmt.Errorf("failed to initialize periph: %w", err)
-	}
-
-	bus, err := i2creg.Open(i2cBus)
+	bus, addr, err := openI2CBus(i2cBus, i2cAddr, uctronicsDefaultAddr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open I2C bus %s: %w", i2cBus, err)
-	}
-
-	addr, err := parseI2CAddr(i2cAddr)
-	if err != nil {
-		bus.Close() // #nosec G104 -- best-effort cleanup on error path
 		return nil, err
-	}
-	if addr == 0 {
-		addr = uctronicsDefaultAddr
 	}
 
 	return &UCTRONICSDisplay{
