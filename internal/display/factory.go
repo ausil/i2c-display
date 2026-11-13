@@ -22,6 +22,17 @@ func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
 		)
 	}
 
+	// SH1106 variants (128x64 mono, SSD1306-adjacent but its own controller)
+	if strings.HasPrefix(displayType, "sh1106") {
+		return NewSH1106Display(
+			cfg.I2CBus,
+			cfg.I2CAddress,
+			cfg.Width,
+			cfg.Height,
+			cfg.Rotation,
+		)
+	}
+
 	// ST7735 variants (SPI TFT)
 	if strings.HasPrefix(displayType, "st7735") {
 		return NewST7735Display(
@@ -47,7 +58,6 @@ func NewDisplay(cfg *config.DisplayConfig) (Display, error) {
 
 	// Other display types - Framework ready, awaiting drivers
 	supportedButNeedDrivers := map[string]string{
-		"sh1106":  "SH1106 (128x64 mono) - compatible with SSD1306, driver available at github.com/danielgatis/go-sh1106 (SPI)",
 		"ssd1327": "SSD1327 (128x128 grayscale) - no Go I2C driver found",
 		"ssd1331": "SSD1331 (96x64 color) - no Go I2C driver found",
 	}

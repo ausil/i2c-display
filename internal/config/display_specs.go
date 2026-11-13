@@ -17,7 +17,7 @@ func GetDisplaySpec(displayType string) (DisplaySpec, bool) {
 		"ssd1306_128x32": {Width: 128, Height: 32},
 		"ssd1306_96x16":  {Width: 96, Height: 16},
 
-		// SH1106 family (via third-party driver)
+		// SH1106 family (native driver)
 		"sh1106":        {Width: 128, Height: 64},
 		"sh1106_128x64": {Width: 128, Height: 64},
 

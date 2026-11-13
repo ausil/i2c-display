@@ -3,8 +3,6 @@ package display
 import (
 	"fmt"
 	"image"
-	"image/color"
-	"image/draw"
 
 	"periph.io/x/conn/v3/i2c"
 	"periph.io/x/conn/v3/i2c/i2creg"
@@ -15,12 +13,13 @@ import (
 // ssd1306DefaultAddr is the I2C address hardcoded by periph's ssd1306 driver.
 const ssd1306DefaultAddr uint16 = 0x3C
 
-// SSD1306 command bytes used for brightness control.
+// SSD1306 command bytes used for brightness control. The controller shares the
+// SSD1306/SH1106 command encoding, so these alias the mono constants.
 const (
-	ssd1306CmdPrefix   byte = 0x00 // control byte: the following bytes are commands
-	ssd1306SetContrast byte = 0x81
-	ssd1306DisplayOff  byte = 0xAE
-	ssd1306DisplayOn   byte = 0xAF
+	ssd1306CmdPrefix   = monoCmdPrefix
+	ssd1306SetContrast = monoSetContrast
+	ssd1306DisplayOff  = monoDisplayOff
+	ssd1306DisplayOn   = monoDisplayOn
 )
 
 // remappedI2CBus rewrites transactions addressed to `from` so they go to `to`.
@@ -39,12 +38,10 @@ func (b *remappedI2CBus) Tx(addr uint16, w, r []byte) error {
 
 // SSD1306Display implements Display interface for real SSD1306 hardware
 type SSD1306Display struct {
-	dev    *ssd1306.Dev
-	bus    i2c.Bus // raw bus, for commands periph's driver does not expose
-	addr   uint16  // effective device address
-	img    *image.Gray
-	width  int
-	height int
+	monoFrameBuffer
+	dev  *ssd1306.Dev
+	bus  i2c.Bus // raw bus, for commands periph's driver does not expose
+	addr uint16  // effective device address
 }
 
 // NewSSD1306Display creates a new SSD1306 display driver
@@ -102,12 +99,10 @@ func NewSSD1306Display(i2cBus, i2cAddr string, width, height, rotation int) (*SS
 	}
 
 	return &SSD1306Display{
-		dev:    dev,
-		bus:    bus,
-		addr:   effectiveAddr,
-		img:    image.NewGray(image.Rect(0, 0, width, height)),
-		width:  width,
-		height: height,
+		monoFrameBuffer: newMonoFrameBuffer(width, height),
+		dev:             dev,
+		bus:             bus,
+		addr:            effectiveAddr,
 	}, nil
 }
 
@@ -116,119 +111,6 @@ func (d *SSD1306Display) Init() error {
 	// The device is initialized in NewSSD1306Display
 	// Clear the display to start fresh
 	return d.Clear()
-}
-
-// Clear clears the display
-func (d *SSD1306Display) Clear() error {
-	// Clear the image buffer
-	draw.Draw(d.img, d.img.Bounds(), &image.Uniform{color.Gray{Y: 0}}, image.Point{}, draw.Src)
-	return nil
-}
-
-// DrawText draws text at the specified position
-// Note: This is a simple implementation. For real text rendering,
-// you would need a font library like golang.org/x/image/font
-func (d *SSD1306Display) DrawText(x, y int, text string, size int) error {
-	// For now, this is a placeholder that draws a rectangle
-	// In a full implementation, you would use a font library
-	charWidth := size / 2
-	for i := range text {
-		startX := x + i*charWidth
-		if startX >= d.width {
-			break
-		}
-		// Draw a simple rectangle to represent each character
-		if err := d.DrawRect(startX, y, charWidth-1, size, false); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// DrawLine draws a horizontal line
-func (d *SSD1306Display) DrawLine(x, y, width int) error {
-	for i := 0; i < width && x+i < d.width; i++ {
-		if x+i >= 0 && y >= 0 && y < d.height {
-			d.img.SetGray(x+i, y, color.Gray{Y: 255})
-		}
-	}
-	return nil
-}
-
-// DrawPixel draws a single pixel
-func (d *SSD1306Display) DrawPixel(x, y int, on bool) error {
-	if x < 0 || x >= d.width || y < 0 || y >= d.height {
-		return nil
-	}
-
-	if on {
-		d.img.SetGray(x, y, color.Gray{Y: 255})
-	} else {
-		d.img.SetGray(x, y, color.Gray{Y: 0})
-	}
-	return nil
-}
-
-// DrawRect draws a rectangle
-//
-//nolint:gocyclo // drawing logic naturally has many conditional branches
-func (d *SSD1306Display) DrawRect(x, y, width, height int, fill bool) error {
-	if fill {
-		for dy := 0; dy < height && y+dy < d.height; dy++ {
-			for dx := 0; dx < width && x+dx < d.width; dx++ {
-				if x+dx >= 0 && y+dy >= 0 {
-					d.img.SetGray(x+dx, y+dy, color.Gray{Y: 255})
-				}
-			}
-		}
-	} else {
-		// Draw outline
-		for i := 0; i < width && x+i < d.width; i++ {
-			if x+i >= 0 && y >= 0 {
-				d.img.SetGray(x+i, y, color.Gray{Y: 255})
-			}
-			if x+i >= 0 && y+height-1 >= 0 && y+height-1 < d.height {
-				d.img.SetGray(x+i, y+height-1, color.Gray{Y: 255})
-			}
-		}
-		for i := 0; i < height && y+i < d.height; i++ {
-			if x >= 0 && y+i >= 0 {
-				d.img.SetGray(x, y+i, color.Gray{Y: 255})
-			}
-			if x+width-1 >= 0 && x+width-1 < d.width && y+i >= 0 {
-				d.img.SetGray(x+width-1, y+i, color.Gray{Y: 255})
-			}
-		}
-	}
-	return nil
-}
-
-// DrawImage draws an image at the specified position
-func (d *SSD1306Display) DrawImage(x, y int, img image.Image) error {
-	bounds := img.Bounds()
-	for dy := 0; dy < bounds.Dy() && y+dy < d.height; dy++ {
-		for dx := 0; dx < bounds.Dx() && x+dx < d.width; dx++ {
-			if x+dx < 0 || y+dy < 0 {
-				continue
-			}
-			r, g, b, a := img.At(bounds.Min.X+dx, bounds.Min.Y+dy).RGBA()
-			// Use max channel so saturated colours (e.g. pure green)
-			// render as white on the monochrome display.
-			brightness := r
-			if g > brightness {
-				brightness = g
-			}
-			if b > brightness {
-				brightness = b
-			}
-			if brightness > 32768 && a > 32768 {
-				d.img.SetGray(x+dx, y+dy, color.Gray{Y: 255})
-			} else {
-				d.img.SetGray(x+dx, y+dy, color.Gray{Y: 0})
-			}
-		}
-	}
-	return nil
 }
 
 // Show flushes the buffer to the display
@@ -246,42 +128,10 @@ func (d *SSD1306Display) Close() error {
 	return d.dev.Halt()
 }
 
-// GetBounds returns the display dimensions
-func (d *SSD1306Display) GetBounds() image.Rectangle {
-	return d.img.Bounds()
-}
-
-// GetBuffer returns a copy of the current display buffer
-func (d *SSD1306Display) GetBuffer() []byte {
-	// Convert image to byte buffer
-	buf := make([]byte, d.width*d.height/8)
-	for y := 0; y < d.height; y++ {
-		for x := 0; x < d.width; x++ {
-			if d.img.GrayAt(x, y).Y > 128 {
-				byteIdx := x + (y/8)*d.width
-				bitIdx := uint(y % 8) /* #nosec G115 -- modulo 8 is always 0–7 */
-				buf[byteIdx] |= 1 << bitIdx
-			}
-		}
-	}
-	return buf
-}
-
 // SetBrightness sets the display brightness (0-255). Level 0 turns the panel
 // off entirely (the screensaver's blank mode); any other level turns it back
 // on and sets the contrast. periph's driver does not expose these commands,
-// so they are sent as raw I2C writes. Each call is a single bus transaction
-// and neither command touches the driver's addressing state, so this is safe
-// alongside concurrent frame draws.
+// so they are sent as raw I2C writes.
 func (d *SSD1306Display) SetBrightness(level uint8) error {
-	var cmds []byte
-	if level == 0 {
-		cmds = []byte{ssd1306CmdPrefix, ssd1306DisplayOff}
-	} else {
-		cmds = []byte{ssd1306CmdPrefix, ssd1306DisplayOn, ssd1306SetContrast, level}
-	}
-	if err := d.bus.Tx(d.addr, cmds, nil); err != nil {
-		return fmt.Errorf("failed to set brightness: %w", err)
-	}
-	return nil
+	return setMonoBrightness(d.bus, d.addr, level)
 }

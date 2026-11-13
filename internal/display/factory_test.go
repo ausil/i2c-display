@@ -50,6 +50,30 @@ func TestNewDisplay(t *testing.T) {
 			wantErr: true, // Will fail without hardware
 		},
 		{
+			name: "sh1106 default",
+			config: config.DisplayConfig{
+				Type:       "sh1106",
+				I2CBus:     "/dev/i2c-1",
+				I2CAddress: "0x3C",
+				Width:      128,
+				Height:     64,
+				Rotation:   0,
+			},
+			wantErr: true, // Will fail without hardware
+		},
+		{
+			name: "sh1106_128x64",
+			config: config.DisplayConfig{
+				Type:       "sh1106_128x64",
+				I2CBus:     "/dev/i2c-1",
+				I2CAddress: "0x3D",
+				Width:      128,
+				Height:     64,
+				Rotation:   2,
+			},
+			wantErr: true, // Will fail without hardware
+		},
+		{
 			name: "st7735 default",
 			config: config.DisplayConfig{
 				Type:     "st7735",
@@ -112,6 +136,12 @@ func TestNewDisplay(t *testing.T) {
 				if !strings.Contains(err.Error(), "unsupported") {
 					t.Errorf("expected 'unsupported' in error, got: %v", err)
 				}
+			}
+			// Implemented drivers must not report themselves as missing; on a
+			// machine without the hardware they fail on the bus instead.
+			if strings.HasPrefix(tt.config.Type, "sh1106") && err != nil &&
+				strings.Contains(err.Error(), "not yet implemented") {
+				t.Errorf("sh1106 should have a driver, got: %v", err)
 			}
 		})
 	}
