@@ -79,6 +79,14 @@ func (p *LoadGraphPage) Render(disp display.Display, s *stats.SystemStats) error
 	return p.renderGraph(disp, s, layout, bounds)
 }
 
+// loadLabel formats the three load averages for the graph page's header row.
+// The colon is left out on purpose: a 128-wide panel fits 21 characters in the
+// compact face and 18 in the full-size one, and "1m:0.52 5m:0.48 15m:0.40" is
+// 24 characters, which used to lose the 15-minute average entirely.
+func loadLabel(s *stats.SystemStats) string {
+	return fmt.Sprintf("1m%.2f 5m%.2f 15m%.2f", s.LoadAvg1, s.LoadAvg5, s.LoadAvg15)
+}
+
 // renderSmall renders text-only output for small displays (height <= 32)
 func (p *LoadGraphPage) renderSmall(disp display.Display, s *stats.SystemStats, layout *Layout) error {
 	if len(layout.ContentLines) == 0 {
@@ -87,14 +95,11 @@ func (p *LoadGraphPage) renderSmall(disp display.Display, s *stats.SystemStats, 
 
 	text := fmt.Sprintf("L:%.2f %.2f %.2f", s.LoadAvg1, s.LoadAvg5, s.LoadAvg15)
 	maxWidth := layout.Width - 2*MarginLeft
-	if layout.TextScale > 0 && layout.TextScale < 1 {
-		text = TruncateTextSmall(text, maxWidth)
-	} else {
-		text = TruncateText(text, maxWidth)
-	}
+	scale := fitScale([]string{text}, maxWidth, layout.TextScale)
+	text = truncateAt(text, maxWidth, scale)
 	c := LoadColor(s.LoadAvg1, p.numCPU)
 
-	if err := DrawTextColorScaled(disp, MarginLeft, layout.ContentLines[0], text, c, layout.TextScale); err != nil {
+	if err := DrawTextColorScaled(disp, MarginLeft, layout.ContentLines[0], text, c, scale); err != nil {
 		return err
 	}
 
@@ -108,17 +113,18 @@ func (p *LoadGraphPage) renderGraph(disp display.Display, s *stats.SystemStats, 
 	}
 
 	// Text label on first content line
-	label := fmt.Sprintf("1m:%.2f 5m:%.2f 15m:%.2f", s.LoadAvg1, s.LoadAvg5, s.LoadAvg15)
+	label := loadLabel(s)
 	maxWidth := bounds.Dx() - 2*MarginLeft
-	label = TruncateText(label, maxWidth)
+	scale := fitScale([]string{label}, maxWidth, layout.TextScale)
+	label = truncateAt(label, maxWidth, scale)
 	c := LoadColor(s.LoadAvg1, p.numCPU)
 
-	if err := DrawTextColorScaled(disp, MarginLeft, layout.ContentLines[0], label, c, layout.TextScale); err != nil {
+	if err := DrawTextColorScaled(disp, MarginLeft, layout.ContentLines[0], label, c, scale); err != nil {
 		return err
 	}
 
 	// Graph area: below the text label (account for scaled text height)
-	textHeight := ScaledTextHeight(layout.TextScale)
+	textHeight := ScaledTextHeight(scale)
 	graphY := layout.ContentLines[0] + textHeight + 2
 	graphX := MarginLeft
 	graphWidth := bounds.Dx() - 2*MarginLeft

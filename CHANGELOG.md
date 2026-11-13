@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Text no longer disappears off the right edge of 128-wide panels. A content line wider than the full-size 7×13 font (18 characters) was silently truncated, so the network page showed `end0: 172.16.46...` with the last octet lost, and the load graph page could only ever show the 1- and 5-minute averages. Pages now choose the widest font that fits, dropping to the compact 5×7 face (about 40% narrower) before truncating at all, and a page never mixes the two fonts. Two formats were also shortened so the essentials fit: the load label is now `1m0.52 5m0.48 15m0.40` instead of `1m:0.52 5m:0.48 15m:0.40`, and the system page's disk/memory rows read `45% 210.0/465.7G` instead of `45.1% (210.0/465.7GB)`, which lost the total next to the metric icons
 - `MockDisplay.DrawImage` averaged the colour channels before thresholding, so the renderer's saturated colours (pure green, red and yellow) drew nothing on the mock while lighting up on real panels — every mock-based rendering test was effectively asserting against a blank screen. It now uses the same brightest-channel rule as the SSD1306 and SH1106 drivers
 
 ### Changed

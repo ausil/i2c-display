@@ -223,6 +223,36 @@ func MeasureText(text string) int {
 	return font.MeasureString(face, text).Ceil()
 }
 
+// fitScale picks the font scale at which every line fits within maxWidth
+// pixels: the full-size 7×13 face when all of them fit, otherwise the compact
+// 5×7 face, which takes about 40% less horizontal room. A layout that is
+// already half-scale (128×32 in 4-line mode) keeps its own scale.
+//
+// 128-pixel panels only fit 18 characters at full size, which silently
+// truncated real values ("end0: 172.16.46.134" needs 133 px, and the load
+// label needs 144 even at 5×7), so dropping to the compact face happens
+// before truncating rather than instead of it.
+func fitScale(lines []string, maxWidth int, layoutScale float64) float64 {
+	if layoutScale > 0 && layoutScale < 1 {
+		return layoutScale
+	}
+	for _, line := range lines {
+		if MeasureText(line) > maxWidth {
+			return 0.5
+		}
+	}
+	return 1
+}
+
+// truncateAt truncates text with the metrics of the font the given scale
+// renders with, so truncation decisions match what is actually drawn.
+func truncateAt(text string, maxWidth int, scale float64) string {
+	if scale > 0 && scale < 1 {
+		return TruncateTextSmall(text, maxWidth)
+	}
+	return TruncateText(text, maxWidth)
+}
+
 // TruncateText truncates text to fit within maxWidth, adding "..." if needed
 func TruncateText(text string, maxWidth int) string {
 	if MeasureText(text) <= maxWidth {

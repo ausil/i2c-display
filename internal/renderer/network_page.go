@@ -37,6 +37,15 @@ func NewNetworkPage(pageNum, maxPerPage, totalInterfaces, lines int) *NetworkPag
 	}
 }
 
+// networkLine formats one interface row. Small displays drop the space after
+// the colon because every character costs 5-7 pixels on a 128-wide panel.
+func networkLine(name, addr string, compact bool) string {
+	if compact {
+		return fmt.Sprintf("%s:%s", name, addr)
+	}
+	return fmt.Sprintf("%s: %s", name, addr)
+}
+
 // Title returns the page title
 func (p *NetworkPage) Title() string {
 	return fmt.Sprintf("Network %d/%d", p.pageNum, p.totalPages)
@@ -70,16 +79,21 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 		}
 	}
 
-	// Render interfaces for this page
-	interfaceCount := 0
+	// Render interfaces for this page. Lines are composed first so the widest
+	// one decides the font scale for the whole page; a page mixing two font
+	// sizes reads as a rendering fault.
+	type pendingLine struct {
+		y    int
+		text string
+	}
+	var pending []pendingLine
 
 	for i := p.interfaceStartIdx; i < p.interfaceEndIdx && i < len(s.Interfaces); i++ {
-		if interfaceCount >= len(layout.ContentLines) {
+		if len(pending) >= len(layout.ContentLines) {
 			break
 		}
 
 		iface := s.Interfaces[i]
-		y := layout.ContentLines[interfaceCount]
 
 		// Determine which address to show
 		var addr string
@@ -91,27 +105,22 @@ func (p *NetworkPage) Render(disp display.Display, s *stats.SystemStats) error {
 			addr = "no addr"
 		}
 
-		// Format based on display size
-		var text string
-		if layout.Height <= 32 {
-			// Compact format for small displays: "name:IP"
-			// Use shorter separator to save space
-			text = fmt.Sprintf("%s:%s", iface.Name, addr)
-		} else {
-			// Standard format: "interface: IP"
-			text = fmt.Sprintf("%s: %s", iface.Name, addr)
-		}
+		pending = append(pending, pendingLine{
+			y:    layout.ContentLines[len(pending)],
+			text: networkLine(iface.Name, addr, layout.Height <= 32),
+		})
+	}
 
-		if layout.TextScale > 0 && layout.TextScale < 1 {
-			text = TruncateTextSmall(text, maxWidth)
-		} else {
-			text = TruncateText(text, maxWidth)
-		}
-		if err := DrawTextColorScaled(disp, MarginLeft, y, text, ColorGreen, layout.TextScale); err != nil {
+	texts := make([]string, len(pending))
+	for i, line := range pending {
+		texts[i] = line.text
+	}
+	scale := fitScale(texts, maxWidth, layout.TextScale)
+
+	for _, line := range pending {
+		if err := DrawTextColorScaled(disp, MarginLeft, line.y, truncateAt(line.text, maxWidth, scale), ColorGreen, scale); err != nil {
 			return err
 		}
-
-		interfaceCount++
 	}
 
 	// Footer: Page indicator (if space available and multiple pages)

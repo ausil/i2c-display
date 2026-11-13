@@ -184,10 +184,13 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 			color color.NRGBA
 		}
 		lines := []iconLine{
-			{iconDisk, fmt.Sprintf("%.1f%% (%.1f/%.1fGB)",
+			// "45% 12.3/465.7G" rather than "45.2% (12.3/465.7GB)": the icon eats
+			// 12 of the 126 pixels and the long form needed 140, so the total was
+			// truncated away on a 128x64 panel.
+			{iconDisk, fmt.Sprintf("%.0f%% %.1f/%.1fG",
 				s.DiskPercent(), s.DiskUsedGB(), s.DiskTotalGB()),
 				MetricColor(s.DiskPercent())},
-			{iconMemory, fmt.Sprintf("%.1f%% (%.1f/%.1fGB)",
+			{iconMemory, fmt.Sprintf("%.0f%% %.1f/%.1fG",
 				s.MemoryPercent(), s.MemoryUsedGB(), s.MemoryTotalGB()),
 				MetricColor(s.MemoryPercent())},
 		}
@@ -198,12 +201,18 @@ func (p *SystemPage) Render(disp display.Display, s *stats.SystemStats) error {
 			lines = append(lines, iconLine{iconCPU, "N/A", ColorGreen})
 		}
 
+		texts := make([]string, 0, len(lines))
+		for _, line := range lines {
+			texts = append(texts, line.text)
+		}
+		scale := fitScale(texts, iconMaxWidth, layout.TextScale)
+
 		for i, line := range lines {
 			if i >= len(layout.ContentLines) {
 				break
 			}
-			text := TruncateText(line.text, iconMaxWidth)
-			if err := DrawIconTextColor(disp, MarginLeft, layout.ContentLines[i], line.icon, text, line.color); err != nil {
+			text := truncateAt(line.text, iconMaxWidth, scale)
+			if err := DrawIconTextColorScaled(disp, MarginLeft, layout.ContentLines[i], line.icon, text, line.color, scale); err != nil {
 				return err
 			}
 		}

@@ -427,6 +427,12 @@ See `configs/config.example.json` for a complete example:
   - `4` — compact mode: mirrors the 128×64 layout (header + separator + 3 content lines + load graph) using a 5×7 font so all information fits in the 32 pixel height
   - Ignored on displays taller than 32 pixels
 
+- **Text fitting** (not configurable): content lines use the 7×13 font when they fit
+  the panel width and automatically drop to the compact 5×7 font when they do not, so
+  values like `end0: 172.16.46.134` and `1m0.52 5m0.48 15m0.40` are shown in full on a
+  128-wide panel instead of losing their tail. Truncation with `...` is the last resort,
+  and a page never mixes the two fonts
+
 - **`width`** / **`height`**: Display dimensions in pixels (optional)
   - **Automatically set** based on display type - no need to specify
   - Only needed for custom/unsupported displays

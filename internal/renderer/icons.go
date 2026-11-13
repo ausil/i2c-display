@@ -153,3 +153,14 @@ func DrawIconTextColor(disp display.Display, x, y int, icon *image.Gray, text st
 	}
 	return DrawTextColor(disp, x+IconWidth+IconGap, y, text, c)
 }
+
+// DrawIconTextColorScaled draws an icon followed by coloured text rendered at
+// the font scale appropriate for the given scale factor (see
+// DrawTextColorScaled), so an icon row can use the compact 5×7 face when the
+// value would otherwise be truncated.
+func DrawIconTextColorScaled(disp display.Display, x, y int, icon *image.Gray, text string, c color.Color, scale float64) error {
+	if err := disp.DrawImage(x, y+1, icon); err != nil {
+		return err
+	}
+	return DrawTextColorScaled(disp, x+IconWidth+IconGap, y, text, c, scale)
+}
