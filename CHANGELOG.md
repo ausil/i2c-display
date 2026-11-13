@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- SH1106 support (`sh1106`, `sh1106_128x64`), the controller on most 1.3" I2C OLED modules. The type was recognized but had no driver, so those panels silently fell back to the mock display. The SH1106 is not SSD1306-compatible: it only supports page addressing, its GDDRAM is 132 columns wide so frames need a column offset of 2, and it needs `0xAD 0x8B` to enable its internal DC-DC converter (the SSD1306 charge-pump command is ignored, which leaves the panel dark). `rotation` supports 0 and 2 (180°) via the mirror commands; `SetBrightness` works, so screensaver dim and blank modes work too. Verified on real hardware: 1.3" SH1106 module on a Radxa Rock 5C
+- SH1106 support (`sh1106`, `sh1106_128x64`), the controller on most 1.3" I2C OLED modules. The type was recognised but had no driver, so those panels silently fell back to the mock display. The SH1106 is not SSD1306-compatible: it only supports page addressing, its GDDRAM is 132 columns wide so frames need a column offset of 2, and it needs `0xAD 0x8B` to enable its internal DC-DC converter (the SSD1306 charge-pump command is ignored, which leaves the panel dark). `rotation` supports 0 and 2 (180°) via the mirror commands; `SetBrightness` works, so screensaver dim and blank modes work too. Verified on real hardware: 1.3" SH1106 module on a Radxa Rock 5C
 - `configs/platforms/radxa-rock-5c.json`: tested Radxa Rock 5C profile with a 1.3" SH1106 on `/dev/i2c-8` (40-pin header pins 3/5)
 
 ### Changed

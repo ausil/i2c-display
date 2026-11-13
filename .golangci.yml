@@ -57,7 +57,11 @@ linters:
     lll:
       line-length: 140
     misspell:
-      locale: US
+      # No locale: the project is written in Australian English ("colour",
+      # "behaviour", "neighbouring"). locale: US rewrites those, and locale: UK
+      # would fight the Go standard library (image/color, "initialize").
+      # Without a locale only misspell's shared dictionary runs, so genuine
+      # typos are still caught either way.
       ignore-rules:
         - colour
         - colours

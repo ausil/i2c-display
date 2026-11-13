@@ -177,7 +177,7 @@ func TestSH1106ShowPages(t *testing.T) {
 	}
 	// Everything else stays dark.
 	if data[0][1] != 0x00 || data[7][126] != 0x00 {
-		t.Error("neighboring columns should stay unlit")
+		t.Error("neighbouring columns should stay unlit")
 	}
 }
 
