@@ -27,6 +27,48 @@ This document describes all displays currently supported and how to add new ones
 }
 ```
 
+### SH1106 — I2C monochrome OLED (native driver)
+
+| Type | Resolution | Description | Status |
+|------|------------|-------------|--------|
+| `sh1106` | 128x64 | Default, the controller on most 1.3" I2C OLED modules | ✅ Working |
+| `sh1106_128x64` | 128x64 | Explicit 128x64 variant | ✅ Working |
+
+The SH1106 looks like an SSD1306 but is not drop-in compatible, so it has its own
+driver (`internal/display/sh1106.go`) rather than reusing periph's SSD1306 one:
+
+- It only supports page addressing; the SSD1306 horizontal/vertical addressing mode
+  and column/page window commands do not exist.
+- Its GDDRAM is 132 columns wide for a 128-pixel panel, so frames are written with a
+  column offset of 2.
+- It needs `0xAD 0x8B` to enable its internal DC-DC converter; the SSD1306 charge-pump
+  command is ignored, which leaves the panel completely dark.
+
+`rotation` supports `0` and `2` (180°), applied with the mirror commands. If the image
+comes up left/right and top/bottom flipped, use `"rotation": 2`.
+
+**Wiring:** VCC, GND, SCL, SDA to the I2C bus on your SBC.
+
+The bus number depends on the board — `/dev/i2c-1` on Raspberry Pi, `/dev/i2c-8` on
+Radxa Rock 5C (40-pin header pins 3 = SDA, 5 = SCL) and Rock 5A, `/dev/i2c-3` on
+Rock 3C, `/dev/i2c-2` on Orange Pi 3B. Find yours with `ls /dev/i2c-*` and confirm the
+panel answers with `sudo i2cdetect -y <bus>` (expect `0x3C` or `0x3D`). Tested platform
+profiles live in [`configs/platforms/`](configs/platforms/).
+
+**Example config:**
+```json
+{
+  "display": {
+    "type": "sh1106",
+    "i2c_bus": "/dev/i2c-1",
+    "i2c_address": "0x3C",
+    "rotation": 0
+  }
+}
+```
+
+See `configs/config.sh1106.json` for a complete example.
+
 ### ST7735 Family — SPI colour TFT (native driver, no extra dependencies)
 
 | Type | Resolution | Module | Col offset | Row offset |
@@ -94,7 +136,6 @@ These displays are recognized by the configuration system (dimensions auto-set) 
 
 | Type | Resolution | Interface | Color | Driver Status |
 |------|------------|-----------|-------|---------------|
-| `sh1106` / `sh1106_128x64` | 128x64 | I2C | Monochrome | Third-party available |
 | `ssd1327` / `ssd1327_128x128` | 128x128 | I2C | 4-bit grayscale | No Go driver found |
 | `ssd1327_96x96` | 96x96 | I2C | 4-bit grayscale | No Go driver found |
 | `ssd1331` / `ssd1331_96x64` | 96x64 | SPI | 16-bit color | No Go driver found |
@@ -187,4 +228,4 @@ SPI displays (ST7735) do not use I2C addresses — use `spi_bus`, `dc_pin`, and 
 - [periph.io SSD1306 Docs](https://periph.io/device/ssd1306/)
 - [periph.io SPI Docs](https://pkg.go.dev/periph.io/x/conn/v3/spi)
 - [ST7735 datasheet](https://www.displayfuture.com/Display/datasheet/controller/ST7735.pdf)
-- [danielgatis/go-sh1106 (third-party SH1106)](https://github.com/danielgatis/go-sh1106)
+- [SH1106 datasheet](https://www.displayfuture.com/Display/datasheet/controller/SH1106.pdf)

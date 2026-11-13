@@ -17,6 +17,11 @@ A Go application for Single Board Computers that controls OLED and TFT displays,
   - Full support via periph.io
   - Types: `ssd1306`, `ssd1306_128x64`, `ssd1306_128x32`, `ssd1306_96x16`
 
+- **SH1106** - 128x64 monochrome OLED (I2C)
+  - The controller on most 1.3" I2C OLED modules; SSD1306-like but needs its own driver
+  - Native driver, no extra dependencies; `rotation` 0 or 2
+  - Types: `sh1106`, `sh1106_128x64`
+
 - **ST7735** - Color TFT LCD (SPI)
   - White-on-black rendering, RGB565 colour
   - Types: `st7735` / `st7735_128x160` (1.8"), `st7735_128x128` (1.44"), `st7735_160x80` (0.96" Waveshare)
@@ -27,7 +32,6 @@ A Go application for Single Board Computers that controls OLED and TFT displays,
   - Type: `uctronics_colour`
 
 ### Framework Ready (Drivers Needed) 🔧
-- **SH1106** - 128x64 monochrome (similar to SSD1306) — Types: `sh1106`, `sh1106_128x64`
 - **SSD1327** - 128x128 / 96x96 4-bit grayscale OLED — Types: `ssd1327`, `ssd1327_128x128`, `ssd1327_96x96`
 - **SSD1331** - 96x64 16-bit color OLED — Types: `ssd1331`, `ssd1331_96x64`
 
@@ -381,6 +385,7 @@ See `configs/config.example.json` for a complete example:
   - `ssd1306` or `ssd1306_128x64` - Standard 128x64 OLED (I2C)
   - `ssd1306_128x32` - Compact 128x32 OLED (I2C)
   - `ssd1306_96x16` - Small 96x16 OLED (I2C)
+  - `sh1106` or `sh1106_128x64` - 128x64 OLED, most 1.3" modules (I2C)
   - `st7735` / `st7735_128x160` - 1.8" 128x160 TFT (SPI)
   - `st7735_128x128` - 1.44" 128x128 TFT (SPI)
   - `st7735_160x80` - 0.96" 160x80 TFT (SPI, e.g. Waveshare)
@@ -414,6 +419,8 @@ See `configs/config.example.json` for a complete example:
   - `1` - Rotated 90° clockwise
   - `2` - Rotated 180° (upside down)
   - `3` - Rotated 270° clockwise (90° counter-clockwise)
+  - SSD1306 and SH1106 panels support `0` and `2` only; other values are a
+    startup error
 
 - **`lines`**: Content line mode for 128×32 displays (default: `0` / auto)
   - `0` or `2` — standard mode: hostname header + separator + one metric per rotating page
@@ -882,6 +889,8 @@ i2c-display/
 │   ├── config/             # Configuration loading and validation
 │   ├── display/            # Display abstraction layer and drivers
 │   │   ├── ssd1306.go      # SSD1306 I2C OLED driver
+│   │   ├── sh1106.go       # SH1106 I2C OLED driver
+│   │   ├── mono.go         # Shared frame buffer for monochrome OLED drivers
 │   │   ├── st7735.go       # ST7735 SPI TFT driver
 │   │   ├── uctronics.go    # UCTRONICS colour TFT driver
 │   │   ├── factory.go      # Display factory
