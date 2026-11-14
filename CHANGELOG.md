@@ -7,16 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Text no longer disappears off the right edge of 128-wide panels. A content line wider than the full-size 7×13 font (18 characters) was silently truncated, so the network page showed `end0: 172.16.46...` with the last octet lost, and the load graph page could only ever show the 1- and 5-minute averages. Pages now choose the widest font that fits, dropping to the compact 5×7 face (about 40% narrower) before truncating at all, and a page never mixes the two fonts. Two formats were also shortened so the essentials fit: the load label is now `1m0.52 5m0.48 15m0.40` instead of `1m:0.52 5m:0.48 15m:0.40`, and the system page's disk/memory rows read `45% 210.0/465.7G` instead of `45.1% (210.0/465.7GB)`, which lost the total next to the metric icons
-- `MockDisplay.DrawImage` averaged the colour channels before thresholding, so the renderer's saturated colours (pure green, red and yellow) drew nothing on the mock while lighting up on real panels — every mock-based rendering test was effectively asserting against a blank screen. It now uses the same brightest-channel rule as the SSD1306 and SH1106 drivers
+## [0.7.0] - 2026-11-13
 
 ### Changed
 
 - **Breaking:** the daemon exits with status 1 when the display hardware cannot be initialised, instead of logging `Falling back to mock display` and running on against a mock panel. The fallback made driver, bus and config faults indistinguishable from a rendering bug — the service looked healthy while the screen stayed dark. Use `-mock` explicitly when there is no hardware attached. The systemd unit gained `StartLimitIntervalSec=60` / `StartLimitBurst=5`, because `Restart=on-failure` with `RestartSec=5s` otherwise retries a permanently broken panel forever
 
 - Packaging: `make dist` now writes the vendored bundle to `i2c-display-<version>-vendored.tar.gz` instead of reusing the plain source tarball name, which `make dist-rpm` also wrote with completely different contents (they silently overwrote each other in `dist/`, and the 2.5 MB vendored file was what the GitHub Release published as "the source tarball"). Both archives are now built from one `git archive` of the tagged tree via the new `make dist-src`, so the vendored bundle carries everything the repository has (`.github/`, `.golangci.yml` and `RELEASING.md` were missing from it before) and matches the plain source byte for byte. `make dist` no longer leaves a `vendor/` directory in the source tree, `dist-rpm` archives the tag rather than `HEAD`, and `make deb`/`deb-src` vendor automatically, which they need for their `-mod=vendor` builds
+
+### Fixed
+
+- Text no longer disappears off the right edge of 128-wide panels. A content line wider than the full-size 7×13 font (18 characters) was silently truncated, so the network page showed `end0: 172.16.46...` with the last octet lost, and the load graph page could only ever show the 1- and 5-minute averages. Pages now choose the widest font that fits, dropping to the compact 5×7 face (about 40% narrower) before truncating at all, and a page never mixes the two fonts. Two formats were also shortened so the essentials fit: the load label is now `1m0.52 5m0.48 15m0.40` instead of `1m:0.52 5m:0.48 15m:0.40`, and the system page's disk/memory rows read `45% 210.0/465.7G` instead of `45.1% (210.0/465.7GB)`, which lost the total next to the metric icons
+- `MockDisplay.DrawImage` averaged the colour channels before thresholding, so the renderer's saturated colours (pure green, red and yellow) drew nothing on the mock while lighting up on real panels — every mock-based rendering test was effectively asserting against a blank screen. It now uses the same brightest-channel rule as the SSD1306 and SH1106 drivers
 
 ## [0.6.0] - 2026-11-13
 
@@ -232,6 +234,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial implementation of SSD1306 display controller
 
+[0.7.0]: https://github.com/ausil/i2c-display/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ausil/i2c-display/compare/v0.5.6...v0.6.0
 [0.5.6]: https://github.com/ausil/i2c-display/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/ausil/i2c-display/compare/v0.5.4...v0.5.5

@@ -1,15 +1,18 @@
-i2c-display (0.6.0-1) unstable; urgency=medium
+i2c-display (0.7.0-1) unstable; urgency=medium
 
-  * Add a native SH1106 driver so 1.3" 128x64 SH1106 modules work instead of
-    falling back to the mock display: page-addressed writes, the 2-column
-    GDDRAM offset, and the SH1106 DC-DC enable sequence; rotation 0/2 and
-    brightness (screensaver dim and blank) are supported
-  * SSD1306 and SH1106 now share their frame buffer and drawing primitives
-    (internal/display/mono.go) and I2C drivers share bus open and address
-    resolution
-  * Add a tested Radxa Rock 5C platform profile (SH1106 on /dev/i2c-8,
-    40-pin header pins 3/5)
-  * Document SH1106 support and the per-board I2C bus numbers
+  * BREAKING: the daemon now exits with status 1 when the display hardware
+    cannot be initialised instead of falling back to a mock display, which
+    made bus, permission and config failures look like rendering bugs; use
+    -mock explicitly without hardware. The systemd unit adds
+    StartLimitIntervalSec/StartLimitBurst so a missing panel stops retrying
+  * Text no longer truncates off the right edge of 128-wide panels: pages use
+    the compact 5x7 font before truncating, so IPv4 addresses and all three
+    load averages are shown; load label and disk/memory formats trimmed to fit
+  * MockDisplay.DrawImage now thresholds on the brightest channel like the
+    SSD1306/SH1106 drivers, so green/red/yellow text renders in tests
+  * Packaging: make dist writes i2c-display-<version>-vendored.tar.gz instead
+    of reusing the plain source tarball name; both archives now come from one
+    git archive of the tag (new make dist-src), deb/deb-src vendor automatically
 
- -- Dennis Gilmore <dennis@ausil.us>  Fri, 13 Nov 2026 14:22:30 -0600
+ -- Dennis Gilmore <dennis@ausil.us>  Fri, 13 Nov 2026 20:25:04 -0600
 
