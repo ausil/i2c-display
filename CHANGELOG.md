@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** the daemon exits with status 1 when the display hardware cannot be initialised, instead of logging `Falling back to mock display` and running on against a mock panel. The fallback made driver, bus and config faults indistinguishable from a rendering bug — the service looked healthy while the screen stayed dark. Use `-mock` explicitly when there is no hardware attached. The systemd unit gained `StartLimitIntervalSec=60` / `StartLimitBurst=5`, because `Restart=on-failure` with `RestartSec=5s` otherwise retries a permanently broken panel forever
+
 - Packaging: `make dist` now writes the vendored bundle to `i2c-display-<version>-vendored.tar.gz` instead of reusing the plain source tarball name, which `make dist-rpm` also wrote with completely different contents (they silently overwrote each other in `dist/`, and the 2.5 MB vendored file was what the GitHub Release published as "the source tarball"). Both archives are now built from one `git archive` of the tagged tree via the new `make dist-src`, so the vendored bundle carries everything the repository has (`.github/`, `.golangci.yml` and `RELEASING.md` were missing from it before) and matches the plain source byte for byte. `make dist` no longer leaves a `vendor/` directory in the source tree, `dist-rpm` archives the tag rather than `HEAD`, and `make deb`/`deb-src` vendor automatically, which they need for their `-mod=vendor` builds
 
 ## [0.6.0] - 2026-11-13

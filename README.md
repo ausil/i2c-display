@@ -1016,6 +1016,29 @@ All pages show the hostname centered at the top, separated from content by a hor
    sudo journalctl -u i2c-display.service -n 50
    ```
 
+5. If the service exits instead of staying up, that is intentional: the daemon
+   aborts when it cannot talk to the panel rather than falling back to a mock
+   display, which used to make wiring and driver faults look like blank screens
+   with a healthy-looking service. The journal names the step that failed:
+
+   - `failed to open I2C bus /dev/i2c-N: ... permission denied` — the account
+     running the daemon cannot open the bus. The unit runs as root, so this
+     usually means it was started by hand; either use the service or add
+     yourself to the `i2c` group
+   - `failed to create SSD1306 device` or `failed to initialize SH1106` — the bus
+     and address are fine but the controller rejected the init sequence; check
+     that `display.type` matches the panel (a 128×32 panel set to `ssd1306` gets
+     a 64-row frame and shows nothing useful)
+   - `display type "x" is recognized but not yet implemented` — unsupported controller
+
+   To check everything except the hardware, run it in the foreground with `-mock`:
+   ```bash
+   sudo i2c-displayd -config /etc/i2c-display/config.json -mock
+   ```
+
+   After 5 failures in a minute systemd stops retrying; once the wiring or config
+   is fixed, clear the counter with `sudo systemctl reset-failure i2c-display.service`.
+
 ### ST7735 Display Not Working
 
 1. Ensure SPI is enabled:

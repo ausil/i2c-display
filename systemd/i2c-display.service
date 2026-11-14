@@ -1,6 +1,11 @@
 [Unit]
 Description=I2C OLED Display Service
 Documentation=https://github.com/ausil/i2c-display
+# A panel that cannot be opened is a permanent failure until someone fixes the
+# wiring or config, so stop hammering the bus and the journal instead of
+# restarting forever (RestartSec=5s alone never hits the default rate limit).
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple

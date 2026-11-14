@@ -73,12 +73,13 @@ func main() {
 			Logger().Info("Initializing display hardware")
 		hardwareDisp, err := display.NewDisplay(&cfg.Display)
 		if err != nil {
-			log.ErrorWithErr(err, "Failed to initialize hardware display")
-			log.Warn("Falling back to mock display")
-			disp = display.NewMockDisplay(cfg.Display.Width, cfg.Display.Height)
-		} else {
-			disp = hardwareDisp
+			// Deliberately fatal. Serving a mock display instead keeps the
+			// service "running" while the panel stays dark, which reads to users
+			// as a rendering bug rather than the driver or bus failure it is. Use
+			// -mock explicitly when no hardware is attached.
+			log.FatalWithErr(err, "Failed to initialize hardware display")
 		}
+		disp = hardwareDisp
 	}
 
 	// Initialize display
